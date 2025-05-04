@@ -30,7 +30,7 @@ const ConversationsView: React.FC<ConversationsViewProps> = ({
 
   // Use the props if provided, otherwise use local state from context
   const [localSelectedConversation, setLocalSelectedConversation] = useState<Conversation | null>(null);
-  
+
   // Use either the prop or local state
   const selectedConversation = propSelectedConversation !== undefined ? propSelectedConversation : localSelectedConversation;
   const setSelectedConversation = propSetSelectedConversation || setLocalSelectedConversation;
@@ -58,7 +58,7 @@ const ConversationsView: React.FC<ConversationsViewProps> = ({
       setConversationMessages([]);
       return;
     }
-    
+
     // Skip reload if it's the same conversation we just loaded and we have messages
     // This prevents infinite loops and unnecessary reloads
     if (lastLoadedConversationId === selectedConversation.id && conversationMessages.length > 0) {
@@ -76,7 +76,7 @@ const ConversationsView: React.FC<ConversationsViewProps> = ({
     // Generate a unique ID for this effect instance
     const effectId = Date.now();
     latestEffectIdRef.current = effectId;
-    
+
     // Store if this effect is still active or has been cleaned up
     let isActive = true;
 
@@ -89,16 +89,16 @@ const ConversationsView: React.FC<ConversationsViewProps> = ({
 
       // Reference the ID to avoid closure issues
       const conversationId = selectedConversation.id;
-  
+
       try {
         if (isActive && latestEffectIdRef.current === effectId) {
           setLoadingMessages(true);
           setMessageError(null);
           setLastLoadTimestamp(now);
         }
-        
+
         console.log(`ConversationsView: Loading messages for conversation ${conversationId}, effect #${effectId}`);
-        
+
         // Only continue if this effect is still the most recent
         if (!isActive || latestEffectIdRef.current !== effectId) {
           console.log(`ConversationsView: Effect #${effectId} no longer active or not latest, aborting message load`);
@@ -107,9 +107,9 @@ const ConversationsView: React.FC<ConversationsViewProps> = ({
 
         // Get messages using the improved function in DataContext
         const messages = await getMessagesByConversationId(conversationId);
-        
+
         // Only update state if this effect is still active, latest, and conversation hasn't changed
-        if (isActive && latestEffectIdRef.current === effectId && 
+        if (isActive && latestEffectIdRef.current === effectId &&
             selectedConversation && selectedConversation.id === conversationId) {
           setConversationMessages(messages);
           setLoadingMessages(false);
@@ -119,9 +119,9 @@ const ConversationsView: React.FC<ConversationsViewProps> = ({
         }
       } catch (error) {
         console.error(`Error loading messages for effect #${effectId}:`, error);
-        
+
         // Only update error state if this effect is still active and latest
-        if (isActive && latestEffectIdRef.current === effectId && 
+        if (isActive && latestEffectIdRef.current === effectId &&
             selectedConversation && selectedConversation.id === conversationId) {
           setMessageError('Failed to load messages');
           setConversationMessages([]);
@@ -137,7 +137,7 @@ const ConversationsView: React.FC<ConversationsViewProps> = ({
         loadMessages();
       }
     }, 50);
-    
+
     // Cleanup function to prevent state updates after component unmount or effect change
     return () => {
       console.log(`ConversationsView: Cleaning up message loading effect #${effectId}`);
@@ -149,22 +149,26 @@ const ConversationsView: React.FC<ConversationsViewProps> = ({
   // Memoize the entire UI to prevent unnecessary re-renders
   const uiContent = useMemo(() => {
     return (
-      <div className="flex flex-1 bg-gray-50">
-        <ConversationsList
-          conversations={conversations}
-          selectedConversation={selectedConversation}
-          setSelectedConversation={setSelectedConversation}
-        />
-  
-        {selectedConversation ? (
-          <ConversationDetail
-            conversation={selectedConversation}
-            messages={conversationMessages}
-            loading={loadingMessages}
-            error={messageError}
+      <div className="flex flex-1 h-screen">
+        <div className="w-96 border-r overflow-y-auto" style={{ height: 'calc(100vh - 64px)' }}>
+          <ConversationsList
+            conversations={conversations}
+            selectedConversation={selectedConversation}
+            setSelectedConversation={setSelectedConversation}
           />
+        </div>
+
+        {selectedConversation ? (
+          <div className="flex-1 bg-gray-50 overflow-y-auto" style={{ height: 'calc(100vh - 64px)' }}>
+            <ConversationDetail
+              conversation={selectedConversation}
+              messages={conversationMessages}
+              loading={loadingMessages}
+              error={messageError}
+            />
+          </div>
         ) : (
-          <div className="flex-1 flex items-center justify-center bg-gray-50">
+          <div className="flex-1 flex items-center justify-center bg-gray-50" style={{ height: 'calc(100vh - 64px)' }}>
             <div className="text-center">
               <MessageCircle size={48} className="mx-auto text-gray-400 mb-4" />
               <h3 className="text-lg font-medium text-gray-900 mb-2">Select a conversation</h3>
@@ -175,14 +179,14 @@ const ConversationsView: React.FC<ConversationsViewProps> = ({
       </div>
     );
   }, [
-    conversations, 
-    selectedConversation, 
-    conversationMessages, 
-    loadingMessages, 
+    conversations,
+    selectedConversation,
+    conversationMessages,
+    loadingMessages,
     messageError,
     setSelectedConversation
   ]);
-  
+
   return uiContent;
 };
 

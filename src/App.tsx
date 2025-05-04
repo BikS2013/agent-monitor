@@ -80,7 +80,9 @@ const App: React.FC = () => {
   return (
     <div className={`flex flex-col h-screen ${theme === 'dark' ? 'bg-gray-900' : 'bg-gray-100'}`}>
       <Navigation currentView={currentView} setCurrentView={handleViewChange} />
-      {renderContent()}
+      <div className="flex-1">
+        {renderContent()}
+      </div>
     </div>
   );
 };

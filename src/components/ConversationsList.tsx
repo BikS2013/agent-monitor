@@ -60,7 +60,7 @@ const ConversationsList = memo<ConversationsListProps>(({
   }, [conversations, searchTerm, statusFilter, conclusionFilter, agentFilter]);
 
   return (
-    <div className={`w-96 ${theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} border-r overflow-y-auto`}>
+    <div className={`${theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
       <div className={`p-4 ${theme === 'dark' ? 'border-gray-700' : 'border-gray-200'} border-b`}>
         <div className="flex items-center justify-between mb-4">
           <h2 className={`text-lg font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>Conversations</h2>

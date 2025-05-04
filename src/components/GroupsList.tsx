@@ -19,48 +19,48 @@ const GroupsList: React.FC<GroupsListProps> = ({
   const [isNewGroupModalOpen, setIsNewGroupModalOpen] = useState(false);
   // Add state for search functionality
   const [searchText, setSearchText] = useState('');
-  
+
   // Get groups array safely
   const groupsArray = groups ? Object.values(groups) : [];
-  
+
   // Filter groups with proper defensive checks
   const filteredGroups = useMemo(() => {
     // Return all groups if search is empty
     if (!searchText.trim()) {
       return groupsArray;
     }
-    
+
     const search = searchText.toLowerCase();
-    
+
     // Filter with proper null/undefined checks
     return groupsArray.filter(group => {
       // Skip invalid groups
       if (!group || typeof group !== 'object') {
         return false;
       }
-      
+
       // Search in name with null check
       const nameMatch = group.name && typeof group.name === 'string'
         ? group.name.toLowerCase().includes(search)
         : false;
-        
-      // Search in description with null check  
+
+      // Search in description with null check
       const descriptionMatch = group.description && typeof group.description === 'string'
         ? group.description.toLowerCase().includes(search)
         : false;
-        
+
       // Search in purpose with null check
       const purposeMatch = group.purpose && typeof group.purpose === 'string'
         ? group.purpose.toLowerCase().includes(search)
         : false;
-        
+
       // Return true if any field matches
       return nameMatch || descriptionMatch || purposeMatch;
     });
   }, [groupsArray, searchText]);
-  
+
   return (
-    <div className={`w-96 ${theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} border-r overflow-y-auto`}>
+    <div className={`${theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
       <div className={`p-4 ${theme === 'dark' ? 'border-gray-700' : 'border-gray-200'} border-b`}>
         <div className="flex items-center justify-between mb-4">
           <h2 className={`text-lg font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>Groups</h2>
@@ -136,16 +136,16 @@ const GroupsList: React.FC<GroupsListProps> = ({
             <div className="flex items-center">
               <Database size={12} className="mr-1" />
               <span>
-                {group.collectionIds && Array.isArray(group.collectionIds) 
-                  ? `${group.collectionIds.length} collections` 
+                {group.collectionIds && Array.isArray(group.collectionIds)
+                  ? `${group.collectionIds.length} collections`
                   : '0 collections'}
               </span>
             </div>
             <div className="flex items-center">
               <Users size={12} className="mr-1" />
               <span>
-                {group.adminUsers && Array.isArray(group.adminUsers) 
-                  ? `${group.adminUsers.length} admins` 
+                {group.adminUsers && Array.isArray(group.adminUsers)
+                  ? `${group.adminUsers.length} admins`
                   : '0 admins'}
               </span>
             </div>

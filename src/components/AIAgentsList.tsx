@@ -29,18 +29,18 @@ const AIAgentsList: React.FC<AIAgentsListProps> = ({
   // Extract unique models with improved error handling
   useEffect(() => {
     const models = new Set<string>();
-    
+
     // Safely extract models from agents with defensive checks
     agentsArray.forEach(agent => {
       // Skip invalid agents or those without a model property
       if (!agent || typeof agent !== 'object') return;
-      
+
       // Check if model exists and is a string
       if (agent.model && typeof agent.model === 'string' && agent.model.trim() !== '') {
         models.add(agent.model);
       }
     });
-    
+
     // Set unique models with 'all' as first option
     setUniqueModels(['all', ...Array.from(models)]);
   }, [aiAgents]);
@@ -55,14 +55,14 @@ const AIAgentsList: React.FC<AIAgentsListProps> = ({
     // Search filter with null/undefined checks
     if (searchText.trim() !== '') {
       const search = searchText.toLowerCase();
-      
+
       // Safe property access with null/undefined checks
-      const nameMatch = agent.name && typeof agent.name === 'string' 
-        ? agent.name.toLowerCase().includes(search) 
+      const nameMatch = agent.name && typeof agent.name === 'string'
+        ? agent.name.toLowerCase().includes(search)
         : false;
-        
-      const modelMatch = agent.model && typeof agent.model === 'string' 
-        ? agent.model.toLowerCase().includes(search) 
+
+      const modelMatch = agent.model && typeof agent.model === 'string'
+        ? agent.model.toLowerCase().includes(search)
         : false;
 
       if (!nameMatch && !modelMatch) {
@@ -76,7 +76,7 @@ const AIAgentsList: React.FC<AIAgentsListProps> = ({
     }
 
     // Model filter with null/undefined check
-    if (modelFilter !== 'all' && 
+    if (modelFilter !== 'all' &&
         (agent.model !== modelFilter || !agent.model)) {
       return false;
     }
@@ -85,7 +85,7 @@ const AIAgentsList: React.FC<AIAgentsListProps> = ({
   });
 
   return (
-    <div className={`w-96 ${theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} border-r overflow-y-auto`}>
+    <div>
       <div className={`p-4 ${theme === 'dark' ? 'border-gray-700' : 'border-gray-200'} border-b`}>
         <div className="flex items-center justify-between mb-4">
           <h2 className={`text-lg font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>AI Agents</h2>

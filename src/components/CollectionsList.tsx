@@ -19,48 +19,48 @@ const CollectionsList: React.FC<CollectionsListProps> = ({
   const [isNewCollectionModalOpen, setIsNewCollectionModalOpen] = useState(false);
   // Add state for search functionality
   const [searchText, setSearchText] = useState('');
-  
+
   // Get collections array safely
   const collectionsArray = collections ? Object.values(collections) : [];
-  
+
   // Filter collections with proper defensive checks
   const filteredCollections = useMemo(() => {
     // Return all collections if search is empty
     if (!searchText.trim()) {
       return collectionsArray;
     }
-    
+
     const search = searchText.toLowerCase();
-    
+
     // Filter with proper null/undefined checks
     return collectionsArray.filter(collection => {
       // Skip invalid collections
       if (!collection || typeof collection !== 'object') {
         return false;
       }
-      
+
       // Search in name with null check
       const nameMatch = collection.name && typeof collection.name === 'string'
         ? collection.name.toLowerCase().includes(search)
         : false;
-        
-      // Search in description with null check  
+
+      // Search in description with null check
       const descriptionMatch = collection.description && typeof collection.description === 'string'
         ? collection.description.toLowerCase().includes(search)
         : false;
-        
+
       // Search in creator with null check
       const creatorMatch = collection.creator && typeof collection.creator === 'string'
         ? collection.creator.toLowerCase().includes(search)
         : false;
-        
+
       // Return true if any field matches
       return nameMatch || descriptionMatch || creatorMatch;
     });
   }, [collectionsArray, searchText]);
-  
+
   return (
-    <div className={`w-96 ${theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} border-r overflow-y-auto`}>
+    <div className={`${theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
       <div className={`p-4 ${theme === 'dark' ? 'border-gray-700' : 'border-gray-200'} border-b`}>
         <div className="flex items-center justify-between mb-4">
           <h2 className={`text-lg font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>Collections</h2>
@@ -102,8 +102,8 @@ const CollectionsList: React.FC<CollectionsListProps> = ({
           <div className="flex items-center justify-between mb-2">
             <h3 className={`font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>{collection.name || 'Unnamed Collection'}</h3>
             <span className={`text-xs ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
-              {collection.creationTimestamp 
-                ? new Date(collection.creationTimestamp).toLocaleDateString() 
+              {collection.creationTimestamp
+                ? new Date(collection.creationTimestamp).toLocaleDateString()
                 : 'No date'}
             </span>
           </div>
@@ -147,10 +147,10 @@ const CollectionsList: React.FC<CollectionsListProps> = ({
                 )}
               </span>
             )}
-            {(!collection.filterCriteria || 
-              (!collection.filterCriteria.aiAgentBased && 
-               !collection.filterCriteria.timeBased && 
-               !collection.filterCriteria.outcomeBased && 
+            {(!collection.filterCriteria ||
+              (!collection.filterCriteria.aiAgentBased &&
+               !collection.filterCriteria.timeBased &&
+               !collection.filterCriteria.outcomeBased &&
                !collection.filterCriteria.multiFactorFilters)) && (
               <span className={`inline-flex items-center px-2 py-1 ${theme === 'dark' ? 'bg-gray-700 text-gray-300' : 'bg-gray-100 text-gray-800'} text-xs rounded`}>
                 <Database size={12} className="mr-1" />

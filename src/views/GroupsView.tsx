@@ -53,21 +53,25 @@ const GroupsView: React.FC<GroupsViewProps> = ({
   };
 
   return (
-    <div className={`flex flex-1 ${theme === 'dark' ? 'bg-gray-800' : 'bg-gray-50'}`}>
-      <GroupsList
-        groups={groups}
-        selectedGroup={selectedGroup}
-        setSelectedGroup={setSelectedGroup}
-      />
+    <div className="flex flex-1 h-screen">
+      <div className={`w-96 ${theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} border-r overflow-y-auto`} style={{ height: 'calc(100vh - 64px)' }}>
+        <GroupsList
+          groups={groups}
+          selectedGroup={selectedGroup}
+          setSelectedGroup={setSelectedGroup}
+        />
+      </div>
 
       {selectedGroup ? (
-        <GroupDetail
-          group={selectedGroup}
-          collections={selectedGroup.collectionIds.map(id => collections[id]).filter(Boolean)}
-          onSelectCollection={handleSelectCollection}
-        />
+        <div className={`flex-1 ${theme === 'dark' ? 'bg-gray-800' : 'bg-gray-50'} overflow-y-auto`} style={{ height: 'calc(100vh - 64px)' }}>
+          <GroupDetail
+            group={selectedGroup}
+            collections={selectedGroup.collectionIds.map(id => collections[id]).filter(Boolean)}
+            onSelectCollection={handleSelectCollection}
+          />
+        </div>
       ) : (
-        <div className={`flex-1 flex items-center justify-center ${theme === 'dark' ? 'bg-gray-800' : 'bg-gray-50'}`}>
+        <div className={`flex-1 flex items-center justify-center ${theme === 'dark' ? 'bg-gray-800' : 'bg-gray-50'}`} style={{ height: 'calc(100vh - 64px)' }}>
           <div className="text-center">
             <Package size={48} className={`mx-auto ${theme === 'dark' ? 'text-gray-500' : 'text-gray-400'} mb-4`} />
             <h3 className={`text-lg font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'} mb-2`}>Select a group</h3>
