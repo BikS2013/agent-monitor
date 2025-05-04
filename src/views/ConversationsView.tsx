@@ -1,24 +1,42 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { MessageCircle } from 'lucide-react';
 import ConversationsList from '../components/ConversationsList';
 import ConversationDetail from '../components/ConversationDetail';
 import { useData } from '../context/DataContext';
 import { Conversation } from '../data/types';
 
-const ConversationsView: React.FC = () => {
+interface ConversationsViewProps {
+  selectedConversation?: Conversation | null;
+  setSelectedConversation?: (conversation: Conversation | null) => void;
+}
+
+const ConversationsView: React.FC<ConversationsViewProps> = ({
+  selectedConversation: propSelectedConversation,
+  setSelectedConversation: propSetSelectedConversation
+}) => {
   const { conversations, getMessagesByConversationId } = useData();
-  const [selectedConversation, setSelectedConversation] = useState<Conversation | null>(null);
+
+  // Use the props if provided, otherwise use local state from context
+  const selectedConversation = propSelectedConversation || null;
+  const setSelectedConversation = propSetSelectedConversation || ((conversation: Conversation | null) => {});
+
+  // If no conversation is selected and there are conversations available, select the first one
+  React.useEffect(() => {
+    if (!selectedConversation && Object.values(conversations).length > 0 && propSetSelectedConversation) {
+      propSetSelectedConversation(Object.values(conversations)[0]);
+    }
+  }, [conversations, selectedConversation, propSetSelectedConversation]);
 
   return (
     <div className="flex flex-1 bg-gray-50">
-      <ConversationsList 
+      <ConversationsList
         conversations={conversations}
         selectedConversation={selectedConversation}
         setSelectedConversation={setSelectedConversation}
       />
-      
+
       {selectedConversation ? (
-        <ConversationDetail 
+        <ConversationDetail
           conversation={selectedConversation}
           messages={getMessagesByConversationId(selectedConversation.id)}
         />

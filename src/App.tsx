@@ -15,29 +15,49 @@ const App: React.FC = () => {
   const [selectedConversation, setSelectedConversation] = useState<Conversation | null>(null);
   const [selectedCollection, setSelectedCollection] = useState<Collection | null>(null);
 
+  // Custom navigation handler to reset states when needed
+  const handleViewChange = (view: string) => {
+    // Reset selected items when navigating to their respective views
+    // This allows the auto-selection logic in each view to work
+    if (view === 'collections') {
+      setSelectedCollection(null);
+    } else if (view === 'conversations') {
+      setSelectedConversation(null);
+    }
+
+    setCurrentView(view);
+  };
+
   const renderContent = () => {
     switch (currentView) {
       case 'dashboard':
         return (
-          <DashboardView 
+          <DashboardView
             onSelectConversation={setSelectedConversation}
-            onChangeView={setCurrentView}
+            onChangeView={handleViewChange}
           />
         );
       case 'conversations':
-        return <ConversationsView />;
+        return (
+          <ConversationsView
+            selectedConversation={selectedConversation}
+            setSelectedConversation={setSelectedConversation}
+          />
+        );
       case 'collections':
         return (
-          <CollectionsView 
+          <CollectionsView
             onSelectConversation={setSelectedConversation}
-            onChangeView={setCurrentView}
+            onChangeView={handleViewChange}
+            selectedCollection={selectedCollection}
+            setSelectedCollection={setSelectedCollection}
           />
         );
       case 'groups':
         return (
-          <GroupsView 
+          <GroupsView
             onSelectCollection={setSelectedCollection}
-            onChangeView={setCurrentView}
+            onChangeView={handleViewChange}
           />
         );
       case 'agents':
@@ -61,7 +81,7 @@ const App: React.FC = () => {
   return (
     <DataProvider>
       <div className="flex flex-col h-screen bg-gray-100">
-        <Navigation currentView={currentView} setCurrentView={setCurrentView} />
+        <Navigation currentView={currentView} setCurrentView={handleViewChange} />
         {renderContent()}
       </div>
     </DataProvider>

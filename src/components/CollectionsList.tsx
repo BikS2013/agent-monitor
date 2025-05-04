@@ -1,5 +1,5 @@
 import React from 'react';
-import { Database, Calendar, CheckCircle, Users, Plus } from 'lucide-react';
+import { Database, Calendar, CheckCircle, Users, Plus, Bot } from 'lucide-react';
 import { Collection } from '../data/types';
 
 interface CollectionsListProps {
@@ -8,10 +8,10 @@ interface CollectionsListProps {
   setSelectedCollection: (collection: Collection) => void;
 }
 
-const CollectionsList: React.FC<CollectionsListProps> = ({ 
-  collections, 
-  selectedCollection, 
-  setSelectedCollection 
+const CollectionsList: React.FC<CollectionsListProps> = ({
+  collections,
+  selectedCollection,
+  setSelectedCollection
 }) => {
   return (
     <div className="w-96 bg-white border-r border-gray-200 overflow-y-auto">
@@ -22,16 +22,16 @@ const CollectionsList: React.FC<CollectionsListProps> = ({
             <Plus size={20} className="text-gray-600" />
           </button>
         </div>
-        
+
         <div className="relative">
-          <input 
-            type="text" 
-            placeholder="Search collections..." 
+          <input
+            type="text"
+            placeholder="Search collections..."
             className="w-full px-4 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           />
         </div>
       </div>
-      
+
       {Object.values(collections).map((collection) => (
         <div
           key={collection.id}

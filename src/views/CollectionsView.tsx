@@ -8,14 +8,24 @@ import { Collection, Conversation } from '../data/types';
 interface CollectionsViewProps {
   onSelectConversation: (conversation: Conversation) => void;
   onChangeView: (view: string) => void;
+  selectedCollection: Collection | null;
+  setSelectedCollection: (collection: Collection | null) => void;
 }
 
-const CollectionsView: React.FC<CollectionsViewProps> = ({ 
+const CollectionsView: React.FC<CollectionsViewProps> = ({
   onSelectConversation,
-  onChangeView
+  onChangeView,
+  selectedCollection,
+  setSelectedCollection
 }) => {
   const { collections, getConversationsByCollectionId } = useData();
-  const [selectedCollection, setSelectedCollection] = useState<Collection | null>(null);
+
+  // If no collection is selected and there are collections available, select the first one
+  React.useEffect(() => {
+    if (!selectedCollection && Object.values(collections).length > 0) {
+      setSelectedCollection(Object.values(collections)[0]);
+    }
+  }, [collections, selectedCollection, setSelectedCollection]);
 
   const handleSelectConversation = (conversation: Conversation) => {
     onSelectConversation(conversation);
@@ -24,14 +34,14 @@ const CollectionsView: React.FC<CollectionsViewProps> = ({
 
   return (
     <div className="flex flex-1 bg-gray-50">
-      <CollectionsList 
+      <CollectionsList
         collections={collections}
         selectedCollection={selectedCollection}
         setSelectedCollection={setSelectedCollection}
       />
-      
+
       {selectedCollection ? (
-        <CollectionDetail 
+        <CollectionDetail
           collection={selectedCollection}
           conversations={getConversationsByCollectionId(selectedCollection.id)}
           onSelectConversation={handleSelectConversation}
