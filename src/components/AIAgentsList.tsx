@@ -85,81 +85,86 @@ const AIAgentsList: React.FC<AIAgentsListProps> = ({
   });
 
   return (
-    <div>
-      <div className={`p-4 ${theme === 'dark' ? 'border-gray-700' : 'border-gray-200'} border-b`}>
-        <div className="flex items-center justify-between mb-4">
-          <h2 className={`text-lg font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>AI Agents</h2>
-          <div className="flex space-x-1">
-            <button
-              onClick={() => setIsFiltersOpen(!isFiltersOpen)}
-              className={`p-2 ${theme === 'dark' ? 'hover:bg-gray-700' : 'hover:bg-gray-100'} rounded`}
-              title="Filter agents"
-            >
-              <Filter size={20} className={`${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`} />
-            </button>
-            <button
-              onClick={() => setIsNewAgentModalOpen(true)}
-              className={`p-2 ${theme === 'dark' ? 'hover:bg-gray-700' : 'hover:bg-gray-100'} rounded`}
-              title="Add new agent"
-            >
-              <Plus size={20} className={`${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`} />
-            </button>
+    <div className={`${theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} flex flex-col`}>
+      {/* Sticky header */}
+      <div className={`sticky top-0 z-10 ${theme === 'dark' ? 'bg-gray-800' : 'bg-white'}`}>
+        <div className={`p-4 ${theme === 'dark' ? 'border-gray-700' : 'border-gray-200'} border-b`}>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className={`text-lg font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>AI Agents</h2>
+            <div className="flex space-x-1">
+              <button
+                onClick={() => setIsFiltersOpen(!isFiltersOpen)}
+                className={`p-2 ${theme === 'dark' ? 'hover:bg-gray-700' : 'hover:bg-gray-100'} rounded`}
+                title="Filter agents"
+              >
+                <Filter size={20} className={`${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`} />
+              </button>
+              <button
+                onClick={() => setIsNewAgentModalOpen(true)}
+                className={`p-2 ${theme === 'dark' ? 'hover:bg-gray-700' : 'hover:bg-gray-100'} rounded`}
+                title="Add new agent"
+              >
+                <Plus size={20} className={`${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`} />
+              </button>
+            </div>
+          </div>
+
+          <div className="relative">
+            <Search size={16} className={`absolute left-3 top-1/2 transform -translate-y-1/2 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-400'}`} />
+            <input
+              type="text"
+              placeholder="Search AI agents..."
+              className={`w-full pl-10 pr-4 py-2 border rounded ${theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' : 'bg-white border-gray-300 text-gray-900'} focus:ring-2 focus:ring-blue-500 focus:border-transparent`}
+              value={searchText}
+              onChange={(e) => setSearchText(e.target.value)}
+            />
           </div>
         </div>
 
-        <div className="relative">
-          <Search size={16} className={`absolute left-3 top-1/2 transform -translate-y-1/2 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-400'}`} />
-          <input
-            type="text"
-            placeholder="Search AI agents..."
-            className={`w-full pl-10 pr-4 py-2 border rounded ${theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' : 'bg-white border-gray-300 text-gray-900'} focus:ring-2 focus:ring-blue-500 focus:border-transparent`}
-            value={searchText}
-            onChange={(e) => setSearchText(e.target.value)}
-          />
-        </div>
+        {isFiltersOpen && (
+          <div className={`p-4 border-b ${theme === 'dark' ? 'bg-gray-700 border-gray-600' : 'bg-gray-50 border-gray-200'}`}>
+            <h3 className={`font-medium mb-2 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>Filters</h3>
+            <div className="space-y-2">
+              <div>
+                <label className={`block text-sm ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'} mb-1`}>Status</label>
+                <select
+                  className={`w-full p-2 border rounded ${theme === 'dark' ? 'bg-gray-800 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'}`}
+                  value={statusFilter}
+                  onChange={(e) => setStatusFilter(e.target.value)}
+                >
+                  <option value="all">All</option>
+                  <option value="active">Active</option>
+                  <option value="inactive">Inactive</option>
+                  <option value="training">Training</option>
+                </select>
+              </div>
+              <div>
+                <label className={`block text-sm ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'} mb-1`}>Model</label>
+                <select
+                  className={`w-full p-2 border rounded ${theme === 'dark' ? 'bg-gray-800 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'}`}
+                  value={modelFilter}
+                  onChange={(e) => setModelFilter(e.target.value)}
+                >
+                  {uniqueModels.map((model) => (
+                    <option key={model} value={model}>
+                      {model === 'all' ? 'All Models' : model}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
-      {isFiltersOpen && (
-        <div className={`p-4 border-b ${theme === 'dark' ? 'bg-gray-700 border-gray-600' : 'bg-gray-50 border-gray-200'}`}>
-          <h3 className={`font-medium mb-2 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>Filters</h3>
-          <div className="space-y-2">
-            <div>
-              <label className={`block text-sm ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'} mb-1`}>Status</label>
-              <select
-                className={`w-full p-2 border rounded ${theme === 'dark' ? 'bg-gray-800 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'}`}
-                value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
-              >
-                <option value="all">All</option>
-                <option value="active">Active</option>
-                <option value="inactive">Inactive</option>
-                <option value="training">Training</option>
-              </select>
-            </div>
-            <div>
-              <label className={`block text-sm ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'} mb-1`}>Model</label>
-              <select
-                className={`w-full p-2 border rounded ${theme === 'dark' ? 'bg-gray-800 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'}`}
-                value={modelFilter}
-                onChange={(e) => setModelFilter(e.target.value)}
-              >
-                {uniqueModels.map((model) => (
-                  <option key={model} value={model}>
-                    {model === 'all' ? 'All Models' : model}
-                  </option>
-                ))}
-              </select>
-            </div>
+      {/* Scrollable content */}
+      <div className="overflow-y-auto">
+        {displayedAgents.length === 0 ? (
+          <div className={`p-8 text-center ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
+            No agents match your search
           </div>
-        </div>
-      )}
-
-      {displayedAgents.length === 0 ? (
-        <div className={`p-8 text-center ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
-          No agents match your search
-        </div>
-      ) : (
-        displayedAgents.map((agent) => (
+        ) : (
+          displayedAgents.map((agent) => (
           <div
             key={agent.id}
             onClick={() => setSelectedAgent(agent)}
@@ -223,6 +228,8 @@ const AIAgentsList: React.FC<AIAgentsListProps> = ({
           </div>
         </div>
       )))}
+
+      </div>
 
       <NewAIAgentModal
         isOpen={isNewAgentModalOpen}

@@ -60,79 +60,84 @@ const ConversationsList = memo<ConversationsListProps>(({
   }, [conversations, searchTerm, statusFilter, conclusionFilter, agentFilter]);
 
   return (
-    <div className={`${theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
-      <div className={`p-4 ${theme === 'dark' ? 'border-gray-700' : 'border-gray-200'} border-b`}>
-        <div className="flex items-center justify-between mb-4">
-          <h2 className={`text-lg font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>Conversations</h2>
-          <button
-            onClick={() => setIsFiltersOpen(!isFiltersOpen)}
-            className={`p-2 ${theme === 'dark' ? 'hover:bg-gray-700' : 'hover:bg-gray-100'} rounded`}
-          >
-            <Filter size={20} className={`${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`} />
-          </button>
-        </div>
+    <div className={`${theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} flex flex-col`}>
+      {/* Sticky header */}
+      <div className={`sticky top-0 z-10 ${theme === 'dark' ? 'bg-gray-800' : 'bg-white'}`}>
+        <div className={`p-4 ${theme === 'dark' ? 'border-gray-700' : 'border-gray-200'} border-b`}>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className={`text-lg font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>Conversations</h2>
+            <button
+              onClick={() => setIsFiltersOpen(!isFiltersOpen)}
+              className={`p-2 ${theme === 'dark' ? 'hover:bg-gray-700' : 'hover:bg-gray-100'} rounded`}
+            >
+              <Filter size={20} className={`${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`} />
+            </button>
+          </div>
 
-        <div className="relative">
-          <Search size={16} className={`absolute left-3 top-1/2 transform -translate-y-1/2 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-400'}`} />
-          <input
-            type="text"
-            placeholder="Search conversations..."
-            className={`w-full pl-10 pr-4 py-2 ${theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' : 'bg-white border-gray-300 text-gray-900'} border rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent`}
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
-        </div>
-      </div>
-
-      {isFiltersOpen && (
-        <div className={`p-4 border-b ${theme === 'dark' ? 'bg-gray-700 border-gray-600' : 'bg-gray-50 border-gray-200'}`}>
-          <h3 className={`font-medium mb-2 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>Filters</h3>
-          <div className="space-y-2">
-            <div>
-              <label className={`block text-sm ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'} mb-1`}>Status</label>
-              <select
-                className={`w-full p-2 border rounded ${theme === 'dark' ? 'bg-gray-800 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'}`}
-                value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
-              >
-                <option value="all">All</option>
-                <option value="active">Active</option>
-                <option value="closed">Closed</option>
-              </select>
-            </div>
-            <div>
-              <label className={`block text-sm ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'} mb-1`}>Conclusion</label>
-              <select
-                className={`w-full p-2 border rounded ${theme === 'dark' ? 'bg-gray-800 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'}`}
-                value={conclusionFilter}
-                onChange={(e) => setConclusionFilter(e.target.value)}
-              >
-                <option value="all">All</option>
-                <option value="successful">Successful</option>
-                <option value="unsuccessful">Unsuccessful</option>
-                <option value="pending">Pending</option>
-              </select>
-            </div>
-            <div>
-              <label className={`block text-sm ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'} mb-1`}>AI Agent</label>
-              <select
-                className={`w-full p-2 border rounded ${theme === 'dark' ? 'bg-gray-800 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'}`}
-                value={agentFilter}
-                onChange={(e) => setAgentFilter(e.target.value)}
-              >
-                <option value="all">All</option>
-                {Object.values(aiAgents).map((agent) => (
-                  <option key={agent.id} value={agent.id}>
-                    {agent.name}
-                  </option>
-                ))}
-              </select>
-            </div>
+          <div className="relative">
+            <Search size={16} className={`absolute left-3 top-1/2 transform -translate-y-1/2 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-400'}`} />
+            <input
+              type="text"
+              placeholder="Search conversations..."
+              className={`w-full pl-10 pr-4 py-2 ${theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' : 'bg-white border-gray-300 text-gray-900'} border rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent`}
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
           </div>
         </div>
-      )}
 
-      {filteredConversations.map((conversation) => (
+        {isFiltersOpen && (
+          <div className={`p-4 border-b ${theme === 'dark' ? 'bg-gray-700 border-gray-600' : 'bg-gray-50 border-gray-200'}`}>
+            <h3 className={`font-medium mb-2 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>Filters</h3>
+            <div className="space-y-2">
+              <div>
+                <label className={`block text-sm ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'} mb-1`}>Status</label>
+                <select
+                  className={`w-full p-2 border rounded ${theme === 'dark' ? 'bg-gray-800 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'}`}
+                  value={statusFilter}
+                  onChange={(e) => setStatusFilter(e.target.value)}
+                >
+                  <option value="all">All</option>
+                  <option value="active">Active</option>
+                  <option value="closed">Closed</option>
+                </select>
+              </div>
+              <div>
+                <label className={`block text-sm ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'} mb-1`}>Conclusion</label>
+                <select
+                  className={`w-full p-2 border rounded ${theme === 'dark' ? 'bg-gray-800 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'}`}
+                  value={conclusionFilter}
+                  onChange={(e) => setConclusionFilter(e.target.value)}
+                >
+                  <option value="all">All</option>
+                  <option value="successful">Successful</option>
+                  <option value="unsuccessful">Unsuccessful</option>
+                  <option value="pending">Pending</option>
+                </select>
+              </div>
+              <div>
+                <label className={`block text-sm ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'} mb-1`}>AI Agent</label>
+                <select
+                  className={`w-full p-2 border rounded ${theme === 'dark' ? 'bg-gray-800 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'}`}
+                  value={agentFilter}
+                  onChange={(e) => setAgentFilter(e.target.value)}
+                >
+                  <option value="all">All</option>
+                  {Object.values(aiAgents).map((agent) => (
+                    <option key={agent.id} value={agent.id}>
+                      {agent.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Scrollable content */}
+      <div className="overflow-y-auto">
+        {filteredConversations.map((conversation) => (
         <div
           key={conversation.id}
           onClick={() => setSelectedConversation(conversation)}
@@ -175,6 +180,7 @@ const ConversationsList = memo<ConversationsListProps>(({
           </div>
         </div>
       ))}
+      </div>
     </div>
   );
 }, (prevProps, nextProps) => {
