@@ -1,5 +1,5 @@
 import React from 'react';
-import { Activity, Shield, Zap, Users, Database, Settings, Download, Share2 } from 'lucide-react';
+import { Activity, Shield, Zap, Users, Database, Settings, Download, Share2, Package } from 'lucide-react';
 import { Group, Collection } from '../data/types';
 import { useTheme } from '../context/ThemeContext';
 
@@ -15,21 +15,12 @@ const GroupDetail: React.FC<GroupDetailProps> = ({
   onSelectCollection
 }) => {
   const { theme } = useTheme();
-  const getPurposeIcon = () => {
-    switch (group.purpose) {
-      case 'evaluation':
-        return <Activity size={24} className="text-purple-500" />;
-      case 'security':
-        return <Shield size={24} className="text-red-500" />;
-      case 'efficiency':
-        return <Zap size={24} className="text-green-500" />;
-      default:
-        return null;
-    }
-  };
 
   const getPurposeColor = () => {
-    switch (group.purpose) {
+    // Add null check for group.purpose
+    const purpose = group.purpose || 'general';
+
+    switch (purpose) {
       case 'evaluation':
         return 'bg-purple-600';
       case 'security':
@@ -46,12 +37,17 @@ const GroupDetail: React.FC<GroupDetailProps> = ({
       <div className={`${getPurposeColor()} text-white p-4 border-b`}>
         <div className="flex items-center justify-between">
           <div className="flex items-center">
-            <div className="bg-white bg-opacity-20 p-2 rounded-lg mr-3">
-              {getPurposeIcon()}
+            <div className="bg-white bg-opacity-30 p-2 rounded-lg mr-3">
+              <div className="text-white">
+                {group.purpose === 'evaluation' ? <Activity size={24} /> :
+                 group.purpose === 'security' ? <Shield size={24} /> :
+                 group.purpose === 'efficiency' ? <Zap size={24} /> :
+                 <Package size={24} />}
+              </div>
             </div>
             <div>
-              <h2 className="text-lg font-semibold">{group.name}</h2>
-              <p className="text-sm opacity-90">{group.description}</p>
+              <h2 className="text-lg font-semibold">{group.name || 'Unnamed Group'}</h2>
+              <p className="text-sm opacity-90">{group.description || 'No description available'}</p>
             </div>
           </div>
           <div className="flex items-center space-x-2">
@@ -74,7 +70,9 @@ const GroupDetail: React.FC<GroupDetailProps> = ({
             <Database size={18} className="text-indigo-500" />
             <div>
               <div className={`text-xs ${theme === 'dark' ? 'text-gray-300' : 'text-gray-500'}`}>Collections</div>
-              <div className={`font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>{collections.length}</div>
+              <div className={`font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+                {Array.isArray(collections) ? collections.length : 0}
+              </div>
             </div>
           </div>
 
@@ -82,15 +80,29 @@ const GroupDetail: React.FC<GroupDetailProps> = ({
             <Users size={18} className="text-indigo-500" />
             <div>
               <div className={`text-xs ${theme === 'dark' ? 'text-gray-300' : 'text-gray-500'}`}>Admins</div>
-              <div className={`font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>{group.adminUsers.length}</div>
+              <div className={`font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+                {group.adminUsers && Array.isArray(group.adminUsers) ? group.adminUsers.length : 0}
+              </div>
             </div>
           </div>
 
           <div className={`${theme === 'dark' ? 'bg-gray-700' : 'bg-white'} p-3 rounded shadow-sm flex items-center space-x-3`}>
-            {getPurposeIcon()}
+            <div className={
+              group.purpose === 'evaluation' ? 'text-purple-500' :
+              group.purpose === 'security' ? 'text-red-500' :
+              group.purpose === 'efficiency' ? 'text-green-500' :
+              'text-blue-500'
+            }>
+              {group.purpose === 'evaluation' ? <Activity size={18} /> :
+               group.purpose === 'security' ? <Shield size={18} /> :
+               group.purpose === 'efficiency' ? <Zap size={18} /> :
+               <Package size={18} />}
+            </div>
             <div>
               <div className={`text-xs ${theme === 'dark' ? 'text-gray-300' : 'text-gray-500'}`}>Purpose</div>
-              <div className={`font-medium capitalize ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>{group.purpose}</div>
+              <div className={`font-medium capitalize ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+                {group.purpose || 'general'}
+              </div>
             </div>
           </div>
         </div>
@@ -101,26 +113,41 @@ const GroupDetail: React.FC<GroupDetailProps> = ({
           <h3 className={`text-lg font-medium mb-4 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>Collections in this Group</h3>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {collections.map((collection) => (
+            {Array.isArray(collections) && collections.length > 0 ? collections.map((collection) => (
               <div
                 key={collection.id}
                 onClick={() => onSelectCollection(collection)}
                 className={`${theme === 'dark' ? 'bg-gray-700 border-gray-600' : 'bg-white border-gray-200'} rounded-lg shadow-sm border p-4 hover:shadow-md transition-shadow cursor-pointer`}
               >
-                <h4 className={`font-medium mb-1 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>{collection.name}</h4>
-                <p className={`text-sm ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'} mb-3`}>{collection.description}</p>
+                <h4 className={`font-medium mb-1 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+                  {collection.name || 'Unnamed Collection'}
+                </h4>
+                <p className={`text-sm ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'} mb-3`}>
+                  {collection.description || 'No description available'}
+                </p>
 
                 <div className={`flex items-center justify-between text-xs ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
                   <div className="flex items-center">
                     <Database size={12} className="mr-1" />
-                    <span>{collection.conversations.length} conversations</span>
+                    <span>
+                      {collection.conversations && Array.isArray(collection.conversations)
+                        ? `${collection.conversations.length} conversations`
+                        : '0 conversations'}
+                    </span>
                   </div>
                   <div>
-                    Created {new Date(collection.creationTimestamp).toLocaleDateString()}
+                    Created {collection.creationTimestamp
+                      ? new Date(collection.creationTimestamp).toLocaleDateString()
+                      : 'unknown date'}
                   </div>
                 </div>
               </div>
-            ))}
+            )) : (
+              <div className={`col-span-2 p-8 text-center ${theme === 'dark' ? 'bg-gray-700 border-gray-600' : 'bg-white border-gray-200'} rounded-lg shadow-sm border`}>
+                <Database size={24} className={`mx-auto mb-2 ${theme === 'dark' ? 'text-gray-500' : 'text-gray-400'}`} />
+                <p className={theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}>No collections found in this group</p>
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -128,7 +155,7 @@ const GroupDetail: React.FC<GroupDetailProps> = ({
       <div className={`p-4 ${theme === 'dark' ? 'bg-gray-700 border-gray-600' : 'bg-white border-gray-200'} border-t`}>
         <h3 className={`text-lg font-medium mb-3 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>Admin Users</h3>
         <div className="space-y-2">
-          {group.adminUsers.map((adminId) => (
+          {group.adminUsers && Array.isArray(group.adminUsers) ? group.adminUsers.map((adminId) => (
             <div key={adminId} className={`flex items-center justify-between p-2 ${theme === 'dark' ? 'bg-gray-800' : 'bg-gray-50'} rounded`}>
               <div className="flex items-center">
                 <div className={`w-8 h-8 ${theme === 'dark' ? 'bg-indigo-900 text-indigo-300' : 'bg-indigo-100 text-indigo-600'} rounded-full flex items-center justify-center mr-2`}>
@@ -137,10 +164,14 @@ const GroupDetail: React.FC<GroupDetailProps> = ({
                 <span className={theme === 'dark' ? 'text-white' : 'text-gray-900'}>{adminId}</span>
               </div>
               <span className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
-                {group.permissionLevels[adminId] || 'read'}
+                {group.permissionLevels && group.permissionLevels[adminId] || 'read'}
               </span>
             </div>
-          ))}
+          )) : (
+            <div className={`p-3 text-center ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
+              No admin users found
+            </div>
+          )}
         </div>
       </div>
     </div>

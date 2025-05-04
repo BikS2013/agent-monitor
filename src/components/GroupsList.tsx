@@ -104,16 +104,19 @@ const GroupsList: React.FC<GroupsListProps> = ({
               theme === 'dark' ? (
                 group.purpose === 'evaluation' ? 'bg-purple-900 text-purple-300' :
                 group.purpose === 'security' ? 'bg-red-900 text-red-300' :
-                'bg-green-900 text-green-300'
+                group.purpose === 'efficiency' ? 'bg-green-900 text-green-300' :
+                'bg-blue-900 text-blue-300'
               ) : (
                 group.purpose === 'evaluation' ? 'bg-purple-100 text-purple-600' :
                 group.purpose === 'security' ? 'bg-red-100 text-red-600' :
-                'bg-green-100 text-green-600'
+                group.purpose === 'efficiency' ? 'bg-green-100 text-green-600' :
+                'bg-blue-100 text-blue-600'
               )
             }`}>
               {group.purpose === 'evaluation' ? <Activity size={20} /> :
                group.purpose === 'security' ? <Shield size={20} /> :
-               <Zap size={20} />}
+               group.purpose === 'efficiency' ? <Zap size={20} /> :
+               <Package size={20} />}
             </div>
             <div>
               <h3 className={`font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
