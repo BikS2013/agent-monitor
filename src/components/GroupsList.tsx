@@ -8,17 +8,19 @@ interface GroupsListProps {
   groups: Record<string, Group>;
   selectedGroup: Group | null;
   setSelectedGroup: (group: Group) => void;
+  searchText?: string;
+  onOpenNewGroupModal?: () => void;
 }
 
 const GroupsList: React.FC<GroupsListProps> = ({
   groups,
   selectedGroup,
-  setSelectedGroup
+  setSelectedGroup,
+  searchText = '',
+  onOpenNewGroupModal
 }) => {
   const { theme } = useTheme();
   const [isNewGroupModalOpen, setIsNewGroupModalOpen] = useState(false);
-  // Add state for search functionality
-  const [searchText, setSearchText] = useState('');
 
   // Get groups array safely
   const groupsArray = groups ? Object.values(groups) : [];
@@ -60,35 +62,9 @@ const GroupsList: React.FC<GroupsListProps> = ({
   }, [groupsArray, searchText]);
 
   return (
-    <div className={`${theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} flex flex-col`}>
-      {/* Sticky header */}
-      <div className={`sticky top-0 z-10 ${theme === 'dark' ? 'bg-gray-800' : 'bg-white'}`}>
-        <div className={`p-4 ${theme === 'dark' ? 'border-gray-700' : 'border-gray-200'} border-b`}>
-          <div className="flex items-center justify-between mb-4">
-            <h2 className={`text-lg font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>Groups</h2>
-            <button
-              onClick={() => setIsNewGroupModalOpen(true)}
-              className={`p-2 ${theme === 'dark' ? 'hover:bg-gray-700' : 'hover:bg-gray-100'} rounded`}
-            >
-              <Plus size={20} className={`${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`} />
-            </button>
-          </div>
-
-          <div className="relative">
-            <Search size={16} className={`absolute left-3 top-1/2 transform -translate-y-1/2 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-400'}`} />
-            <input
-              type="text"
-              placeholder="Search groups..."
-              className={`w-full pl-10 pr-4 py-2 border rounded ${theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' : 'bg-white border-gray-300 text-gray-900'} focus:ring-2 focus:ring-blue-500 focus:border-transparent`}
-              value={searchText}
-              onChange={(e) => setSearchText(e.target.value)}
-            />
-          </div>
-        </div>
-      </div>
-
-      {/* Scrollable content */}
-      <div className="overflow-y-auto">
+    <div className={`${theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} flex flex-col h-full`}>
+      {/* Group list */}
+      <div className="flex-1">
         {filteredGroups.length === 0 ? (
           <div className={`p-8 text-center ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
             No groups match your search
