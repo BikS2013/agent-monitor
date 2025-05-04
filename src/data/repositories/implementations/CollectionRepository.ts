@@ -26,14 +26,8 @@ export class CollectionRepository extends BaseRepository<Collection> implements 
       return null;
     }
     
-    if (!includeRelations) {
-      // For lazy loading, return metadata only without conversations
-      return {
-        ...collection,
-        conversations: [] // Empty array to save bandwidth
-      };
-    }
-    
+    // Always return the collection with its conversation IDs
+    // This is needed for proper display in the UI
     return collection;
   }
   
@@ -51,13 +45,19 @@ export class CollectionRepository extends BaseRepository<Collection> implements 
     // Apply pagination if provided
     const paginatedCollections = this.applyPagination(filteredCollections, options);
     
-    // For lazy loading, strip out conversation arrays
-    const lightweightCollections = paginatedCollections.map(collection => ({
-      ...collection,
-      conversations: []
-    }));
+    // Keep the conversation IDs which are needed for UI display
+    // This doesn't actually load the full conversation objects, just their IDs
+    console.log(`CollectionRepository.getAll: Found ${paginatedCollections.length} collections`);
     
-    return this.formatQueryResult(lightweightCollections, total, options);
+    if (paginatedCollections.length > 0) {
+      console.log('CollectionRepository.getAll: First collection:', {
+        id: paginatedCollections[0].id,
+        name: paginatedCollections[0].name,
+        conversationCount: paginatedCollections[0].conversations.length
+      });
+    }
+    
+    return this.formatQueryResult(paginatedCollections, total, options);
   }
   
   /**
@@ -67,14 +67,7 @@ export class CollectionRepository extends BaseRepository<Collection> implements 
     const collections = await this.dataSource.getCollections(ids);
     const result = Object.values(collections);
     
-    if (!includeRelations) {
-      // For lazy loading, strip out conversation arrays
-      return result.map(collection => ({
-        ...collection,
-        conversations: []
-      }));
-    }
-    
+    // Always include conversation IDs, which are needed for UI display
     return result;
   }
   
@@ -153,6 +146,8 @@ export class CollectionRepository extends BaseRepository<Collection> implements 
   async getByGroupId(groupId: string, options?: QueryOptions): Promise<QueryResult<Collection>> {
     const collections = await this.dataSource.getCollectionsByGroupId(groupId);
     
+    console.log(`CollectionRepository.getByGroupId: Found ${collections.length} collections for group ${groupId}`);
+    
     // Apply filtering if provided
     const filteredCollections = this.filterItems(collections, options?.filter);
     const total = filteredCollections.length;
@@ -160,13 +155,16 @@ export class CollectionRepository extends BaseRepository<Collection> implements 
     // Apply pagination if provided
     const paginatedCollections = this.applyPagination(filteredCollections, options);
     
-    // For lazy loading, strip out conversation arrays
-    const lightweightCollections = paginatedCollections.map(collection => ({
-      ...collection,
-      conversations: []
-    }));
+    // Always include conversation IDs for UI display
+    if (paginatedCollections.length > 0) {
+      console.log('CollectionRepository.getByGroupId: First collection:', {
+        id: paginatedCollections[0].id,
+        name: paginatedCollections[0].name,
+        conversationCount: paginatedCollections[0].conversations.length
+      });
+    }
     
-    return this.formatQueryResult(lightweightCollections, total, options);
+    return this.formatQueryResult(paginatedCollections, total, options);
   }
   
   /**

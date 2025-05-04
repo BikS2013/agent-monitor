@@ -4,6 +4,7 @@ import { useData } from '../../context/DataContext';
 import { Collection, AIAgent, Conversation } from '../../data/types';
 import { Calendar, Bot, CheckCircle, Filter, Plus, Trash2, MessageCircle, AlertCircle } from 'lucide-react';
 import { filterConversationsByCollectionCriteria } from '../../data/filterUtils';
+import { useTheme } from '../../context/ThemeContext';
 
 interface NewCollectionModalProps {
   isOpen: boolean;
@@ -14,6 +15,7 @@ interface NewCollectionModalProps {
 const NewCollectionModal: React.FC<NewCollectionModalProps> = ({ isOpen, onClose, collectionToEdit }) => {
   const { addCollection, getCurrentUser, aiAgents, conversations } = useData();
   const currentUser = getCurrentUser();
+  const { theme } = useTheme();
 
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
@@ -315,21 +317,21 @@ const NewCollectionModal: React.FC<NewCollectionModalProps> = ({ isOpen, onClose
     switch (filterType) {
       case 'aiAgent':
         return (
-          <div className="border border-gray-300 rounded-md p-3 max-h-60 overflow-y-auto">
-            <h4 className="font-medium text-sm mb-2 flex items-center">
+          <div className={`border ${theme === 'dark' ? 'border-gray-600' : 'border-gray-300'} rounded-md p-3 max-h-60 overflow-y-auto ${theme === 'dark' ? 'bg-gray-700' : 'bg-white'}`}>
+            <h4 className={`font-medium text-sm mb-2 flex items-center ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
               <Bot size={16} className="text-blue-500 mr-1" />
               Select AI Agents
             </h4>
             {Object.values(aiAgents).map((agent) => (
-              <div key={agent.id} className="flex items-center py-2 border-b last:border-b-0">
+              <div key={agent.id} className={`flex items-center py-2 ${theme === 'dark' ? 'border-gray-600' : 'border-gray-200'} border-b last:border-b-0`}>
                 <input
                   type="checkbox"
                   id={`agent-${agent.id}`}
                   checked={selectedAgents.includes(agent.id)}
                   onChange={() => toggleAgentSelection(agent.id)}
-                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                  className={`h-4 w-4 text-blue-600 focus:ring-blue-500 ${theme === 'dark' ? 'border-gray-500 bg-gray-600' : 'border-gray-300'} rounded`}
                 />
-                <label htmlFor={`agent-${agent.id}`} className="ml-2 block text-sm">
+                <label htmlFor={`agent-${agent.id}`} className={`ml-2 block text-sm ${theme === 'dark' ? 'text-gray-200' : 'text-gray-700'}`}>
                   {agent.name} ({agent.model})
                 </label>
               </div>
@@ -339,8 +341,8 @@ const NewCollectionModal: React.FC<NewCollectionModalProps> = ({ isOpen, onClose
 
       case 'time':
         return (
-          <div className="border border-gray-300 rounded-md p-3">
-            <h4 className="font-medium text-sm mb-2 flex items-center">
+          <div className={`border ${theme === 'dark' ? 'border-gray-600' : 'border-gray-300'} rounded-md p-3 ${theme === 'dark' ? 'bg-gray-700' : 'bg-white'}`}>
+            <h4 className={`font-medium text-sm mb-2 flex items-center ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
               <Calendar size={16} className="text-blue-500 mr-1" />
               Time Period
             </h4>
@@ -352,7 +354,11 @@ const NewCollectionModal: React.FC<NewCollectionModalProps> = ({ isOpen, onClose
                     setFormTouched(true);
                     setTimePeriod(e.target.value as any);
                   }}
-                  className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className={`w-full px-3 py-2 text-sm border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                    theme === 'dark'
+                      ? 'bg-gray-600 border-gray-500 text-white'
+                      : 'bg-white border-gray-300 text-gray-900'
+                  }`}
                 >
                   <option value="today">Today</option>
                   <option value="week">Last Week</option>
@@ -366,7 +372,7 @@ const NewCollectionModal: React.FC<NewCollectionModalProps> = ({ isOpen, onClose
               {timePeriod === 'custom' && (
                 <div className="grid grid-cols-2 gap-2 mt-2">
                   <div>
-                    <label htmlFor="startDate" className="block text-xs text-gray-500 mb-1">
+                    <label htmlFor="startDate" className={`block text-xs ${theme === 'dark' ? 'text-gray-300' : 'text-gray-500'} mb-1`}>
                       Start Date
                     </label>
                     <input
@@ -377,12 +383,16 @@ const NewCollectionModal: React.FC<NewCollectionModalProps> = ({ isOpen, onClose
                         setFormTouched(true);
                         setCustomStartDate(e.target.value);
                       }}
-                      className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md"
+                      className={`w-full px-3 py-2 text-sm border rounded-md ${
+                        theme === 'dark'
+                          ? 'bg-gray-600 border-gray-500 text-white'
+                          : 'bg-white border-gray-300 text-gray-900'
+                      }`}
                       required={timePeriod === 'custom'}
                     />
                   </div>
                   <div>
-                    <label htmlFor="endDate" className="block text-xs text-gray-500 mb-1">
+                    <label htmlFor="endDate" className={`block text-xs ${theme === 'dark' ? 'text-gray-300' : 'text-gray-500'} mb-1`}>
                       End Date
                     </label>
                     <input
@@ -393,7 +403,11 @@ const NewCollectionModal: React.FC<NewCollectionModalProps> = ({ isOpen, onClose
                         setFormTouched(true);
                         setCustomEndDate(e.target.value);
                       }}
-                      className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md"
+                      className={`w-full px-3 py-2 text-sm border rounded-md ${
+                        theme === 'dark'
+                          ? 'bg-gray-600 border-gray-500 text-white'
+                          : 'bg-white border-gray-300 text-gray-900'
+                      }`}
                       required={timePeriod === 'custom'}
                     />
                   </div>
@@ -405,8 +419,8 @@ const NewCollectionModal: React.FC<NewCollectionModalProps> = ({ isOpen, onClose
 
       case 'outcome':
         return (
-          <div className="border border-gray-300 rounded-md p-3">
-            <h4 className="font-medium text-sm mb-2 flex items-center">
+          <div className={`border ${theme === 'dark' ? 'border-gray-600' : 'border-gray-300'} rounded-md p-3 ${theme === 'dark' ? 'bg-gray-700' : 'bg-white'}`}>
+            <h4 className={`font-medium text-sm mb-2 flex items-center ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
               <CheckCircle size={16} className="text-blue-500 mr-1" />
               Conversation Outcome
             </h4>
@@ -417,7 +431,11 @@ const NewCollectionModal: React.FC<NewCollectionModalProps> = ({ isOpen, onClose
                   setFormTouched(true);
                   setOutcomeType(e.target.value as any);
                 }}
-                className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className={`w-full px-3 py-2 text-sm border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                  theme === 'dark'
+                    ? 'bg-gray-600 border-gray-500 text-white'
+                    : 'bg-white border-gray-300 text-gray-900'
+                }`}
               >
                 <option value="successful">Successful</option>
                 <option value="unsuccessful">Unsuccessful</option>
@@ -429,14 +447,14 @@ const NewCollectionModal: React.FC<NewCollectionModalProps> = ({ isOpen, onClose
 
       case 'multiFactor':
         return (
-          <div className="border border-gray-300 rounded-md p-3">
-            <h4 className="font-medium text-sm mb-3 flex items-center">
+          <div className={`border ${theme === 'dark' ? 'border-gray-600' : 'border-gray-300'} rounded-md p-3 ${theme === 'dark' ? 'bg-gray-700' : 'bg-white'}`}>
+            <h4 className={`font-medium text-sm mb-3 flex items-center ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
               <Filter size={16} className="text-blue-500 mr-1" />
               Multi-Factor Filters
             </h4>
 
             <div className="space-y-3">
-              <div className="flex items-center justify-between p-2 bg-gray-50 rounded">
+              <div className={`flex items-center justify-between p-2 ${theme === 'dark' ? 'bg-gray-600' : 'bg-gray-50'} rounded`}>
                 <div className="flex items-center">
                   <input
                     type="checkbox"
@@ -446,17 +464,17 @@ const NewCollectionModal: React.FC<NewCollectionModalProps> = ({ isOpen, onClose
                       setFormTouched(true);
                       setIncludeAgentFilter(e.target.checked);
                     }}
-                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                    className={`h-4 w-4 text-blue-600 focus:ring-blue-500 ${theme === 'dark' ? 'border-gray-500 bg-gray-600' : 'border-gray-300'} rounded`}
                   />
-                  <label htmlFor="agentFilter" className="ml-2 block text-sm">
+                  <label htmlFor="agentFilter" className={`ml-2 block text-sm ${theme === 'dark' ? 'text-gray-200' : 'text-gray-700'}`}>
                     AI Agent Filter
                   </label>
                 </div>
-                <Bot size={16} className="text-gray-400" />
+                <Bot size={16} className={theme === 'dark' ? 'text-gray-300' : 'text-gray-400'} />
               </div>
 
               {includeAgentFilter && (
-                <div className="ml-6 border-l-2 border-blue-200 pl-3">
+                <div className={`ml-6 border-l-2 ${theme === 'dark' ? 'border-blue-800' : 'border-blue-200'} pl-3`}>
                   <div className="max-h-32 overflow-y-auto">
                     {Object.values(aiAgents).map((agent) => (
                       <div key={agent.id} className="flex items-center py-1">
@@ -465,9 +483,9 @@ const NewCollectionModal: React.FC<NewCollectionModalProps> = ({ isOpen, onClose
                           id={`multi-agent-${agent.id}`}
                           checked={selectedAgents.includes(agent.id)}
                           onChange={() => toggleAgentSelection(agent.id)}
-                          className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                          className={`h-4 w-4 text-blue-600 focus:ring-blue-500 ${theme === 'dark' ? 'border-gray-500 bg-gray-600' : 'border-gray-300'} rounded`}
                         />
-                        <label htmlFor={`multi-agent-${agent.id}`} className="ml-2 block text-sm">
+                        <label htmlFor={`multi-agent-${agent.id}`} className={`ml-2 block text-sm ${theme === 'dark' ? 'text-gray-200' : 'text-gray-700'}`}>
                           {agent.name}
                         </label>
                       </div>
@@ -476,7 +494,7 @@ const NewCollectionModal: React.FC<NewCollectionModalProps> = ({ isOpen, onClose
                 </div>
               )}
 
-              <div className="flex items-center justify-between p-2 bg-gray-50 rounded">
+              <div className={`flex items-center justify-between p-2 ${theme === 'dark' ? 'bg-gray-600' : 'bg-gray-50'} rounded`}>
                 <div className="flex items-center">
                   <input
                     type="checkbox"
@@ -486,17 +504,17 @@ const NewCollectionModal: React.FC<NewCollectionModalProps> = ({ isOpen, onClose
                       setFormTouched(true);
                       setIncludeTimeFilter(e.target.checked);
                     }}
-                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                    className={`h-4 w-4 text-blue-600 focus:ring-blue-500 ${theme === 'dark' ? 'border-gray-500 bg-gray-600' : 'border-gray-300'} rounded`}
                   />
-                  <label htmlFor="timeFilter" className="ml-2 block text-sm">
+                  <label htmlFor="timeFilter" className={`ml-2 block text-sm ${theme === 'dark' ? 'text-gray-200' : 'text-gray-700'}`}>
                     Time Period Filter
                   </label>
                 </div>
-                <Calendar size={16} className="text-gray-400" />
+                <Calendar size={16} className={theme === 'dark' ? 'text-gray-300' : 'text-gray-400'} />
               </div>
 
               {includeTimeFilter && (
-                <div className="ml-6 border-l-2 border-blue-200 pl-3">
+                <div className={`ml-6 border-l-2 ${theme === 'dark' ? 'border-blue-800' : 'border-blue-200'} pl-3`}>
                   <div>
                     <select
                       value={multiFactorTimePeriod}
@@ -504,7 +522,11 @@ const NewCollectionModal: React.FC<NewCollectionModalProps> = ({ isOpen, onClose
                         setFormTouched(true);
                         setMultiFactorTimePeriod(e.target.value as any);
                       }}
-                      className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className={`w-full px-3 py-2 text-sm border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                        theme === 'dark'
+                          ? 'bg-gray-600 border-gray-500 text-white'
+                          : 'bg-white border-gray-300 text-gray-900'
+                      }`}
                     >
                       <option value="today">Today</option>
                       <option value="week">Last Week</option>
@@ -518,7 +540,7 @@ const NewCollectionModal: React.FC<NewCollectionModalProps> = ({ isOpen, onClose
                   {multiFactorTimePeriod === 'custom' && (
                     <div className="grid grid-cols-2 gap-2 mt-2">
                       <div>
-                        <label htmlFor="multiStartDate" className="block text-xs text-gray-500 mb-1">
+                        <label htmlFor="multiStartDate" className={`block text-xs ${theme === 'dark' ? 'text-gray-300' : 'text-gray-500'} mb-1`}>
                           Start Date
                         </label>
                         <input
@@ -529,12 +551,16 @@ const NewCollectionModal: React.FC<NewCollectionModalProps> = ({ isOpen, onClose
                             setFormTouched(true);
                             setMultiFactorStartDate(e.target.value);
                           }}
-                          className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md"
+                          className={`w-full px-3 py-2 text-sm border rounded-md ${
+                            theme === 'dark'
+                              ? 'bg-gray-600 border-gray-500 text-white'
+                              : 'bg-white border-gray-300 text-gray-900'
+                          }`}
                           required={multiFactorTimePeriod === 'custom'}
                         />
                       </div>
                       <div>
-                        <label htmlFor="multiEndDate" className="block text-xs text-gray-500 mb-1">
+                        <label htmlFor="multiEndDate" className={`block text-xs ${theme === 'dark' ? 'text-gray-300' : 'text-gray-500'} mb-1`}>
                           End Date
                         </label>
                         <input
@@ -545,7 +571,11 @@ const NewCollectionModal: React.FC<NewCollectionModalProps> = ({ isOpen, onClose
                             setFormTouched(true);
                             setMultiFactorEndDate(e.target.value);
                           }}
-                          className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md"
+                          className={`w-full px-3 py-2 text-sm border rounded-md ${
+                            theme === 'dark'
+                              ? 'bg-gray-600 border-gray-500 text-white'
+                              : 'bg-white border-gray-300 text-gray-900'
+                          }`}
                           required={multiFactorTimePeriod === 'custom'}
                         />
                       </div>
@@ -554,7 +584,7 @@ const NewCollectionModal: React.FC<NewCollectionModalProps> = ({ isOpen, onClose
                 </div>
               )}
 
-              <div className="flex items-center justify-between p-2 bg-gray-50 rounded">
+              <div className={`flex items-center justify-between p-2 ${theme === 'dark' ? 'bg-gray-600' : 'bg-gray-50'} rounded`}>
                 <div className="flex items-center">
                   <input
                     type="checkbox"
@@ -564,17 +594,17 @@ const NewCollectionModal: React.FC<NewCollectionModalProps> = ({ isOpen, onClose
                       setFormTouched(true);
                       setIncludeOutcomeFilter(e.target.checked);
                     }}
-                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                    className={`h-4 w-4 text-blue-600 focus:ring-blue-500 ${theme === 'dark' ? 'border-gray-500 bg-gray-600' : 'border-gray-300'} rounded`}
                   />
-                  <label htmlFor="outcomeFilter" className="ml-2 block text-sm">
+                  <label htmlFor="outcomeFilter" className={`ml-2 block text-sm ${theme === 'dark' ? 'text-gray-200' : 'text-gray-700'}`}>
                     Outcome Filter
                   </label>
                 </div>
-                <CheckCircle size={16} className="text-gray-400" />
+                <CheckCircle size={16} className={theme === 'dark' ? 'text-gray-300' : 'text-gray-400'} />
               </div>
 
               {includeOutcomeFilter && (
-                <div className="ml-6 border-l-2 border-blue-200 pl-3">
+                <div className={`ml-6 border-l-2 ${theme === 'dark' ? 'border-blue-800' : 'border-blue-200'} pl-3`}>
                   <div>
                     <select
                       value={outcomeType}
@@ -582,7 +612,11 @@ const NewCollectionModal: React.FC<NewCollectionModalProps> = ({ isOpen, onClose
                         setFormTouched(true);
                         setOutcomeType(e.target.value as any);
                       }}
-                      className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className={`w-full px-3 py-2 text-sm border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                        theme === 'dark'
+                          ? 'bg-gray-600 border-gray-500 text-white'
+                          : 'bg-white border-gray-300 text-gray-900'
+                      }`}
                     >
                       <option value="successful">Successful</option>
                       <option value="unsuccessful">Unsuccessful</option>
@@ -592,7 +626,7 @@ const NewCollectionModal: React.FC<NewCollectionModalProps> = ({ isOpen, onClose
                 </div>
               )}
 
-              <div className="flex items-center justify-between p-2 bg-gray-50 rounded">
+              <div className={`flex items-center justify-between p-2 ${theme === 'dark' ? 'bg-gray-600' : 'bg-gray-50'} rounded`}>
                 <div className="flex items-center">
                   <input
                     type="checkbox"
@@ -602,17 +636,17 @@ const NewCollectionModal: React.FC<NewCollectionModalProps> = ({ isOpen, onClose
                       setFormTouched(true);
                       setIncludePriorityFilter(e.target.checked);
                     }}
-                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                    className={`h-4 w-4 text-blue-600 focus:ring-blue-500 ${theme === 'dark' ? 'border-gray-500 bg-gray-600' : 'border-gray-300'} rounded`}
                   />
-                  <label htmlFor="priorityFilter" className="ml-2 block text-sm">
+                  <label htmlFor="priorityFilter" className={`ml-2 block text-sm ${theme === 'dark' ? 'text-gray-200' : 'text-gray-700'}`}>
                     Priority Filter
                   </label>
                 </div>
-                <Filter size={16} className="text-gray-400" />
+                <Filter size={16} className={theme === 'dark' ? 'text-gray-300' : 'text-gray-400'} />
               </div>
 
               {includePriorityFilter && (
-                <div className="ml-6 border-l-2 border-blue-200 pl-3">
+                <div className={`ml-6 border-l-2 ${theme === 'dark' ? 'border-blue-800' : 'border-blue-200'} pl-3`}>
                   <div>
                     <select
                       value={priorityLevel}
@@ -620,7 +654,11 @@ const NewCollectionModal: React.FC<NewCollectionModalProps> = ({ isOpen, onClose
                         setFormTouched(true);
                         setPriorityLevel(e.target.value as any);
                       }}
-                      className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className={`w-full px-3 py-2 text-sm border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                        theme === 'dark'
+                          ? 'bg-gray-600 border-gray-500 text-white'
+                          : 'bg-white border-gray-300 text-gray-900'
+                      }`}
                     >
                       <option value="high">High</option>
                       <option value="medium">Medium</option>
@@ -646,7 +684,7 @@ const NewCollectionModal: React.FC<NewCollectionModalProps> = ({ isOpen, onClose
       <form onSubmit={handleSubmit}>
         <div className="space-y-4">
           <div>
-            <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
+            <label htmlFor="name" className={`block text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'} mb-1`}>
               Collection Name
             </label>
             <input
@@ -657,13 +695,17 @@ const NewCollectionModal: React.FC<NewCollectionModalProps> = ({ isOpen, onClose
                 setFormTouched(true);
                 setName(e.target.value);
               }}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                theme === 'dark'
+                  ? 'bg-gray-600 border-gray-500 text-white'
+                  : 'bg-white border-gray-300 text-gray-900'
+              }`}
               required
             />
           </div>
 
           <div>
-            <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-1">
+            <label htmlFor="description" className={`block text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'} mb-1`}>
               Description
             </label>
             <textarea
@@ -673,14 +715,18 @@ const NewCollectionModal: React.FC<NewCollectionModalProps> = ({ isOpen, onClose
                 setFormTouched(true);
                 setDescription(e.target.value);
               }}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                theme === 'dark'
+                  ? 'bg-gray-600 border-gray-500 text-white'
+                  : 'bg-white border-gray-300 text-gray-900'
+              }`}
               rows={2}
               required
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className={`block text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'} mb-1`}>
               Filter Type
             </label>
             <select
@@ -689,7 +735,11 @@ const NewCollectionModal: React.FC<NewCollectionModalProps> = ({ isOpen, onClose
                 setFormTouched(true);
                 setFilterType(e.target.value as any);
               }}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                theme === 'dark'
+                  ? 'bg-gray-600 border-gray-500 text-white'
+                  : 'bg-white border-gray-300 text-gray-900'
+              }`}
             >
               <option value="aiAgent">AI Agent Based</option>
               <option value="time">Time Based</option>
@@ -702,8 +752,12 @@ const NewCollectionModal: React.FC<NewCollectionModalProps> = ({ isOpen, onClose
           {renderFilterOptions()}
 
           {/* Preview of matching conversations */}
-          <div className="border border-gray-300 rounded-md p-3 bg-gray-50">
-            <h4 className="font-medium text-sm mb-2 flex items-center">
+          <div className={`border rounded-md p-3 ${
+            theme === 'dark'
+              ? 'border-gray-600 bg-gray-700'
+              : 'border-gray-300 bg-gray-50'
+          }`}>
+            <h4 className={`font-medium text-sm mb-2 flex items-center ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
               <MessageCircle size={16} className="text-blue-500 mr-1" />
               Matching Conversations Preview
             </h4>
@@ -711,25 +765,43 @@ const NewCollectionModal: React.FC<NewCollectionModalProps> = ({ isOpen, onClose
             {matchingConversationIds.length > 0 ? (
               <div>
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm font-medium">{matchingConversationIds.length} conversations match these criteria</span>
+                  <span className={`text-sm font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+                    {matchingConversationIds.length} conversations match these criteria
+                  </span>
                 </div>
 
-                <div className="max-h-32 overflow-y-auto bg-white rounded border border-gray-200">
+                <div className={`max-h-32 overflow-y-auto rounded border ${
+                  theme === 'dark'
+                    ? 'bg-gray-600 border-gray-600'
+                    : 'bg-white border-gray-200'
+                }`}>
                   {matchingConversationIds.slice(0, 5).map(id => {
                     const conversation = conversations[id];
                     return (
-                      <div key={id} className="p-2 border-b last:border-b-0 text-sm">
+                      <div key={id} className={`p-2 text-sm ${
+                        theme === 'dark'
+                          ? 'border-gray-600 border-b last:border-b-0'
+                          : 'border-gray-200 border-b last:border-b-0'
+                      }`}>
                         <div className="flex justify-between">
-                          <span className="font-medium">{conversation.id}</span>
+                          <span className={`font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+                            {conversation.id}
+                          </span>
                           <span className={`text-xs px-1.5 py-0.5 rounded-full ${
-                            conversation.conclusion === 'successful' ? 'bg-green-100 text-green-800' :
-                            conversation.conclusion === 'unsuccessful' ? 'bg-red-100 text-red-800' :
-                            'bg-yellow-100 text-yellow-800'
+                            theme === 'dark' ? (
+                              conversation.conclusion === 'successful' ? 'bg-green-900 text-green-300' :
+                              conversation.conclusion === 'unsuccessful' ? 'bg-red-900 text-red-300' :
+                              'bg-yellow-900 text-yellow-300'
+                            ) : (
+                              conversation.conclusion === 'successful' ? 'bg-green-100 text-green-800' :
+                              conversation.conclusion === 'unsuccessful' ? 'bg-red-100 text-red-800' :
+                              'bg-yellow-100 text-yellow-800'
+                            )
                           }`}>
                             {conversation.conclusion}
                           </span>
                         </div>
-                        <div className="text-xs text-gray-500">
+                        <div className={`text-xs ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
                           {conversation.userName} with {conversation.aiAgentName}
                         </div>
                       </div>
@@ -737,31 +809,39 @@ const NewCollectionModal: React.FC<NewCollectionModalProps> = ({ isOpen, onClose
                   })}
 
                   {matchingConversationIds.length > 5 && (
-                    <div className="p-2 text-center text-xs text-gray-500">
+                    <div className={`p-2 text-center text-xs ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
                       + {matchingConversationIds.length - 5} more conversations
                     </div>
                   )}
                 </div>
               </div>
             ) : (
-              <div className="flex items-center justify-center p-4 text-gray-500">
+              <div className={`flex items-center justify-center p-4 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
                 <AlertCircle size={16} className="mr-2 text-yellow-500" />
                 <span>No conversations match these criteria</span>
               </div>
             )}
           </div>
 
-          <div className="pt-4 flex justify-end space-x-3">
+          <div className={`pt-4 flex justify-end space-x-3 ${theme === 'dark' ? 'border-t border-gray-600' : ''}`}>
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+              className={`px-4 py-2 border rounded-md ${
+                theme === 'dark'
+                  ? 'border-gray-600 text-gray-300 hover:bg-gray-700'
+                  : 'border-gray-300 text-gray-700 hover:bg-gray-50'
+              }`}
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600"
+              className={`px-4 py-2 text-white rounded-md ${
+                theme === 'dark'
+                  ? 'bg-blue-600 hover:bg-blue-700'
+                  : 'bg-blue-500 hover:bg-blue-600'
+              }`}
             >
               {submitButtonText}
             </button>

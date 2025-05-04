@@ -38,8 +38,34 @@ export class JsonDataSource implements IDataSource {
     if (this.initialized) return;
 
     try {
+      console.log('Initializing JsonDataSource with path:', this.filePath);
+
       // In a browser environment, we would use fetch
-      // For simplicity, we're directly importing mock data here
+      // For simplicity, we're directly importing sample data here
+      console.log('Importing sample data from sampleData.ts');
+
+      let sampleData;
+      try {
+        sampleData = await import('../sampleData');
+        console.log('Sample data import result:', {
+          hasMessages: !!sampleData.messages,
+          hasConversations: !!sampleData.conversations,
+          hasCollections: !!sampleData.collections,
+          hasGroups: !!sampleData.groups,
+          hasAiAgents: !!sampleData.aiAgents,
+          hasUsers: !!sampleData.users
+        });
+
+        if (!sampleData.messages || !sampleData.conversations ||
+            !sampleData.collections || !sampleData.groups ||
+            !sampleData.aiAgents || !sampleData.users) {
+          throw new Error('Sample data missing required properties');
+        }
+      } catch (importError) {
+        console.error('Error importing sample data:', importError);
+        throw new Error('Failed to import sample data');
+      }
+
       const {
         messages,
         conversations,
@@ -47,7 +73,9 @@ export class JsonDataSource implements IDataSource {
         groups,
         aiAgents,
         users
-      } = await import('../mockData');
+      } = sampleData;
+
+      console.log('Sample data import successful');
 
       this.data = {
         messages: { ...messages },
@@ -58,6 +86,7 @@ export class JsonDataSource implements IDataSource {
         users: { ...users }
       };
 
+      // Log some examples for verification
       console.log('JsonDataSource initialized with mock data:', {
         messages: Object.keys(this.data.messages).length,
         conversations: Object.keys(this.data.conversations).length,
@@ -67,10 +96,30 @@ export class JsonDataSource implements IDataSource {
         users: Object.keys(this.data.users).length
       });
 
+      // Log a sample of each data type
+      if (Object.keys(this.data.conversations).length > 0) {
+        const conversationId = Object.keys(this.data.conversations)[0];
+        console.log('Sample conversation:', {
+          id: conversationId,
+          data: this.data.conversations[conversationId]
+        });
+      } else {
+        console.warn('No conversations found in sample data');
+      }
+
+      // Log collection IDs
+      console.log('Collection IDs:', Object.keys(this.data.collections));
+
+      // Log group IDs
+      console.log('Group IDs:', Object.keys(this.data.groups));
+
+      // Log AI agent IDs
+      console.log('AI agent IDs:', Object.keys(this.data.aiAgents));
+
       this.initialized = true;
     } catch (error) {
       console.error('Failed to initialize JsonDataSource:', error);
-      throw new Error('Failed to initialize data source');
+      throw new Error('Failed to initialize data source: ' + (error as Error).message);
     }
   }
 

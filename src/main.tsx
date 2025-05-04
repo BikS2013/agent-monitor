@@ -4,12 +4,15 @@ import App from './App';
 import './index.css';
 import { DataProvider } from './context/DataContext';
 import { RepositoryProvider } from './context/RepositoryContext';
+import { ThemeProvider } from './context/ThemeContext';
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <RepositoryProvider>
       <DataProvider>
-        <App />
+        <ThemeProvider>
+          <App />
+        </ThemeProvider>
       </DataProvider>
     </RepositoryProvider>
   </React.StrictMode>,

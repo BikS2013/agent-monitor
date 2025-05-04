@@ -46,52 +46,71 @@ const ConversationsView: React.FC<ConversationsViewProps> = ({
 
   // Store the last loaded conversation ID to prevent reload loops
   const [lastLoadedConversationId, setLastLoadedConversationId] = useState<string | null>(null);
+  // Track the timestamp of the last message load to implement throttling
+  const [lastLoadTimestamp, setLastLoadTimestamp] = useState<number>(0);
+  // Use a ref to track the latest effect ID to prevent race conditions
+  const latestEffectIdRef = React.useRef<number>(0);
 
-  // Load messages when selected conversation changes - Improved stability
+  // Load messages when selected conversation changes - Enhanced stability
   useEffect(() => {
-    // If no conversation selected or it's the same one we just loaded, don't reload
-    if (!selectedConversation || 
-        (lastLoadedConversationId === selectedConversation.id && conversationMessages.length > 0)) {
+    // If no conversation selected, clear messages and exit
+    if (!selectedConversation) {
+      setConversationMessages([]);
+      return;
+    }
+    
+    // Skip reload if it's the same conversation we just loaded and we have messages
+    // This prevents infinite loops and unnecessary reloads
+    if (lastLoadedConversationId === selectedConversation.id && conversationMessages.length > 0) {
       return;
     }
 
-    // Reference ID to manage this effect's lifecycle
+    // Implement time-based throttling (don't load more than once every 500ms)
+    const now = Date.now();
+    const timeSinceLastLoad = now - lastLoadTimestamp;
+    if (timeSinceLastLoad < 500 && lastLoadedConversationId === selectedConversation.id) {
+      console.log(`ConversationsView: Throttling message load, last load was ${timeSinceLastLoad}ms ago`);
+      return;
+    }
+
+    // Generate a unique ID for this effect instance
     const effectId = Date.now();
+    latestEffectIdRef.current = effectId;
     
     // Store if this effect is still active or has been cleaned up
     let isActive = true;
 
-    // Improved message loading function with better state management
+    // Improved message loading function with enhanced state management
     const loadMessages = async () => {
-      if (!selectedConversation) {
-        if (isActive) {
-          setConversationMessages([]);
-        }
+      // Double-check if the conversation is still selected (it might have changed during async operations)
+      if (!selectedConversation || !isActive) {
         return;
       }
 
-      // Reference the ID to avoid closure issues when using the conversation later
+      // Reference the ID to avoid closure issues
       const conversationId = selectedConversation.id;
   
       try {
-        if (isActive) {
+        if (isActive && latestEffectIdRef.current === effectId) {
           setLoadingMessages(true);
           setMessageError(null);
+          setLastLoadTimestamp(now);
         }
         
         console.log(`ConversationsView: Loading messages for conversation ${conversationId}, effect #${effectId}`);
         
-        // Only continue if this effect is still active
-        if (!isActive) {
-          console.log(`ConversationsView: Effect #${effectId} no longer active, aborting message load`);
+        // Only continue if this effect is still the most recent
+        if (!isActive || latestEffectIdRef.current !== effectId) {
+          console.log(`ConversationsView: Effect #${effectId} no longer active or not latest, aborting message load`);
           return;
         }
 
         // Get messages using the improved function in DataContext
         const messages = await getMessagesByConversationId(conversationId);
         
-        // Only update state if this effect is still active and conversation hasn't changed
-        if (isActive && selectedConversation && selectedConversation.id === conversationId) {
+        // Only update state if this effect is still active, latest, and conversation hasn't changed
+        if (isActive && latestEffectIdRef.current === effectId && 
+            selectedConversation && selectedConversation.id === conversationId) {
           setConversationMessages(messages);
           setLoadingMessages(false);
           // Remember that we've loaded this conversation
@@ -101,8 +120,9 @@ const ConversationsView: React.FC<ConversationsViewProps> = ({
       } catch (error) {
         console.error(`Error loading messages for effect #${effectId}:`, error);
         
-        // Only update error state if this effect is still active
-        if (isActive && selectedConversation && selectedConversation.id === conversationId) {
+        // Only update error state if this effect is still active and latest
+        if (isActive && latestEffectIdRef.current === effectId && 
+            selectedConversation && selectedConversation.id === conversationId) {
           setMessageError('Failed to load messages');
           setConversationMessages([]);
           setLoadingMessages(false);
@@ -110,42 +130,60 @@ const ConversationsView: React.FC<ConversationsViewProps> = ({
       }
     };
 
-    // Execute the message loading
-    loadMessages();
+    // Delay message loading slightly to debounce rapid navigation
+    const timeoutId = setTimeout(() => {
+      // Only load if this is still the latest effect
+      if (latestEffectIdRef.current === effectId) {
+        loadMessages();
+      }
+    }, 50);
     
-    // Cleanup function to prevent state updates after component unmount
+    // Cleanup function to prevent state updates after component unmount or effect change
     return () => {
       console.log(`ConversationsView: Cleaning up message loading effect #${effectId}`);
+      clearTimeout(timeoutId);
       isActive = false;
     };
   }, [selectedConversation, getMessagesByConversationId, lastLoadedConversationId, conversationMessages.length]);
 
-  return (
-    <div className="flex flex-1 bg-gray-50">
-      <ConversationsList
-        conversations={conversations}
-        selectedConversation={selectedConversation}
-        setSelectedConversation={setSelectedConversation}
-      />
-
-      {selectedConversation ? (
-        <ConversationDetail
-          conversation={selectedConversation}
-          messages={conversationMessages}
-          loading={loadingMessages}
-          error={messageError}
+  // Memoize the entire UI to prevent unnecessary re-renders
+  const uiContent = useMemo(() => {
+    return (
+      <div className="flex flex-1 bg-gray-50">
+        <ConversationsList
+          conversations={conversations}
+          selectedConversation={selectedConversation}
+          setSelectedConversation={setSelectedConversation}
         />
-      ) : (
-        <div className="flex-1 flex items-center justify-center bg-gray-50">
-          <div className="text-center">
-            <MessageCircle size={48} className="mx-auto text-gray-400 mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">Select a conversation</h3>
-            <p className="text-gray-500">Choose a conversation to view messages and AI analysis</p>
+  
+        {selectedConversation ? (
+          <ConversationDetail
+            conversation={selectedConversation}
+            messages={conversationMessages}
+            loading={loadingMessages}
+            error={messageError}
+          />
+        ) : (
+          <div className="flex-1 flex items-center justify-center bg-gray-50">
+            <div className="text-center">
+              <MessageCircle size={48} className="mx-auto text-gray-400 mb-4" />
+              <h3 className="text-lg font-medium text-gray-900 mb-2">Select a conversation</h3>
+              <p className="text-gray-500">Choose a conversation to view messages and AI analysis</p>
+            </div>
           </div>
-        </div>
-      )}
-    </div>
-  );
+        )}
+      </div>
+    );
+  }, [
+    conversations, 
+    selectedConversation, 
+    conversationMessages, 
+    loadingMessages, 
+    messageError,
+    setSelectedConversation
+  ]);
+  
+  return uiContent;
 };
 
 export default ConversationsView;

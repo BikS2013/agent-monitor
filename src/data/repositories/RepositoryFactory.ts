@@ -33,13 +33,48 @@ export class RepositoryFactory {
   static async initialize(dataSource?: IDataSource): Promise<void> {
     if (!dataSource) {
       // Default to JsonDataSource if none provided
-      this.dataSource = new JsonDataSource('/path/to/data.json');
+      // We don't need a real file path since we're directly importing from sampleData.ts
+      this.dataSource = new JsonDataSource('mock-data');
     } else {
       this.dataSource = dataSource;
     }
 
-    // Initialize the data source
-    await this.dataSource.initialize();
+    try {
+      // Initialize the data source
+      console.log('RepositoryFactory: Initializing data source...');
+      await this.dataSource.initialize();
+      console.log('RepositoryFactory: Data source initialized successfully');
+
+      // Test data access
+      console.log('RepositoryFactory: Testing data access...');
+
+      // Test conversation access
+      const conversationRepo = this.getConversationRepository();
+      const conversations = await conversationRepo.getAll();
+      console.log('RepositoryFactory: Conversation test -', {
+        count: conversations.data.length,
+        success: conversations.data.length > 0
+      });
+
+      // Test collection access
+      const collectionRepo = this.getCollectionRepository();
+      const collections = await collectionRepo.getAll();
+      console.log('RepositoryFactory: Collection test -', {
+        count: collections.data.length,
+        success: collections.data.length > 0
+      });
+
+      // Test group access
+      const groupRepo = this.getGroupRepository();
+      const groups = await groupRepo.getAll();
+      console.log('RepositoryFactory: Group test -', {
+        count: groups.data.length,
+        success: groups.data.length > 0
+      });
+    } catch (error) {
+      console.error('RepositoryFactory: Failed to initialize data source:', error);
+      throw error;
+    }
   }
 
   /**

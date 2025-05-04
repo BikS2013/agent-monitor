@@ -26,14 +26,8 @@ export class GroupRepository extends BaseRepository<Group> implements IGroupRepo
       return null;
     }
     
-    if (!includeRelations) {
-      // Return just the group metadata without collections
-      return {
-        ...group,
-        collectionIds: [] // Empty array to save bandwidth
-      };
-    }
-    
+    // Always return the group with its collection IDs
+    // This is needed for proper display in the UI
     return group;
   }
   
@@ -51,13 +45,19 @@ export class GroupRepository extends BaseRepository<Group> implements IGroupRepo
     // Apply pagination if provided
     const paginatedGroups = this.applyPagination(filteredGroups, options);
     
-    // For lazy loading, strip out collection IDs
-    const lightweightGroups = paginatedGroups.map(group => ({
-      ...group,
-      collectionIds: []
-    }));
+    // Keep the collection IDs which are needed for UI display
+    // This doesn't actually load the full collection objects, just their IDs
+    console.log(`GroupRepository.getAll: Found ${paginatedGroups.length} groups`);
     
-    return this.formatQueryResult(lightweightGroups, total, options);
+    if (paginatedGroups.length > 0) {
+      console.log('GroupRepository.getAll: First group:', {
+        id: paginatedGroups[0].id,
+        name: paginatedGroups[0].name,
+        collectionsCount: paginatedGroups[0].collectionIds.length
+      });
+    }
+    
+    return this.formatQueryResult(paginatedGroups, total, options);
   }
   
   /**
@@ -67,14 +67,7 @@ export class GroupRepository extends BaseRepository<Group> implements IGroupRepo
     const groups = await this.dataSource.getGroups(ids);
     const result = Object.values(groups);
     
-    if (!includeRelations) {
-      // For lazy loading, strip out collection arrays
-      return result.map(group => ({
-        ...group,
-        collectionIds: []
-      }));
-    }
-    
+    // Always include collection IDs, which are needed for UI display
     return result;
   }
   

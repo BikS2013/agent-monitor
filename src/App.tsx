@@ -8,6 +8,7 @@ import AIAgentsView from './views/AIAgentsView';
 import AnalyticsView from './views/AnalyticsView';
 import SettingsView from './views/SettingsView';
 import { Conversation, Collection, Group } from './data/types';
+import { useTheme } from './context/ThemeContext';
 
 const App: React.FC = () => {
   const [currentView, setCurrentView] = useState('dashboard');
@@ -64,18 +65,20 @@ const App: React.FC = () => {
         return <SettingsView />;
       default:
         return (
-          <div className="flex-1 flex items-center justify-center bg-gray-50">
+          <div className={`flex-1 flex items-center justify-center ${theme === 'dark' ? 'bg-gray-800' : 'bg-gray-50'}`}>
             <div className="text-center">
-              <h3 className="text-lg font-medium text-gray-900 mb-2">AI Contact Center</h3>
-              <p className="text-gray-500">Monitor and manage AI agent interactions</p>
+              <h3 className={`text-lg font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'} mb-2`}>AI Contact Center</h3>
+              <p className={`${theme === 'dark' ? 'text-gray-300' : 'text-gray-500'}`}>Monitor and manage AI agent interactions</p>
             </div>
           </div>
         );
     }
   };
 
+  const { theme } = useTheme();
+
   return (
-    <div className="flex flex-col h-screen bg-gray-100">
+    <div className={`flex flex-col h-screen ${theme === 'dark' ? 'bg-gray-900' : 'bg-gray-100'}`}>
       <Navigation currentView={currentView} setCurrentView={handleViewChange} />
       {renderContent()}
     </div>

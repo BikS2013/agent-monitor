@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import Modal from '../common/Modal';
 import { useData } from '../../context/DataContext';
 import { Activity, Shield, Zap } from 'lucide-react';
+import { useTheme } from '../../context/ThemeContext';
 
 interface NewGroupModalProps {
   isOpen: boolean;
@@ -11,12 +12,13 @@ interface NewGroupModalProps {
 const NewGroupModal: React.FC<NewGroupModalProps> = ({ isOpen, onClose }) => {
   const { addGroup, getCurrentUser, collections } = useData();
   const currentUser = getCurrentUser();
-  
+  const { theme } = useTheme();
+
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [purpose, setPurpose] = useState<'evaluation' | 'security' | 'efficiency'>('evaluation');
   const [selectedCollections, setSelectedCollections] = useState<string[]>([]);
-  
+
   const handleCollectionToggle = (collectionId: string) => {
     if (selectedCollections.includes(collectionId)) {
       setSelectedCollections(selectedCollections.filter(id => id !== collectionId));
@@ -24,10 +26,10 @@ const NewGroupModal: React.FC<NewGroupModalProps> = ({ isOpen, onClose }) => {
       setSelectedCollections([...selectedCollections, collectionId]);
     }
   };
-  
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     // Create new group
     addGroup({
       name,
@@ -39,7 +41,7 @@ const NewGroupModal: React.FC<NewGroupModalProps> = ({ isOpen, onClose }) => {
         [currentUser.id]: 'full'
       }
     });
-    
+
     // Reset form and close modal
     setName('');
     setDescription('');
@@ -47,7 +49,7 @@ const NewGroupModal: React.FC<NewGroupModalProps> = ({ isOpen, onClose }) => {
     setSelectedCollections([]);
     onClose();
   };
-  
+
   const getPurposeIcon = () => {
     switch (purpose) {
       case 'evaluation':
@@ -60,13 +62,13 @@ const NewGroupModal: React.FC<NewGroupModalProps> = ({ isOpen, onClose }) => {
         return null;
     }
   };
-  
+
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Create New Group" size="lg">
       <form onSubmit={handleSubmit}>
         <div className="space-y-4">
           <div>
-            <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
+            <label htmlFor="name" className={`block text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'} mb-1`}>
               Group Name
             </label>
             <input
@@ -74,27 +76,35 @@ const NewGroupModal: React.FC<NewGroupModalProps> = ({ isOpen, onClose }) => {
               id="name"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                theme === 'dark'
+                  ? 'bg-gray-600 border-gray-500 text-white'
+                  : 'bg-white border-gray-300 text-gray-900'
+              }`}
               required
             />
           </div>
-          
+
           <div>
-            <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-1">
+            <label htmlFor="description" className={`block text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'} mb-1`}>
               Description
             </label>
             <textarea
               id="description"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                theme === 'dark'
+                  ? 'bg-gray-600 border-gray-500 text-white'
+                  : 'bg-white border-gray-300 text-gray-900'
+              }`}
               rows={2}
               required
             />
           </div>
-          
+
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className={`block text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'} mb-1`}>
               Group Purpose
             </label>
             <div className="grid grid-cols-3 gap-3">
@@ -102,7 +112,13 @@ const NewGroupModal: React.FC<NewGroupModalProps> = ({ isOpen, onClose }) => {
                 type="button"
                 onClick={() => setPurpose('evaluation')}
                 className={`flex items-center p-3 border rounded-md ${
-                  purpose === 'evaluation' ? 'border-purple-500 bg-purple-50' : 'border-gray-300'
+                  purpose === 'evaluation'
+                    ? theme === 'dark'
+                      ? 'border-purple-700 bg-purple-900 text-purple-300'
+                      : 'border-purple-500 bg-purple-50 text-gray-900'
+                    : theme === 'dark'
+                      ? 'border-gray-600 text-gray-300'
+                      : 'border-gray-300 text-gray-900'
                 }`}
               >
                 <Activity size={20} className="text-purple-500 mr-2" />
@@ -112,7 +128,13 @@ const NewGroupModal: React.FC<NewGroupModalProps> = ({ isOpen, onClose }) => {
                 type="button"
                 onClick={() => setPurpose('security')}
                 className={`flex items-center p-3 border rounded-md ${
-                  purpose === 'security' ? 'border-red-500 bg-red-50' : 'border-gray-300'
+                  purpose === 'security'
+                    ? theme === 'dark'
+                      ? 'border-red-700 bg-red-900 text-red-300'
+                      : 'border-red-500 bg-red-50 text-gray-900'
+                    : theme === 'dark'
+                      ? 'border-gray-600 text-gray-300'
+                      : 'border-gray-300 text-gray-900'
                 }`}
               >
                 <Shield size={20} className="text-red-500 mr-2" />
@@ -122,7 +144,13 @@ const NewGroupModal: React.FC<NewGroupModalProps> = ({ isOpen, onClose }) => {
                 type="button"
                 onClick={() => setPurpose('efficiency')}
                 className={`flex items-center p-3 border rounded-md ${
-                  purpose === 'efficiency' ? 'border-green-500 bg-green-50' : 'border-gray-300'
+                  purpose === 'efficiency'
+                    ? theme === 'dark'
+                      ? 'border-green-700 bg-green-900 text-green-300'
+                      : 'border-green-500 bg-green-50 text-gray-900'
+                    : theme === 'dark'
+                      ? 'border-gray-600 text-gray-300'
+                      : 'border-gray-300 text-gray-900'
                 }`}
               >
                 <Zap size={20} className="text-green-500 mr-2" />
@@ -130,52 +158,78 @@ const NewGroupModal: React.FC<NewGroupModalProps> = ({ isOpen, onClose }) => {
               </button>
             </div>
           </div>
-          
+
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className={`block text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'} mb-1`}>
               Select Collections
             </label>
-            <div className="border border-gray-300 rounded-md max-h-48 overflow-y-auto">
+            <div className={`border rounded-md max-h-48 overflow-y-auto ${
+              theme === 'dark'
+                ? 'border-gray-600 bg-gray-700'
+                : 'border-gray-300 bg-white'
+            }`}>
               {Object.values(collections).length > 0 ? (
                 Object.values(collections).map(collection => (
-                  <div 
+                  <div
                     key={collection.id}
-                    className="flex items-center p-3 border-b last:border-b-0"
+                    className={`flex items-center p-3 ${
+                      theme === 'dark'
+                        ? 'border-gray-600 border-b last:border-b-0'
+                        : 'border-gray-200 border-b last:border-b-0'
+                    }`}
                   >
                     <input
                       type="checkbox"
                       id={`collection-${collection.id}`}
                       checked={selectedCollections.includes(collection.id)}
                       onChange={() => handleCollectionToggle(collection.id)}
-                      className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                      className={`h-4 w-4 text-blue-600 focus:ring-blue-500 rounded ${
+                        theme === 'dark'
+                          ? 'border-gray-500 bg-gray-600'
+                          : 'border-gray-300 bg-white'
+                      }`}
                     />
-                    <label 
+                    <label
                       htmlFor={`collection-${collection.id}`}
-                      className="ml-3 block text-sm font-medium text-gray-700"
+                      className={`ml-3 block text-sm font-medium ${
+                        theme === 'dark' ? 'text-gray-200' : 'text-gray-700'
+                      }`}
                     >
                       {collection.name}
                     </label>
                   </div>
                 ))
               ) : (
-                <div className="p-3 text-center text-gray-500">
+                <div className={`p-3 text-center ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
                   No collections available. Create collections first.
                 </div>
               )}
             </div>
           </div>
-          
-          <div className="pt-4 flex justify-end space-x-3">
+
+          <div className={`pt-4 flex justify-end space-x-3 ${theme === 'dark' ? 'border-t border-gray-600' : ''}`}>
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+              className={`px-4 py-2 border rounded-md ${
+                theme === 'dark'
+                  ? 'border-gray-600 text-gray-300 hover:bg-gray-700'
+                  : 'border-gray-300 text-gray-700 hover:bg-gray-50'
+              }`}
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600"
+              className={`px-4 py-2 text-white rounded-md ${
+                selectedCollections.length === 0
+                  ? theme === 'dark'
+                    ? 'bg-blue-800 opacity-50 cursor-not-allowed'
+                    : 'bg-blue-400 cursor-not-allowed'
+                  : theme === 'dark'
+                    ? 'bg-blue-600 hover:bg-blue-700'
+                    : 'bg-blue-500 hover:bg-blue-600'
+              }`}
               disabled={selectedCollections.length === 0}
             >
               Create Group

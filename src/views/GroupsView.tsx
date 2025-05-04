@@ -4,6 +4,7 @@ import GroupsList from '../components/GroupsList';
 import GroupDetail from '../components/GroupDetail';
 import { useData } from '../context/DataContext';
 import { Group, Collection, Conversation } from '../data/types';
+import { useTheme } from '../context/ThemeContext';
 
 interface GroupsViewProps {
   onSelectCollection: (collection: Collection) => void;
@@ -18,7 +19,25 @@ const GroupsView: React.FC<GroupsViewProps> = ({
   selectedGroup,
   setSelectedGroup
 }) => {
-  const { groups, getCollectionsByGroupId } = useData();
+  const { groups, loading, collections } = useData();
+  const { theme } = useTheme();
+
+  // Debug: Log groups data
+  React.useEffect(() => {
+    console.log('GroupsView: Groups data', {
+      count: Object.keys(groups).length,
+      ids: Object.keys(groups),
+      loading: loading.groups
+    });
+  }, [groups, loading.groups]);
+
+  // Debug: Log collections data
+  React.useEffect(() => {
+    console.log('GroupsView: Collections data', {
+      count: Object.keys(collections).length,
+      ids: Object.keys(collections).slice(0, 5) // Show first 5 for brevity
+    });
+  }, [collections]);
 
   // Only auto-select the first group if there's no selected group
   // This preserves the selection when navigating between views
@@ -34,7 +53,7 @@ const GroupsView: React.FC<GroupsViewProps> = ({
   };
 
   return (
-    <div className="flex flex-1 bg-gray-50">
+    <div className={`flex flex-1 ${theme === 'dark' ? 'bg-gray-800' : 'bg-gray-50'}`}>
       <GroupsList
         groups={groups}
         selectedGroup={selectedGroup}
@@ -44,15 +63,15 @@ const GroupsView: React.FC<GroupsViewProps> = ({
       {selectedGroup ? (
         <GroupDetail
           group={selectedGroup}
-          collections={getCollectionsByGroupId(selectedGroup.id)}
+          collections={selectedGroup.collectionIds.map(id => collections[id]).filter(Boolean)}
           onSelectCollection={handleSelectCollection}
         />
       ) : (
-        <div className="flex-1 flex items-center justify-center bg-gray-50">
+        <div className={`flex-1 flex items-center justify-center ${theme === 'dark' ? 'bg-gray-800' : 'bg-gray-50'}`}>
           <div className="text-center">
-            <Package size={48} className="mx-auto text-gray-400 mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">Select a group</h3>
-            <p className="text-gray-500">Choose a group to view its collections and details</p>
+            <Package size={48} className={`mx-auto ${theme === 'dark' ? 'text-gray-500' : 'text-gray-400'} mb-4`} />
+            <h3 className={`text-lg font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'} mb-2`}>Select a group</h3>
+            <p className={`${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>Choose a group to view its collections and details</p>
           </div>
         </div>
       )}

@@ -184,6 +184,27 @@ export const filterConversationsByCollectionCriteria = (
           conversation.priority === filter.priority
         );
       }
+
+      // Filter by tags (exact match for any in the array)
+      if (filter.tags && filter.tags.length > 0) {
+        filteredConversations = filteredConversations.filter(conversation =>
+          conversation.tags.some(tag => filter.tags.includes(tag))
+        );
+      }
+
+      // Filter by message count (min and/or max)
+      if (filter.messageCount) {
+        if (filter.messageCount.min !== undefined) {
+          filteredConversations = filteredConversations.filter(conversation =>
+            conversation.messageCount >= filter.messageCount.min
+          );
+        }
+        if (filter.messageCount.max !== undefined) {
+          filteredConversations = filteredConversations.filter(conversation =>
+            conversation.messageCount <= filter.messageCount.max
+          );
+        }
+      }
     }
   } else {
     // No filters, return all conversations

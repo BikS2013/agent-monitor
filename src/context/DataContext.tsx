@@ -247,137 +247,129 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   } | null>(null);
 
   /**
-   * Get messages for a conversation (lazy loading)
-   * Added request cancellation and loading state management to prevent UI flickering
+   * Get messages for a conversation (lazy loading) with improved stability
+   * Enhanced request cancellation, caching, and loading state management
    */
   const getMessagesByConversationId = async (conversationId: string): Promise<Message[]> => {
-    // Throttle message loading requests for the same conversation (no more than once per second)
+    if (!initialized || !messageRepository || !conversationRepository) {
+      console.warn(`DataContext: Repositories not initialized, cannot load messages for ${conversationId}`);
+      return [];
+    }
+
+    // Get the conversation object first
+    const conversation = conversations[conversationId];
+    if (!conversation) {
+      console.warn(`DataContext: Conversation ${conversationId} not found in local state`);
+      return [];
+    }
+
+    // Check if we have any cached messages for this conversation
+    const cachedMessages = conversation.messages
+      .filter(msgId => messages[msgId]) // Only include messages we already have
+      .map(msgId => messages[msgId])
+      .sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
+    
+    // If we have all messages cached and there's at least one, return them immediately
+    const hasAllCachedMessages = 
+      cachedMessages.length === conversation.messages.length && 
+      cachedMessages.length > 0;
+    
+    if (hasAllCachedMessages) {
+      console.log(`DataContext: Using ${cachedMessages.length} cached messages for conversation ${conversationId}`);
+      return cachedMessages;
+    }
+    
+    // Implement strict throttling for message loading (max once per second per conversation)
+    // Return cached messages (even if incomplete) during throttling period
     if (lastConversationMessageLoad && 
         lastConversationMessageLoad.id === conversationId &&
         Date.now() - lastConversationMessageLoad.timestamp < 1000) {
       console.log(`DataContext: Throttling message load for ${conversationId}, last load was ${Date.now() - lastConversationMessageLoad.timestamp}ms ago`);
       
-      // First check if we already have the messages in our local state cache
-      const conversation = conversations[conversationId];
-      if (!conversation) {
-        return [];
-      }
-
-      // Return any cached messages we already have
-      const cachedMessages = conversation.messages
-        .filter(msgId => messages[msgId])
-        .map(msgId => messages[msgId])
-        .sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
-      
+      // If we have any cached messages, return them during throttling
       if (cachedMessages.length > 0) {
         return cachedMessages;
       }
     }
     
-    // Track if this specific request is the most recent one
+    // Generate a unique ID for this request to track cancellations
     const requestId = Date.now();
-    let isLatestRequest = true;
     
-    // Store the latest request ID to track cancellations
+    // Use a ref to track the latest request (instead of window global)
+    const currentLatestRequestId = (window as any)._latestMessageRequest || 0;
+    if (requestId <= currentLatestRequestId) {
+      console.log(`DataContext: Request ${requestId} is not newer than current latest ${currentLatestRequestId}, using cached data`);
+      return cachedMessages.length > 0 ? cachedMessages : [];
+    }
+    
+    // Set this as the latest request
     (window as any)._latestMessageRequest = requestId;
     
-    // Update the last load timestamp
+    // Update the last load timestamp atomically
     setLastConversationMessageLoad({
       id: conversationId,
       timestamp: Date.now()
     });
     
-    if (!initialized || !messageRepository || !conversationRepository) {
-      return [];
-    }
-
+    // Use ref to track if this request was canceled
+    let wasRequestCanceled = false;
+    
     try {
       console.log(`DataContext: Loading messages for conversation ${conversationId} (request ${requestId})`);
       
-      // Only set loading state if this is the latest request
+      // Set loading state
       setLoading(prev => ({ ...prev, messages: true }));
-
-      // First check if we already have the messages in our local state cache
-      const conversation = conversations[conversationId];
-      if (!conversation) {
-        console.warn(`DataContext: Conversation ${conversationId} not found in local state`);
-        if (isLatestRequest) {
-          setLoading(prev => ({ ...prev, messages: false }));
-        }
-        return [];
-      }
-
-      // Performance optimization: Check if we already have the messages in cache
-      const cachedMessages = conversation.messages
-        .filter(msgId => messages[msgId]) // Only include messages we already have
-        .map(msgId => messages[msgId])
-        .sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
       
-      // If we have all the messages, return them without making a repository call
-      if (cachedMessages.length === conversation.messages.length && cachedMessages.length > 0) {
-        console.log(`DataContext: Using ${cachedMessages.length} cached messages for conversation ${conversationId}`);
-        
-        // Check if this request was canceled
-        if ((window as any)._latestMessageRequest !== requestId) {
-          isLatestRequest = false;
-          console.log(`DataContext: Request ${requestId} was superseded by a newer request`);
-          return cachedMessages;
-        }
-        
-        if (isLatestRequest) {
-          setLoading(prev => ({ ...prev, messages: false }));
-        }
-        return cachedMessages;
-      }
-
-      // Check if this request was canceled before making repository call
+      // Return any partial cached results if this request is canceled before repository call
       if ((window as any)._latestMessageRequest !== requestId) {
-        isLatestRequest = false;
-        console.log(`DataContext: Request ${requestId} was superseded by a newer request, returning empty results`);
-        return [];
+        wasRequestCanceled = true;
+        console.log(`DataContext: Request ${requestId} was superseded before repository call`);
+        return cachedMessages.length > 0 ? cachedMessages : [];
       }
 
-      // Otherwise get messages from the repository
+      // Get new messages from the repository
       console.log(`DataContext: Fetching messages for conversation ${conversationId} from repository`);
       const messagesResult = await conversationRepository.getMessages(conversationId);
       
-      // Check after repository call if this request is still relevant
+      // Verify if this request is still the latest after repository call
       if ((window as any)._latestMessageRequest !== requestId) {
-        isLatestRequest = false;
-        console.log(`DataContext: Request ${requestId} was superseded during repository call, discarding results`);
-        return [];
+        wasRequestCanceled = true;
+        console.log(`DataContext: Request ${requestId} was superseded during repository call`);
+        return cachedMessages.length > 0 ? cachedMessages : messagesResult.data;
       }
       
       console.log(`DataContext: Received ${messagesResult.data.length} messages for request ${requestId}`);
 
-      // Only update state if this is still the latest request
-      if (isLatestRequest) {
-        // Update messages state with new messages (batch update)
-        const newMessages = { ...messages };
+      // Use functional update to atomically update the messages state
+      setMessages(prevMessages => {
+        const merged = { ...prevMessages };
         messagesResult.data.forEach(message => {
-          newMessages[message.id] = message;
+          merged[message.id] = message;
         });
-        
-        // Use a functional update to avoid race conditions with state updates
-        setMessages(prevMessages => {
-          // Another update might have happened while we were fetching
-          const merged = { ...prevMessages };
-          messagesResult.data.forEach(message => {
-            merged[message.id] = message;
-          });
-          return merged;
-        });
-        
+        return merged;
+      });
+      
+      // Clean up loading state if this is still the latest request
+      if ((window as any)._latestMessageRequest === requestId) {
         setLoading(prev => ({ ...prev, messages: false }));
       }
       
       return messagesResult.data;
     } catch (error) {
-      console.error(`Failed to get messages for conversation ${conversationId}:`, error);
-      if (isLatestRequest) {
+      console.error(`Failed to get messages for conversation ${conversationId} (request ${requestId}):`, error);
+      
+      // Only update loading state if this was the latest request
+      if ((window as any)._latestMessageRequest === requestId) {
         setLoading(prev => ({ ...prev, messages: false }));
       }
-      return [];
+      
+      // Return any cached messages on error
+      return cachedMessages.length > 0 ? cachedMessages : [];
+    } finally {
+      // Always check if we need to update the loading state
+      if (wasRequestCanceled) {
+        console.log(`DataContext: Cleaning up canceled request ${requestId}`);
+      }
     }
   };
 
