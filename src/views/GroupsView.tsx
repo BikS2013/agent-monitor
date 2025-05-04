@@ -3,6 +3,7 @@ import { Package, Plus, Search, Edit, Share2, Download, Settings } from 'lucide-
 import GroupsList from '../components/GroupsList';
 import GroupDetail from '../components/GroupDetail';
 import NewGroupModal from '../components/modals/NewGroupModal';
+import EditGroupModal from '../components/modals/EditGroupModal';
 import { useData } from '../context/DataContext';
 import { Group, Collection, Conversation } from '../data/types';
 import { useTheme } from '../context/ThemeContext';
@@ -23,6 +24,7 @@ const GroupsView: React.FC<GroupsViewProps> = ({
   const { groups, loading, collections } = useData();
   const { theme } = useTheme();
   const [isNewGroupModalOpen, setIsNewGroupModalOpen] = React.useState(false);
+  const [isEditGroupModalOpen, setIsEditGroupModalOpen] = React.useState(false);
   const [searchText, setSearchText] = React.useState('');
 
   // Debug: Log groups data
@@ -118,7 +120,11 @@ const GroupsView: React.FC<GroupsViewProps> = ({
                 </div>
               </div>
               <div className="flex items-center space-x-2">
-                <button className="p-2 hover:bg-white hover:bg-opacity-10 rounded" title="Edit Group">
+                <button
+                  className="p-2 hover:bg-white hover:bg-opacity-10 rounded"
+                  title="Edit Group"
+                  onClick={() => setIsEditGroupModalOpen(true)}
+                >
                   <Edit size={18} />
                 </button>
                 <button className="p-2 hover:bg-white hover:bg-opacity-10 rounded" title="Share Group">
@@ -158,6 +164,15 @@ const GroupsView: React.FC<GroupsViewProps> = ({
         isOpen={isNewGroupModalOpen}
         onClose={() => setIsNewGroupModalOpen(false)}
       />
+
+      {/* Edit Group Modal */}
+      {selectedGroup && (
+        <EditGroupModal
+          isOpen={isEditGroupModalOpen}
+          onClose={() => setIsEditGroupModalOpen(false)}
+          group={selectedGroup}
+        />
+      )}
     </div>
   );
 };
