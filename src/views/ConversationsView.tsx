@@ -20,7 +20,8 @@ const ConversationsView: React.FC<ConversationsViewProps> = ({
   const selectedConversation = propSelectedConversation || null;
   const setSelectedConversation = propSetSelectedConversation || ((conversation: Conversation | null) => {});
 
-  // If no conversation is selected and there are conversations available, select the first one
+  // Only auto-select the first conversation if there's no selected conversation
+  // This preserves the selection when navigating from Collections view
   React.useEffect(() => {
     if (!selectedConversation && Object.values(conversations).length > 0 && propSetSelectedConversation) {
       propSetSelectedConversation(Object.values(conversations)[0]);

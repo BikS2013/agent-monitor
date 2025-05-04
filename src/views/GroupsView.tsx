@@ -8,14 +8,25 @@ import { Group, Collection, Conversation } from '../data/types';
 interface GroupsViewProps {
   onSelectCollection: (collection: Collection) => void;
   onChangeView: (view: string) => void;
+  selectedGroup: Group | null;
+  setSelectedGroup: (group: Group | null) => void;
 }
 
-const GroupsView: React.FC<GroupsViewProps> = ({ 
+const GroupsView: React.FC<GroupsViewProps> = ({
   onSelectCollection,
-  onChangeView
+  onChangeView,
+  selectedGroup,
+  setSelectedGroup
 }) => {
   const { groups, getCollectionsByGroupId } = useData();
-  const [selectedGroup, setSelectedGroup] = useState<Group | null>(null);
+
+  // Only auto-select the first group if there's no selected group
+  // This preserves the selection when navigating between views
+  React.useEffect(() => {
+    if (!selectedGroup && Object.values(groups).length > 0) {
+      setSelectedGroup(Object.values(groups)[0]);
+    }
+  }, [groups, selectedGroup]);
 
   const handleSelectCollection = (collection: Collection) => {
     onSelectCollection(collection);
@@ -24,14 +35,14 @@ const GroupsView: React.FC<GroupsViewProps> = ({
 
   return (
     <div className="flex flex-1 bg-gray-50">
-      <GroupsList 
+      <GroupsList
         groups={groups}
         selectedGroup={selectedGroup}
         setSelectedGroup={setSelectedGroup}
       />
-      
+
       {selectedGroup ? (
-        <GroupDetail 
+        <GroupDetail
           group={selectedGroup}
           collections={getCollectionsByGroupId(selectedGroup.id)}
           onSelectCollection={handleSelectCollection}

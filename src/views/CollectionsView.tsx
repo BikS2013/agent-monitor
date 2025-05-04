@@ -20,7 +20,8 @@ const CollectionsView: React.FC<CollectionsViewProps> = ({
 }) => {
   const { collections, getConversationsByCollectionId } = useData();
 
-  // If no collection is selected and there are collections available, select the first one
+  // Only auto-select the first collection if there's no selected collection
+  // This preserves the selection when navigating from Groups view
   React.useEffect(() => {
     if (!selectedCollection && Object.values(collections).length > 0) {
       setSelectedCollection(Object.values(collections)[0]);

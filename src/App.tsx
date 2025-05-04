@@ -8,23 +8,18 @@ import GroupsView from './views/GroupsView';
 import AIAgentsView from './views/AIAgentsView';
 import AnalyticsView from './views/AnalyticsView';
 import SettingsView from './views/SettingsView';
-import { Conversation, Collection } from './data/types';
+import { Conversation, Collection, Group } from './data/types';
 
 const App: React.FC = () => {
   const [currentView, setCurrentView] = useState('dashboard');
   const [selectedConversation, setSelectedConversation] = useState<Conversation | null>(null);
   const [selectedCollection, setSelectedCollection] = useState<Collection | null>(null);
+  const [selectedGroup, setSelectedGroup] = useState<Group | null>(null);
 
-  // Custom navigation handler to reset states when needed
+  // Custom navigation handler that maintains selected items across views
   const handleViewChange = (view: string) => {
-    // Reset selected items when navigating to their respective views
-    // This allows the auto-selection logic in each view to work
-    if (view === 'collections') {
-      setSelectedCollection(null);
-    } else if (view === 'conversations') {
-      setSelectedConversation(null);
-    }
-
+    // We don't reset selected items anymore to maintain consistency
+    // This allows selections to persist when navigating between related views
     setCurrentView(view);
   };
 
@@ -58,6 +53,8 @@ const App: React.FC = () => {
           <GroupsView
             onSelectCollection={setSelectedCollection}
             onChangeView={handleViewChange}
+            selectedGroup={selectedGroup}
+            setSelectedGroup={setSelectedGroup}
           />
         );
       case 'agents':
