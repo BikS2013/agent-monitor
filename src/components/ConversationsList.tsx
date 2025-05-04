@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, memo, useMemo } from 'react';
 import { Filter, Search, Users, Bot, Brain, CheckCircle, XCircle } from 'lucide-react';
 import { Conversation } from '../data/types';
 
@@ -8,7 +8,8 @@ interface ConversationsListProps {
   setSelectedConversation: (conversation: Conversation) => void;
 }
 
-const ConversationsList: React.FC<ConversationsListProps> = ({ 
+// Optimize rendering with memo to prevent unnecessary re-renders
+const ConversationsList = memo<ConversationsListProps>(({ 
   conversations, 
   selectedConversation, 
   setSelectedConversation 
@@ -16,16 +17,19 @@ const ConversationsList: React.FC<ConversationsListProps> = ({
   const [isFiltersOpen, setIsFiltersOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
 
-  const filteredConversations = Object.values(conversations).filter(conversation => {
-    if (!searchTerm) return true;
-    
-    return (
-      conversation.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      conversation.userName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      conversation.aiAgentName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      conversation.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()))
-    );
-  });
+  // Use useMemo to prevent recomputing the filtered conversations on every render
+  const filteredConversations = useMemo(() => {
+    return Object.values(conversations).filter(conversation => {
+      if (!searchTerm) return true;
+      
+      return (
+        conversation.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        conversation.userName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        conversation.aiAgentName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        conversation.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()))
+      );
+    });
+  }, [conversations, searchTerm]);
 
   return (
     <div className="w-96 bg-white border-r border-gray-200 overflow-y-auto">
@@ -124,6 +128,18 @@ const ConversationsList: React.FC<ConversationsListProps> = ({
       ))}
     </div>
   );
-};
+}, (prevProps, nextProps) => {
+  // Only re-render if important props change
+  const selectedIdChanged = 
+    (prevProps.selectedConversation?.id !== nextProps.selectedConversation?.id);
+  
+  // Check if conversations object keys have changed
+  const prevKeys = Object.keys(prevProps.conversations).sort().join(',');
+  const nextKeys = Object.keys(nextProps.conversations).sort().join(',');
+  const conversationsChanged = prevKeys !== nextKeys;
+  
+  // Return true if nothing important changed (to skip re-render)
+  return !(selectedIdChanged || conversationsChanged);
+});
 
 export default ConversationsList;
