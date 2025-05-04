@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Database, Calendar, CheckCircle, Users, Plus, Bot } from 'lucide-react';
 import { Collection } from '../data/types';
+import NewCollectionModal from './modals/NewCollectionModal';
 
 interface CollectionsListProps {
   collections: Record<string, Collection>;
@@ -13,12 +14,16 @@ const CollectionsList: React.FC<CollectionsListProps> = ({
   selectedCollection,
   setSelectedCollection
 }) => {
+  const [isNewCollectionModalOpen, setIsNewCollectionModalOpen] = useState(false);
   return (
     <div className="w-96 bg-white border-r border-gray-200 overflow-y-auto">
       <div className="p-4 border-b">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-semibold">Collections</h2>
-          <button className="p-2 hover:bg-gray-100 rounded">
+          <button
+            onClick={() => setIsNewCollectionModalOpen(true)}
+            className="p-2 hover:bg-gray-100 rounded"
+          >
             <Plus size={20} className="text-gray-600" />
           </button>
         </div>
@@ -77,6 +82,11 @@ const CollectionsList: React.FC<CollectionsListProps> = ({
           </div>
         </div>
       ))}
+
+      <NewCollectionModal
+        isOpen={isNewCollectionModalOpen}
+        onClose={() => setIsNewCollectionModalOpen(false)}
+      />
     </div>
   );
 };

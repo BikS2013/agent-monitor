@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Package, Database, Users, Plus, Activity, Shield, Zap } from 'lucide-react';
 import { Group } from '../data/types';
+import NewGroupModal from './modals/NewGroupModal';
 
 interface GroupsListProps {
   groups: Record<string, Group>;
@@ -8,30 +9,34 @@ interface GroupsListProps {
   setSelectedGroup: (group: Group) => void;
 }
 
-const GroupsList: React.FC<GroupsListProps> = ({ 
-  groups, 
-  selectedGroup, 
-  setSelectedGroup 
+const GroupsList: React.FC<GroupsListProps> = ({
+  groups,
+  selectedGroup,
+  setSelectedGroup
 }) => {
+  const [isNewGroupModalOpen, setIsNewGroupModalOpen] = useState(false);
   return (
     <div className="w-96 bg-white border-r border-gray-200 overflow-y-auto">
       <div className="p-4 border-b">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-semibold">Groups</h2>
-          <button className="p-2 hover:bg-gray-100 rounded">
+          <button
+            onClick={() => setIsNewGroupModalOpen(true)}
+            className="p-2 hover:bg-gray-100 rounded"
+          >
             <Plus size={20} className="text-gray-600" />
           </button>
         </div>
-        
+
         <div className="relative">
-          <input 
-            type="text" 
-            placeholder="Search groups..." 
+          <input
+            type="text"
+            placeholder="Search groups..."
             className="w-full px-4 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           />
         </div>
       </div>
-      
+
       {Object.values(groups).map((group) => (
         <div
           key={group.id}
@@ -55,9 +60,9 @@ const GroupsList: React.FC<GroupsListProps> = ({
               <p className="text-xs text-gray-500">{group.purpose} group</p>
             </div>
           </div>
-          
+
           <p className="text-sm text-gray-600 mb-3">{group.description}</p>
-          
+
           <div className="flex items-center justify-between text-xs text-gray-500">
             <div className="flex items-center">
               <Database size={12} className="mr-1" />
@@ -70,6 +75,11 @@ const GroupsList: React.FC<GroupsListProps> = ({
           </div>
         </div>
       ))}
+
+      <NewGroupModal
+        isOpen={isNewGroupModalOpen}
+        onClose={() => setIsNewGroupModalOpen(false)}
+      />
     </div>
   );
 };

@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Bot, Plus, Activity, Clock, CheckCircle } from 'lucide-react';
 import { AIAgent } from '../data/types';
+import NewAIAgentModal from './modals/NewAIAgentModal';
 
 interface AIAgentsListProps {
   aiAgents: Record<string, AIAgent>;
@@ -8,30 +9,34 @@ interface AIAgentsListProps {
   setSelectedAgent: (agent: AIAgent) => void;
 }
 
-const AIAgentsList: React.FC<AIAgentsListProps> = ({ 
-  aiAgents, 
-  selectedAgent, 
-  setSelectedAgent 
+const AIAgentsList: React.FC<AIAgentsListProps> = ({
+  aiAgents,
+  selectedAgent,
+  setSelectedAgent
 }) => {
+  const [isNewAgentModalOpen, setIsNewAgentModalOpen] = useState(false);
   return (
     <div className="w-96 bg-white border-r border-gray-200 overflow-y-auto">
       <div className="p-4 border-b">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-semibold">AI Agents</h2>
-          <button className="p-2 hover:bg-gray-100 rounded">
+          <button
+            onClick={() => setIsNewAgentModalOpen(true)}
+            className="p-2 hover:bg-gray-100 rounded"
+          >
             <Plus size={20} className="text-gray-600" />
           </button>
         </div>
-        
+
         <div className="relative">
-          <input 
-            type="text" 
-            placeholder="Search AI agents..." 
+          <input
+            type="text"
+            placeholder="Search AI agents..."
             className="w-full px-4 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           />
         </div>
       </div>
-      
+
       {Object.values(aiAgents).map((agent) => (
         <div
           key={agent.id}
@@ -62,7 +67,7 @@ const AIAgentsList: React.FC<AIAgentsListProps> = ({
               </div>
             </div>
           </div>
-          
+
           <div className="grid grid-cols-2 gap-2 text-sm">
             <div className="flex items-center">
               <Activity size={14} className="text-blue-500 mr-1" />
@@ -82,6 +87,11 @@ const AIAgentsList: React.FC<AIAgentsListProps> = ({
           </div>
         </div>
       ))}
+
+      <NewAIAgentModal
+        isOpen={isNewAgentModalOpen}
+        onClose={() => setIsNewAgentModalOpen(false)}
+      />
     </div>
   );
 };

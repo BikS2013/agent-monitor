@@ -9,7 +9,10 @@ import {
   getMessagesByConversationId,
   getConversationsByCollectionId,
   getCollectionsByGroupId,
-  getCurrentUser as getUser
+  getCurrentUser as getUser,
+  createCollection,
+  createGroup,
+  createAIAgent
 } from '../data/api';
 import { Message, Conversation, Collection, Group, AIAgent, User } from '../data/types';
 
@@ -24,21 +27,63 @@ interface DataContextType {
   getConversationsByCollectionId: (collectionId: string) => Conversation[];
   getCollectionsByGroupId: (groupId: string) => Collection[];
   getCurrentUser: () => User;
+  addCollection: (collectionData: Omit<Collection, 'id'>) => Collection;
+  addGroup: (groupData: Omit<Group, 'id'>) => Group;
+  addAIAgent: (agentData: Omit<AIAgent, 'id'>) => AIAgent;
+  refreshData: () => void;
 }
 
 const DataContext = createContext<DataContextType | undefined>(undefined);
 
 export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [messages] = useState<Record<string, Message>>(getMessages());
-  const [conversations] = useState<Record<string, Conversation>>(getConversations());
-  const [collections] = useState<Record<string, Collection>>(getCollections());
-  const [groups] = useState<Record<string, Group>>(getGroups());
-  const [aiAgents] = useState<Record<string, AIAgent>>(getAIAgents());
-  const [users] = useState<Record<string, User>>(getUsers());
+  const [messages, setMessages] = useState<Record<string, Message>>(getMessages());
+  const [conversations, setConversations] = useState<Record<string, Conversation>>(getConversations());
+  const [collections, setCollections] = useState<Record<string, Collection>>(getCollections());
+  const [groups, setGroups] = useState<Record<string, Group>>(getGroups());
+  const [aiAgents, setAIAgents] = useState<Record<string, AIAgent>>(getAIAgents());
+  const [users, setUsers] = useState<Record<string, User>>(getUsers());
 
   // Helper function to get current user
   const getCurrentUser = (): User => {
     return getUser();
+  };
+
+  // Function to refresh data from the API
+  const refreshData = () => {
+    setMessages(getMessages());
+    setConversations(getConversations());
+    setCollections(getCollections());
+    setGroups(getGroups());
+    setAIAgents(getAIAgents());
+    setUsers(getUsers());
+  };
+
+  // Functions to add new items
+  const addCollection = (collectionData: Omit<Collection, 'id'>): Collection => {
+    const newCollection = createCollection(collectionData);
+    setCollections(prev => ({
+      ...prev,
+      [newCollection.id]: newCollection
+    }));
+    return newCollection;
+  };
+
+  const addGroup = (groupData: Omit<Group, 'id'>): Group => {
+    const newGroup = createGroup(groupData);
+    setGroups(prev => ({
+      ...prev,
+      [newGroup.id]: newGroup
+    }));
+    return newGroup;
+  };
+
+  const addAIAgent = (agentData: Omit<AIAgent, 'id'>): AIAgent => {
+    const newAgent = createAIAgent(agentData);
+    setAIAgents(prev => ({
+      ...prev,
+      [newAgent.id]: newAgent
+    }));
+    return newAgent;
   };
 
   const value = {
@@ -51,7 +96,11 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     getMessagesByConversationId,
     getConversationsByCollectionId,
     getCollectionsByGroupId,
-    getCurrentUser
+    getCurrentUser,
+    addCollection,
+    addGroup,
+    addAIAgent,
+    refreshData
   };
 
   return <DataContext.Provider value={value}>{children}</DataContext.Provider>;
