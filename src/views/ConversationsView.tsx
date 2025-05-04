@@ -44,50 +44,73 @@ const ConversationsView: React.FC<ConversationsViewProps> = ({
     }
   }, [conversations, selectedConversation, setSelectedConversation, loading.conversations]);
 
-  // Disable message loading for testing UI stability
+  // Load messages when selected conversation changes - Improved stability
   useEffect(() => {
-    // Just set placeholder messages instead of loading them
-    if (selectedConversation) {
-      console.log(`ConversationsView: Message loading disabled for testing, using placeholders`);
-      
-      // Create dummy placeholder messages (2 messages)
-      const placeholderMessages: Message[] = [
-        {
-          id: 'placeholder1',
-          content: 'This is a placeholder message from the user.',
-          timestamp: new Date().toISOString(),
-          sender: 'user',
-          senderName: selectedConversation.userName,
-          messageType: 'text',
-          readStatus: true,
-          metadata: {
-            tags: ['placeholder'],
-            priority: 'medium'
-          }
-        },
-        {
-          id: 'placeholder2',
-          content: 'This is a placeholder response message from the AI.',
-          timestamp: new Date().toISOString(),
-          sender: 'ai',
-          senderName: selectedConversation.aiAgentName,
-          messageType: 'text',
-          readStatus: true,
-          metadata: {
-            tags: ['placeholder'],
-            priority: 'medium',
-            confidence: '95%'
-          }
+    // Reference ID to manage this effect's lifecycle
+    const effectId = Date.now();
+    
+    // Store if this effect is still active or has been cleaned up
+    let isActive = true;
+
+    // Improved message loading function with better state management
+    const loadMessages = async () => {
+      if (!selectedConversation) {
+        if (isActive) {
+          setConversationMessages([]);
         }
-      ];
-      
-      setConversationMessages(placeholderMessages);
-      setLoadingMessages(false);
-      setMessageError(null);
-    } else {
-      setConversationMessages([]);
-    }
-  }, [selectedConversation]);
+        return;
+      }
+
+      // Reference the ID to avoid closure issues when using the conversation later
+      const conversationId = selectedConversation.id;
+  
+      try {
+        if (isActive) {
+          setLoadingMessages(true);
+          setMessageError(null);
+        }
+        
+        console.log(`ConversationsView: Loading messages for conversation ${conversationId}, effect #${effectId}`);
+        
+        // Small artificial delay to ensure UI responsiveness
+        await new Promise(resolve => setTimeout(resolve, 10));
+        
+        // Only continue if this effect is still active
+        if (!isActive) {
+          console.log(`ConversationsView: Effect #${effectId} no longer active, aborting message load`);
+          return;
+        }
+
+        // Get messages using the improved function in DataContext
+        const messages = await getMessagesByConversationId(conversationId);
+        
+        // Only update state if this effect is still active and conversation hasn't changed
+        if (isActive && selectedConversation && selectedConversation.id === conversationId) {
+          setConversationMessages(messages);
+          setLoadingMessages(false);
+          console.log(`ConversationsView: Loaded ${messages.length} messages for conversation ${conversationId}`);
+        }
+      } catch (error) {
+        console.error(`Error loading messages for effect #${effectId}:`, error);
+        
+        // Only update error state if this effect is still active
+        if (isActive && selectedConversation && selectedConversation.id === conversationId) {
+          setMessageError('Failed to load messages');
+          setConversationMessages([]);
+          setLoadingMessages(false);
+        }
+      }
+    };
+
+    // Execute the message loading
+    loadMessages();
+    
+    // Cleanup function to prevent state updates after component unmount
+    return () => {
+      console.log(`ConversationsView: Cleaning up message loading effect #${effectId}`);
+      isActive = false;
+    };
+  }, [selectedConversation, getMessagesByConversationId]);
 
   return (
     <div className="flex flex-1 bg-gray-50">
