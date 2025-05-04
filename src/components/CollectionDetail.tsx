@@ -76,6 +76,22 @@ const CollectionDetail: React.FC<CollectionDetailProps> = ({
                  collection.filterCriteria.timeBased ? 'Time-based' :
                  collection.filterCriteria.outcomeBased ? 'Outcome' : 'Multi-factor'}
               </div>
+              {collection.filterCriteria.multiFactorFilters && (
+                <div className="text-xs text-gray-500 mt-1">
+                  {collection.filterCriteria.multiFactorFilters.some(f => f.agentIds || f.agentId) && (
+                    <span className="mr-2">Agent</span>
+                  )}
+                  {collection.filterCriteria.multiFactorFilters.some(f => f.timeRange) && (
+                    <span className="mr-2">Time</span>
+                  )}
+                  {collection.filterCriteria.multiFactorFilters.some(f => f.outcome) && (
+                    <span className="mr-2">Outcome</span>
+                  )}
+                  {collection.filterCriteria.multiFactorFilters.some(f => f.priority) && (
+                    <span className="mr-2">Priority</span>
+                  )}
+                </div>
+              )}
             </div>
           </div>
         </div>

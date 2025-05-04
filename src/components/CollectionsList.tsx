@@ -73,6 +73,18 @@ const CollectionsList: React.FC<CollectionsListProps> = ({
               <span className="inline-flex items-center px-2 py-1 bg-yellow-100 text-yellow-800 text-xs rounded">
                 <Database size={12} className="mr-1" />
                 Multi-factor
+                {collection.filterCriteria.multiFactorFilters.some(f => f.agentIds || f.agentId) && (
+                  <span className="ml-1 text-xs">• Agent</span>
+                )}
+                {collection.filterCriteria.multiFactorFilters.some(f => f.timeRange) && (
+                  <span className="ml-1 text-xs">• Time</span>
+                )}
+                {collection.filterCriteria.multiFactorFilters.some(f => f.outcome) && (
+                  <span className="ml-1 text-xs">• Outcome</span>
+                )}
+                {collection.filterCriteria.multiFactorFilters.some(f => f.priority) && (
+                  <span className="ml-1 text-xs">• Priority</span>
+                )}
               </span>
             )}
           </div>

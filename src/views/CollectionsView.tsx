@@ -20,6 +20,9 @@ const CollectionsView: React.FC<CollectionsViewProps> = ({
 }) => {
   const { collections, getConversationsByCollectionId } = useData();
 
+  // Debug log to check if collections are loaded
+  console.log('Collections in CollectionsView:', Object.keys(collections).length, collections);
+
   // Only auto-select the first collection if there's no selected collection
   // This preserves the selection when navigating from Groups view
   React.useEffect(() => {

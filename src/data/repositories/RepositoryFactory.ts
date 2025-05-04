@@ -1,7 +1,7 @@
 import { IDataSource } from '../sources/IDataSource';
 import { JsonDataSource } from '../sources/JsonDataSource';
 
-import { 
+import {
   IMessageRepository,
   IConversationRepository,
   ICollectionRepository,
@@ -25,7 +25,7 @@ import {
  */
 export class RepositoryFactory {
   private static dataSource: IDataSource | null = null;
-  
+
   /**
    * Initialize the factory with a data source
    * @param dataSource Data source to use for repositories (defaults to JsonDataSource)
@@ -37,11 +37,11 @@ export class RepositoryFactory {
     } else {
       this.dataSource = dataSource;
     }
-    
+
     // Initialize the data source
     await this.dataSource.initialize();
   }
-  
+
   /**
    * Get the message repository
    */
@@ -49,10 +49,10 @@ export class RepositoryFactory {
     if (!this.dataSource) {
       throw new Error('RepositoryFactory not initialized');
     }
-    
+
     return new MessageRepository(this.dataSource);
   }
-  
+
   /**
    * Get the conversation repository
    */
@@ -60,10 +60,10 @@ export class RepositoryFactory {
     if (!this.dataSource) {
       throw new Error('RepositoryFactory not initialized');
     }
-    
+
     return new ConversationRepository(this.dataSource);
   }
-  
+
   /**
    * Get the collection repository
    */
@@ -71,10 +71,10 @@ export class RepositoryFactory {
     if (!this.dataSource) {
       throw new Error('RepositoryFactory not initialized');
     }
-    
+
     return new CollectionRepository(this.dataSource);
   }
-  
+
   /**
    * Get the group repository
    */
@@ -82,10 +82,10 @@ export class RepositoryFactory {
     if (!this.dataSource) {
       throw new Error('RepositoryFactory not initialized');
     }
-    
+
     return new GroupRepository(this.dataSource);
   }
-  
+
   /**
    * Get the AI agent repository
    */
@@ -93,10 +93,10 @@ export class RepositoryFactory {
     if (!this.dataSource) {
       throw new Error('RepositoryFactory not initialized');
     }
-    
+
     return new AIAgentRepository(this.dataSource);
   }
-  
+
   /**
    * Get the user repository
    */
@@ -104,7 +104,7 @@ export class RepositoryFactory {
     if (!this.dataSource) {
       throw new Error('RepositoryFactory not initialized');
     }
-    
+
     return new UserRepository(this.dataSource);
   }
 }

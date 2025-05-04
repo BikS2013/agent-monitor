@@ -96,10 +96,16 @@ export const filterConversationsByCollectionCriteria = (
 
     // Apply each filter sequentially
     for (const filter of filterCriteria.multiFactorFilters) {
-      // Filter by agent
+      // Filter by agent(s)
       if (filter.agentId) {
+        // For backward compatibility
         filteredConversations = filteredConversations.filter(conversation =>
           conversation.aiAgentId === filter.agentId
+        );
+      } else if (filter.agentIds && filter.agentIds.length > 0) {
+        // New format with multiple agent IDs
+        filteredConversations = filteredConversations.filter(conversation =>
+          filter.agentIds.includes(conversation.aiAgentId)
         );
       }
 
@@ -121,6 +127,14 @@ export const filterConversationsByCollectionCriteria = (
             case 'month':
               startDate = new Date(now);
               startDate.setMonth(now.getMonth() - 1);
+              break;
+            case 'quarter':
+              startDate = new Date(now);
+              startDate.setMonth(now.getMonth() - 3);
+              break;
+            case 'year':
+              startDate = new Date(now);
+              startDate.setFullYear(now.getFullYear() - 1);
               break;
             default:
               startDate = new Date(now.setHours(0, 0, 0, 0));

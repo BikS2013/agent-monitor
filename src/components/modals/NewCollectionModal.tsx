@@ -78,7 +78,7 @@ const NewCollectionModal: React.FC<NewCollectionModalProps> = ({ isOpen, onClose
         const filters = collectionToEdit.filterCriteria.multiFactorFilters;
 
         // Check which filters are included
-        const hasAgentFilter = filters.some(f => f.agentId);
+        const hasAgentFilter = filters.some(f => f.agentId || f.agentIds);
         const hasTimeFilter = filters.some(f => f.timeRange);
         const hasOutcomeFilter = filters.some(f => f.outcome);
         const hasPriorityFilter = filters.some(f => f.priority);
@@ -90,9 +90,15 @@ const NewCollectionModal: React.FC<NewCollectionModalProps> = ({ isOpen, onClose
 
         // Set specific values if available
         if (hasAgentFilter) {
-          const agentFilter = filters.find(f => f.agentId);
-          if (agentFilter && agentFilter.agentId) {
-            setSelectedAgents([agentFilter.agentId]);
+          const agentFilter = filters.find(f => f.agentId || f.agentIds);
+          if (agentFilter) {
+            if (agentFilter.agentId) {
+              // For backward compatibility
+              setSelectedAgents([agentFilter.agentId]);
+            } else if (agentFilter.agentIds && agentFilter.agentIds.length > 0) {
+              // New format with multiple agent IDs
+              setSelectedAgents([...agentFilter.agentIds]);
+            }
           }
         }
 
@@ -242,7 +248,7 @@ const NewCollectionModal: React.FC<NewCollectionModalProps> = ({ isOpen, onClose
 
       if (includeAgentFilter) {
         filterCriteria.multiFactorFilters.push({
-          agentId: selectedAgents.length > 0 ? selectedAgents[0] : Object.keys(aiAgents)[0]
+          agentIds: selectedAgents.length > 0 ? selectedAgents : [Object.keys(aiAgents)[0]]
         });
       }
 
