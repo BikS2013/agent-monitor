@@ -1,8 +1,16 @@
 import React, { useState, useMemo } from 'react';
-import { Package, Database, Users, Plus, Activity, Shield, Zap, Search } from 'lucide-react';
 import { Group } from '../data/types';
 import NewGroupModal from './modals/NewGroupModal';
 import { useTheme } from '../context/ThemeContext';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import {
+  faBoxArchive,
+  faDatabase,
+  faUsers,
+  faChartLine,
+  faShield,
+  faBolt
+} from '@fortawesome/free-solid-svg-icons';
 
 interface GroupsListProps {
   groups: Record<string, Group>;
@@ -94,10 +102,10 @@ const GroupsList: React.FC<GroupsListProps> = ({
                 'bg-blue-100 text-blue-600'
               )
             }`}>
-              {group.purpose === 'evaluation' ? <Activity size={20} /> :
-               group.purpose === 'security' ? <Shield size={20} /> :
-               group.purpose === 'efficiency' ? <Zap size={20} /> :
-               <Package size={20} />}
+              {group.purpose === 'evaluation' ? <FontAwesomeIcon icon={faChartLine} /> :
+               group.purpose === 'security' ? <FontAwesomeIcon icon={faShield} /> :
+               group.purpose === 'efficiency' ? <FontAwesomeIcon icon={faBolt} /> :
+               <FontAwesomeIcon icon={faBoxArchive} />}
             </div>
             <div>
               <h3 className={`font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
@@ -115,7 +123,7 @@ const GroupsList: React.FC<GroupsListProps> = ({
 
           <div className={`flex items-center justify-between text-xs ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
             <div className="flex items-center">
-              <Database size={12} className="mr-1" />
+              <FontAwesomeIcon icon={faDatabase} className="mr-1" size="xs" />
               <span>
                 {group.collectionIds && Array.isArray(group.collectionIds)
                   ? `${group.collectionIds.length} collections`
@@ -123,7 +131,7 @@ const GroupsList: React.FC<GroupsListProps> = ({
               </span>
             </div>
             <div className="flex items-center">
-              <Users size={12} className="mr-1" />
+              <FontAwesomeIcon icon={faUsers} className="mr-1" size="xs" />
               <span>
                 {group.adminUsers && Array.isArray(group.adminUsers)
                   ? `${group.adminUsers.length} admins`

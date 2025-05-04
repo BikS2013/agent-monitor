@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { Package, Plus, Search, Edit, Share2, Download, Settings } from 'lucide-react';
 import GroupsList from '../components/GroupsList';
 import GroupDetail from '../components/GroupDetail';
 import NewGroupModal from '../components/modals/NewGroupModal';
@@ -7,6 +6,16 @@ import EditGroupModal from '../components/modals/EditGroupModal';
 import { useData } from '../context/DataContext';
 import { Group, Collection, Conversation } from '../data/types';
 import { useTheme } from '../context/ThemeContext';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import {
+  faBoxArchive,
+  faPlus,
+  faMagnifyingGlass,
+  faPenToSquare,
+  faShareNodes,
+  faDownload,
+  faGear
+} from '@fortawesome/free-solid-svg-icons';
 
 interface GroupsViewProps {
   onSelectCollection: (collection: Collection) => void;
@@ -69,12 +78,15 @@ const GroupsView: React.FC<GroupsViewProps> = ({
               onClick={() => setIsNewGroupModalOpen(true)}
               className={`p-2 ${theme === 'dark' ? 'hover:bg-gray-700' : 'hover:bg-gray-100'} rounded`}
             >
-              <Plus size={20} className={`${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`} />
+              <FontAwesomeIcon icon={faPlus} className={`${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`} />
             </button>
           </div>
 
           <div className="relative">
-            <Search size={16} className={`absolute left-3 top-1/2 transform -translate-y-1/2 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-400'}`} />
+            <FontAwesomeIcon
+              icon={faMagnifyingGlass}
+              className={`absolute left-3 top-1/2 transform -translate-y-1/2 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-400'}`}
+            />
             <input
               type="text"
               placeholder="Search groups..."
@@ -108,10 +120,7 @@ const GroupsView: React.FC<GroupsViewProps> = ({
               <div className="flex items-center">
                 <div className="bg-white bg-opacity-30 p-2 rounded-lg mr-3">
                   <div className="text-white">
-                    {selectedGroup.purpose === 'evaluation' ? <Package size={24} /> :
-                     selectedGroup.purpose === 'security' ? <Package size={24} /> :
-                     selectedGroup.purpose === 'efficiency' ? <Package size={24} /> :
-                     <Package size={24} />}
+                    <FontAwesomeIcon icon={faBoxArchive} size="lg" />
                   </div>
                 </div>
                 <div>
@@ -125,16 +134,16 @@ const GroupsView: React.FC<GroupsViewProps> = ({
                   title="Edit Group"
                   onClick={() => setIsEditGroupModalOpen(true)}
                 >
-                  <Edit size={18} />
+                  <FontAwesomeIcon icon={faPenToSquare} />
                 </button>
                 <button className="p-2 hover:bg-white hover:bg-opacity-10 rounded" title="Share Group">
-                  <Share2 size={18} />
+                  <FontAwesomeIcon icon={faShareNodes} />
                 </button>
                 <button className="p-2 hover:bg-white hover:bg-opacity-10 rounded" title="Download Group Data">
-                  <Download size={18} />
+                  <FontAwesomeIcon icon={faDownload} />
                 </button>
                 <button className="p-2 hover:bg-white hover:bg-opacity-10 rounded" title="Group Settings">
-                  <Settings size={18} />
+                  <FontAwesomeIcon icon={faGear} />
                 </button>
               </div>
             </div>
@@ -152,7 +161,7 @@ const GroupsView: React.FC<GroupsViewProps> = ({
       ) : (
         <div className={`flex-1 flex items-center justify-center ${theme === 'dark' ? 'bg-gray-800' : 'bg-gray-50'}`} style={{ height: 'calc(100vh - 64px)' }}>
           <div className="text-center">
-            <Package size={48} className={`mx-auto ${theme === 'dark' ? 'text-gray-500' : 'text-gray-400'} mb-4`} />
+            <FontAwesomeIcon icon={faBoxArchive} size="3x" className={`mx-auto ${theme === 'dark' ? 'text-gray-500' : 'text-gray-400'} mb-4`} />
             <h3 className={`text-lg font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'} mb-2`}>Select a group</h3>
             <p className={`${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>Choose a group to view its collections and details</p>
           </div>
