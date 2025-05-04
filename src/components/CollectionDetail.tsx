@@ -168,32 +168,30 @@ const CollectionDetail = memo<CollectionDetailProps>(({
       />
     </div>
   );
-};
-
 }, (prevProps, nextProps) => {
   // Compare collection IDs
   if (prevProps.collection.id !== nextProps.collection.id) {
     return false; // Collection changed, need to re-render
   }
-  
+
   // Fast path: check conversation count
   if (prevProps.conversations.length !== nextProps.conversations.length) {
     return false; // Conversation count changed, need to re-render
   }
-  
+
   // Check if conversations array has changed
   const prevConvIds = prevProps.conversations.map(c => c.id).sort().join(',');
   const nextConvIds = nextProps.conversations.map(c => c.id).sort().join(',');
   if (prevConvIds !== nextConvIds) {
     return false; // Conversation IDs changed, need to re-render
   }
-  
+
   // Check for critical field changes in the collection object
   if (prevProps.collection.name !== nextProps.collection.name ||
       prevProps.collection.description !== nextProps.collection.description) {
     return false; // Collection metadata changed, need to re-render
   }
-  
+
   // If we got here, no important changes detected
   return true; // Skip re-render
 });

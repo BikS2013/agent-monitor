@@ -1,7 +1,8 @@
 import React, { useState, memo, useMemo } from 'react';
 import { Filter, Search, Users, Bot, Brain, CheckCircle, XCircle } from 'lucide-react';
-import { Conversation } from '../data/types';
+import { Conversation, AIAgent } from '../data/types';
 import { useTheme } from '../context/ThemeContext';
+import { useData } from '../context/DataContext';
 
 interface ConversationsListProps {
   conversations: Record<string, Conversation>;
@@ -16,22 +17,47 @@ const ConversationsList = memo<ConversationsListProps>(({
   setSelectedConversation
 }) => {
   const { theme } = useTheme();
+  const { aiAgents } = useData();
   const [isFiltersOpen, setIsFiltersOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+
+  // Add state for filters
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [conclusionFilter, setConclusionFilter] = useState('all');
+  const [agentFilter, setAgentFilter] = useState('all');
 
   // Use useMemo to prevent recomputing the filtered conversations on every render
   const filteredConversations = useMemo(() => {
     return Object.values(conversations).filter(conversation => {
-      if (!searchTerm) return true;
+      // Apply search filter
+      if (searchTerm) {
+        const searchMatch =
+          conversation.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          conversation.userName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          conversation.aiAgentName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          conversation.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()));
 
-      return (
-        conversation.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        conversation.userName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        conversation.aiAgentName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        conversation.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()))
-      );
+        if (!searchMatch) return false;
+      }
+
+      // Apply status filter
+      if (statusFilter !== 'all' && conversation.status !== statusFilter) {
+        return false;
+      }
+
+      // Apply conclusion filter
+      if (conclusionFilter !== 'all' && conversation.conclusion !== conclusionFilter) {
+        return false;
+      }
+
+      // Apply agent filter
+      if (agentFilter !== 'all' && conversation.aiAgentId !== agentFilter) {
+        return false;
+      }
+
+      return true;
     });
-  }, [conversations, searchTerm]);
+  }, [conversations, searchTerm, statusFilter, conclusionFilter, agentFilter]);
 
   return (
     <div className={`w-96 ${theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} border-r overflow-y-auto`}>
@@ -64,7 +90,11 @@ const ConversationsList = memo<ConversationsListProps>(({
           <div className="space-y-2">
             <div>
               <label className={`block text-sm ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'} mb-1`}>Status</label>
-              <select className={`w-full p-2 border rounded ${theme === 'dark' ? 'bg-gray-800 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'}`}>
+              <select
+                className={`w-full p-2 border rounded ${theme === 'dark' ? 'bg-gray-800 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'}`}
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+              >
                 <option value="all">All</option>
                 <option value="active">Active</option>
                 <option value="closed">Closed</option>
@@ -72,7 +102,11 @@ const ConversationsList = memo<ConversationsListProps>(({
             </div>
             <div>
               <label className={`block text-sm ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'} mb-1`}>Conclusion</label>
-              <select className={`w-full p-2 border rounded ${theme === 'dark' ? 'bg-gray-800 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'}`}>
+              <select
+                className={`w-full p-2 border rounded ${theme === 'dark' ? 'bg-gray-800 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'}`}
+                value={conclusionFilter}
+                onChange={(e) => setConclusionFilter(e.target.value)}
+              >
                 <option value="all">All</option>
                 <option value="successful">Successful</option>
                 <option value="unsuccessful">Unsuccessful</option>
@@ -81,10 +115,17 @@ const ConversationsList = memo<ConversationsListProps>(({
             </div>
             <div>
               <label className={`block text-sm ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'} mb-1`}>AI Agent</label>
-              <select className={`w-full p-2 border rounded ${theme === 'dark' ? 'bg-gray-800 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'}`}>
+              <select
+                className={`w-full p-2 border rounded ${theme === 'dark' ? 'bg-gray-800 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'}`}
+                value={agentFilter}
+                onChange={(e) => setAgentFilter(e.target.value)}
+              >
                 <option value="all">All</option>
-                <option value="ai1">Customer Service Bot</option>
-                <option value="ai2">Technical Support AI</option>
+                {Object.values(aiAgents).map((agent) => (
+                  <option key={agent.id} value={agent.id}>
+                    {agent.name}
+                  </option>
+                ))}
               </select>
             </div>
           </div>
@@ -137,6 +178,15 @@ const ConversationsList = memo<ConversationsListProps>(({
     </div>
   );
 }, (prevProps, nextProps) => {
+  // We're not using the memo optimization for this component anymore
+  // since we have filter state that's not part of the props
+  // This ensures the component always re-renders when filter state changes
+  return false;
+
+  // Note: The original memo optimization logic is kept below for reference
+  // but it's not being used anymore
+
+  /*
   // 1. Check if selected conversation has changed (most common case)
   const prevSelectedId = prevProps.selectedConversation?.id;
   const nextSelectedId = nextProps.selectedConversation?.id;
@@ -150,35 +200,36 @@ const ConversationsList = memo<ConversationsListProps>(({
   if (prevCount !== nextCount) {
     return false; // Count changed, need to re-render
   }
-  
+
   // 3. Only if counts are the same, do a more detailed comparison
   // This is faster than joining and comparing strings
   const prevKeys = Object.keys(prevProps.conversations).sort();
   const nextKeys = Object.keys(nextProps.conversations).sort();
-  
+
   // Check if any keys differ
   for (let i = 0; i < prevKeys.length; i++) {
     if (prevKeys[i] !== nextKeys[i]) {
       return false; // Keys are different, need to re-render
     }
   }
-  
+
   // 4. Additional check for content changes in conversations with same keys
   // This detects if a conversation object was modified (conclusion changed, etc.)
   // Only check a few key properties to keep this efficient
   for (const key of prevKeys) {
     const prevConv = prevProps.conversations[key];
     const nextConv = nextProps.conversations[key];
-    
+
     // Check critical fields that would affect rendering
     if (prevConv.conclusion !== nextConv.conclusion ||
         prevConv.confidence !== nextConv.confidence) {
       return false; // Content changed, need to re-render
     }
   }
-  
+
   // If we got here, no important changes detected
   return true; // Skip re-render
+  */
 });
 
 export default ConversationsList;
