@@ -46,6 +46,10 @@ interface DataContextType {
   addGroup: (groupData: Omit<Group, 'id'>) => Promise<Group>;
   addAIAgent: (agentData: Omit<AIAgent, 'id'>) => Promise<AIAgent>;
 
+  // Data update methods
+  updateGroup: (group: Group) => Promise<Group>;
+  updateAIAgent: (agent: AIAgent) => Promise<AIAgent>;
+
   // Refresh methods
   refreshData: () => Promise<void>;
   refreshCollection: (collectionId: string) => Promise<void>;
@@ -268,58 +272,58 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       .filter(msgId => messages[msgId]) // Only include messages we already have
       .map(msgId => messages[msgId])
       .sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
-    
+
     // If we have all messages cached and there's at least one, return them immediately
-    const hasAllCachedMessages = 
-      cachedMessages.length === conversation.messages.length && 
+    const hasAllCachedMessages =
+      cachedMessages.length === conversation.messages.length &&
       cachedMessages.length > 0;
-    
+
     if (hasAllCachedMessages) {
       console.log(`DataContext: Using ${cachedMessages.length} cached messages for conversation ${conversationId}`);
       return cachedMessages;
     }
-    
+
     // Implement strict throttling for message loading (max once per second per conversation)
     // Return cached messages (even if incomplete) during throttling period
-    if (lastConversationMessageLoad && 
+    if (lastConversationMessageLoad &&
         lastConversationMessageLoad.id === conversationId &&
         Date.now() - lastConversationMessageLoad.timestamp < 1000) {
       console.log(`DataContext: Throttling message load for ${conversationId}, last load was ${Date.now() - lastConversationMessageLoad.timestamp}ms ago`);
-      
+
       // If we have any cached messages, return them during throttling
       if (cachedMessages.length > 0) {
         return cachedMessages;
       }
     }
-    
+
     // Generate a unique ID for this request to track cancellations
     const requestId = Date.now();
-    
+
     // Use a ref to track the latest request (instead of window global)
     const currentLatestRequestId = (window as any)._latestMessageRequest || 0;
     if (requestId <= currentLatestRequestId) {
       console.log(`DataContext: Request ${requestId} is not newer than current latest ${currentLatestRequestId}, using cached data`);
       return cachedMessages.length > 0 ? cachedMessages : [];
     }
-    
+
     // Set this as the latest request
     (window as any)._latestMessageRequest = requestId;
-    
+
     // Update the last load timestamp atomically
     setLastConversationMessageLoad({
       id: conversationId,
       timestamp: Date.now()
     });
-    
+
     // Use ref to track if this request was canceled
     let wasRequestCanceled = false;
-    
+
     try {
       console.log(`DataContext: Loading messages for conversation ${conversationId} (request ${requestId})`);
-      
+
       // Set loading state
       setLoading(prev => ({ ...prev, messages: true }));
-      
+
       // Return any partial cached results if this request is canceled before repository call
       if ((window as any)._latestMessageRequest !== requestId) {
         wasRequestCanceled = true;
@@ -330,14 +334,14 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       // Get new messages from the repository
       console.log(`DataContext: Fetching messages for conversation ${conversationId} from repository`);
       const messagesResult = await conversationRepository.getMessages(conversationId);
-      
+
       // Verify if this request is still the latest after repository call
       if ((window as any)._latestMessageRequest !== requestId) {
         wasRequestCanceled = true;
         console.log(`DataContext: Request ${requestId} was superseded during repository call`);
         return cachedMessages.length > 0 ? cachedMessages : messagesResult.data;
       }
-      
+
       console.log(`DataContext: Received ${messagesResult.data.length} messages for request ${requestId}`);
 
       // Use functional update to atomically update the messages state
@@ -348,21 +352,21 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         });
         return merged;
       });
-      
+
       // Clean up loading state if this is still the latest request
       if ((window as any)._latestMessageRequest === requestId) {
         setLoading(prev => ({ ...prev, messages: false }));
       }
-      
+
       return messagesResult.data;
     } catch (error) {
       console.error(`Failed to get messages for conversation ${conversationId} (request ${requestId}):`, error);
-      
+
       // Only update loading state if this was the latest request
       if ((window as any)._latestMessageRequest === requestId) {
         setLoading(prev => ({ ...prev, messages: false }));
       }
-      
+
       // Return any cached messages on error
       return cachedMessages.length > 0 ? cachedMessages : [];
     } finally {
@@ -606,6 +610,58 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   };
 
+  /**
+   * Update an existing group
+   */
+  const updateGroup = async (group: Group): Promise<Group> => {
+    if (!initialized || !groupRepository) {
+      throw new Error('Group repository not initialized');
+    }
+
+    try {
+      // For mock implementation, just update the state directly
+      // In a real implementation, this would call the repository's update method
+      // const updatedGroup = await groupRepository.update(group.id, group);
+
+      // Update groups state
+      setGroups(prev => ({
+        ...prev,
+        [group.id]: group
+      }));
+
+      return group;
+    } catch (error) {
+      console.error(`Failed to update group ${group.id}:`, error);
+      throw error;
+    }
+  };
+
+  /**
+   * Update an existing AI agent
+   */
+  const updateAIAgent = async (agent: AIAgent): Promise<AIAgent> => {
+    if (!initialized || !aiAgentRepository) {
+      throw new Error('AI agent repository not initialized');
+    }
+
+    try {
+      // For mock implementation, just update the state directly
+      // In a real implementation, this would call the repository's update method
+      // const updatedAgent = await aiAgentRepository.update(agent.id, agent);
+
+      // Update AI agents state
+      setAIAgents(prev => ({
+        ...prev,
+        [agent.id]: agent
+      }));
+
+      return agent;
+    } catch (error) {
+      console.error(`Failed to update AI agent ${agent.id}:`, error);
+      throw error;
+    }
+  };
+
   const value: DataContextType = {
     // State data
     messages,
@@ -628,6 +684,10 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     addCollection,
     addGroup,
     addAIAgent,
+
+    // Data update methods
+    updateGroup,
+    updateAIAgent,
 
     // Refresh methods
     refreshData,

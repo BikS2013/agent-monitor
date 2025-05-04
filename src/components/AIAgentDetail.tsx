@@ -1,7 +1,8 @@
-import React from 'react';
-import { Bot, Activity, Clock, CheckCircle, MessageCircle, BarChart3, Settings, Power, Zap } from 'lucide-react';
+import React, { useState } from 'react';
+import { Bot, Activity, Clock, CheckCircle, MessageCircle, BarChart3, Settings, Power, Zap, Edit } from 'lucide-react';
 import { AIAgent } from '../data/types';
 import { useTheme } from '../context/ThemeContext';
+import EditAIAgentModal from './modals/EditAIAgentModal';
 
 interface AIAgentDetailProps {
   agent: AIAgent;
@@ -9,6 +10,7 @@ interface AIAgentDetailProps {
 
 const AIAgentDetail: React.FC<AIAgentDetailProps> = ({ agent }) => {
   const { theme } = useTheme();
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   return (
     <div className="flex-1 flex flex-col">
       <div className={`${theme === 'dark' ? 'bg-blue-800' : 'bg-blue-600'} text-white p-4 border-b`}>
@@ -28,6 +30,13 @@ const AIAgentDetail: React.FC<AIAgentDetailProps> = ({ agent }) => {
               agent.status === 'inactive' ? 'bg-gray-500' : 'bg-blue-500'
             }`}>
               {agent.status}
+            </button>
+            <button
+              className="p-2 hover:bg-white hover:bg-opacity-10 rounded"
+              onClick={() => setIsEditModalOpen(true)}
+              title="Edit Agent"
+            >
+              <Edit size={18} />
             </button>
             <button className="p-2 hover:bg-white hover:bg-opacity-10 rounded">
               <Power size={18} />
@@ -164,6 +173,13 @@ const AIAgentDetail: React.FC<AIAgentDetailProps> = ({ agent }) => {
           </div>
         </div>
       </div>
+
+      {/* Edit AI Agent Modal */}
+      <EditAIAgentModal
+        isOpen={isEditModalOpen}
+        onClose={() => setIsEditModalOpen(false)}
+        agent={agent}
+      />
     </div>
   );
 };

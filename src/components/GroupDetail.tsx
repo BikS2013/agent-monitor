@@ -1,7 +1,8 @@
-import React from 'react';
-import { Activity, Shield, Zap, Users, Database, Settings, Download, Share2, Package } from 'lucide-react';
+import React, { useState } from 'react';
+import { Activity, Shield, Zap, Users, Database, Settings, Download, Share2, Package, Edit } from 'lucide-react';
 import { Group, Collection } from '../data/types';
 import { useTheme } from '../context/ThemeContext';
+import EditGroupModal from './modals/EditGroupModal';
 
 interface GroupDetailProps {
   group: Group;
@@ -15,6 +16,7 @@ const GroupDetail: React.FC<GroupDetailProps> = ({
   onSelectCollection
 }) => {
   const { theme } = useTheme();
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
   const getPurposeColor = () => {
     // Add null check for group.purpose
@@ -51,6 +53,13 @@ const GroupDetail: React.FC<GroupDetailProps> = ({
             </div>
           </div>
           <div className="flex items-center space-x-2">
+            <button
+              className="p-2 hover:bg-white hover:bg-opacity-10 rounded"
+              onClick={() => setIsEditModalOpen(true)}
+              title="Edit Group"
+            >
+              <Edit size={18} />
+            </button>
             <button className="p-2 hover:bg-white hover:bg-opacity-10 rounded">
               <Share2 size={18} />
             </button>
@@ -174,6 +183,13 @@ const GroupDetail: React.FC<GroupDetailProps> = ({
           )}
         </div>
       </div>
+
+      {/* Edit Group Modal */}
+      <EditGroupModal
+        isOpen={isEditModalOpen}
+        onClose={() => setIsEditModalOpen(false)}
+        group={group}
+      />
     </div>
   );
 };
