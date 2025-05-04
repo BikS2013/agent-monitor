@@ -23,6 +23,7 @@ import {
   AIAgent,
   User
 } from './types';
+import { filterConversationsByCollectionCriteria } from './filterUtils';
 
 // Mock API functions to simulate backend calls
 
@@ -112,16 +113,76 @@ export const getCurrentUser = (): User => {
   return users['admin1'];
 };
 
-// Create new items
-export const createCollection = (collectionData: Omit<Collection, 'id'>): Collection => {
+// Create or update collections
+export const createCollection = (collectionData: Omit<Collection, 'id'> & { id?: string }): Collection => {
+  // Apply filter criteria to get matching conversations
+  const matchingConversationIds = filterConversationsByCollectionCriteria(
+    conversations,
+    collectionData.filterCriteria
+  );
+
+  // Update the conversations list in the collection data
+  const updatedData = {
+    ...collectionData,
+    conversations: matchingConversationIds,
+    metadata: {
+      ...collectionData.metadata,
+      totalConversations: matchingConversationIds.length,
+      // Calculate average duration if there are conversations
+      avgDuration: matchingConversationIds.length > 0
+        ? calculateAverageDuration(matchingConversationIds)
+        : '0m'
+    }
+  };
+
+  // If id is provided, update existing collection
+  if (updatedData.id && collections[updatedData.id]) {
+    const { id, ...data } = updatedData;
+    const updatedCollection: Collection = {
+      id,
+      ...data
+    };
+
+    collections[id] = updatedCollection;
+    return updatedCollection;
+  }
+
+  // Otherwise create a new collection
   const id = `c${Object.keys(collections).length + 1}`;
   const newCollection: Collection = {
     id,
-    ...collectionData
+    ...updatedData
   };
 
   collections[id] = newCollection;
   return newCollection;
+};
+
+// Helper function to calculate average duration of conversations
+const calculateAverageDuration = (conversationIds: string[]): string => {
+  if (conversationIds.length === 0) return '0m';
+
+  // Extract duration strings and convert to minutes
+  const durationRegex = /(\d+)m/;
+  let totalMinutes = 0;
+  let count = 0;
+
+  conversationIds.forEach(id => {
+    const conversation = conversations[id];
+    if (conversation) {
+      const match = conversation.duration.match(durationRegex);
+      if (match && match[1]) {
+        totalMinutes += parseInt(match[1]);
+        count++;
+      }
+    }
+  });
+
+  if (count === 0) return '0m';
+
+  // Calculate average and round to nearest minute
+  const avgMinutes = Math.round(totalMinutes / count);
+  return `${avgMinutes}m`;
 };
 
 export const createGroup = (groupData: Omit<Group, 'id'>): Group => {

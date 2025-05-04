@@ -1,6 +1,7 @@
-import React from 'react';
-import { Calendar, Users, Database, Filter, CheckCircle, XCircle, Download, Share2 } from 'lucide-react';
+import React, { useState } from 'react';
+import { Calendar, Users, Database, Filter, CheckCircle, XCircle, Download, Share2, Edit } from 'lucide-react';
 import { Collection, Conversation } from '../data/types';
+import NewCollectionModal from './modals/NewCollectionModal';
 
 interface CollectionDetailProps {
   collection: Collection;
@@ -8,11 +9,12 @@ interface CollectionDetailProps {
   onSelectConversation: (conversation: Conversation) => void;
 }
 
-const CollectionDetail: React.FC<CollectionDetailProps> = ({ 
-  collection, 
+const CollectionDetail: React.FC<CollectionDetailProps> = ({
+  collection,
   conversations,
   onSelectConversation
 }) => {
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   return (
     <div className="flex-1 flex flex-col">
       <div className="bg-indigo-600 text-white p-4 border-b">
@@ -22,16 +24,23 @@ const CollectionDetail: React.FC<CollectionDetailProps> = ({
             <p className="text-sm opacity-90">{collection.description}</p>
           </div>
           <div className="flex items-center space-x-2">
-            <button className="p-2 hover:bg-indigo-700 rounded">
+            <button
+              onClick={() => setIsEditModalOpen(true)}
+              className="p-2 hover:bg-indigo-700 rounded"
+              title="Edit Collection"
+            >
+              <Edit size={18} />
+            </button>
+            <button className="p-2 hover:bg-indigo-700 rounded" title="Share Collection">
               <Share2 size={18} />
             </button>
-            <button className="p-2 hover:bg-indigo-700 rounded">
+            <button className="p-2 hover:bg-indigo-700 rounded" title="Download Collection">
               <Download size={18} />
             </button>
           </div>
         </div>
       </div>
-      
+
       <div className="p-4 bg-gray-50 border-b">
         <div className="flex flex-wrap gap-4">
           <div className="bg-white p-3 rounded shadow-sm flex items-center space-x-3">
@@ -41,7 +50,7 @@ const CollectionDetail: React.FC<CollectionDetailProps> = ({
               <div className="font-medium">{new Date(collection.creationTimestamp).toLocaleDateString()}</div>
             </div>
           </div>
-          
+
           <div className="bg-white p-3 rounded shadow-sm flex items-center space-x-3">
             <Users size={18} className="text-indigo-500" />
             <div>
@@ -49,7 +58,7 @@ const CollectionDetail: React.FC<CollectionDetailProps> = ({
               <div className="font-medium">{collection.creator}</div>
             </div>
           </div>
-          
+
           <div className="bg-white p-3 rounded shadow-sm flex items-center space-x-3">
             <Database size={18} className="text-indigo-500" />
             <div>
@@ -57,13 +66,13 @@ const CollectionDetail: React.FC<CollectionDetailProps> = ({
               <div className="font-medium">{conversations.length}</div>
             </div>
           </div>
-          
+
           <div className="bg-white p-3 rounded shadow-sm flex items-center space-x-3">
             <Filter size={18} className="text-indigo-500" />
             <div>
               <div className="text-xs text-gray-500">Filter Type</div>
               <div className="font-medium">
-                {collection.filterCriteria.aiAgentBased ? 'AI Agent' : 
+                {collection.filterCriteria.aiAgentBased ? 'AI Agent' :
                  collection.filterCriteria.timeBased ? 'Time-based' :
                  collection.filterCriteria.outcomeBased ? 'Outcome' : 'Multi-factor'}
               </div>
@@ -71,11 +80,11 @@ const CollectionDetail: React.FC<CollectionDetailProps> = ({
           </div>
         </div>
       </div>
-      
+
       <div className="flex-1 overflow-y-auto">
         <div className="p-4">
           <h3 className="text-lg font-medium mb-4">Conversations in this Collection</h3>
-          
+
           <div className="bg-white rounded-lg shadow overflow-hidden">
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
@@ -91,8 +100,8 @@ const CollectionDetail: React.FC<CollectionDetailProps> = ({
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
                 {conversations.map((conversation) => (
-                  <tr 
-                    key={conversation.id} 
+                  <tr
+                    key={conversation.id}
                     className="hover:bg-gray-50 cursor-pointer"
                     onClick={() => onSelectConversation(conversation)}
                   >
@@ -127,6 +136,13 @@ const CollectionDetail: React.FC<CollectionDetailProps> = ({
           </div>
         </div>
       </div>
+
+      {/* Edit Collection Modal */}
+      <NewCollectionModal
+        isOpen={isEditModalOpen}
+        onClose={() => setIsEditModalOpen(false)}
+        collectionToEdit={collection}
+      />
     </div>
   );
 };

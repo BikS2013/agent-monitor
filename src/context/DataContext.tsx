@@ -27,7 +27,7 @@ interface DataContextType {
   getConversationsByCollectionId: (collectionId: string) => Conversation[];
   getCollectionsByGroupId: (groupId: string) => Collection[];
   getCurrentUser: () => User;
-  addCollection: (collectionData: Omit<Collection, 'id'>) => Collection;
+  addCollection: (collectionData: Omit<Collection, 'id'> & { id?: string }) => Collection;
   addGroup: (groupData: Omit<Group, 'id'>) => Group;
   addAIAgent: (agentData: Omit<AIAgent, 'id'>) => AIAgent;
   refreshData: () => void;
@@ -58,14 +58,14 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     setUsers(getUsers());
   };
 
-  // Functions to add new items
-  const addCollection = (collectionData: Omit<Collection, 'id'>): Collection => {
-    const newCollection = createCollection(collectionData);
+  // Functions to add or update items
+  const addCollection = (collectionData: Omit<Collection, 'id'> & { id?: string }): Collection => {
+    const collection = createCollection(collectionData);
     setCollections(prev => ({
       ...prev,
-      [newCollection.id]: newCollection
+      [collection.id]: collection
     }));
-    return newCollection;
+    return collection;
   };
 
   const addGroup = (groupData: Omit<Group, 'id'>): Group => {
