@@ -149,8 +149,10 @@ const ConversationsView: React.FC<ConversationsViewProps> = ({
   // Memoize the entire UI to prevent unnecessary re-renders
   const uiContent = useMemo(() => {
     return (
-      <div className="flex flex-1 h-screen">
-        <div className="w-96 border-r overflow-y-auto" style={{ height: 'calc(100vh - 64px)' }}>
+      <div className="flex flex-1" style={{ height: 'calc(100vh - 64px)' }}>
+        {/* Left sidebar with fixed header (A2) and scrollable content (B1) */}
+        <div className="w-96 border-r flex flex-col" style={{ height: 'calc(100vh - 64px)' }}>
+          {/* A2 area is handled inside ConversationsList component */}
           <ConversationsList
             conversations={conversations}
             selectedConversation={selectedConversation}
@@ -158,8 +160,10 @@ const ConversationsView: React.FC<ConversationsViewProps> = ({
           />
         </div>
 
+        {/* Main content area with fixed header (A3) and scrollable content (B2) */}
         {selectedConversation ? (
-          <div className="flex-1 bg-gray-50 overflow-y-auto" style={{ height: 'calc(100vh - 64px)' }}>
+          <div className="flex-1 flex flex-col" style={{ height: 'calc(100vh - 64px)' }}>
+            {/* A3 area is handled inside ConversationDetail component */}
             <ConversationDetail
               conversation={selectedConversation}
               messages={conversationMessages}

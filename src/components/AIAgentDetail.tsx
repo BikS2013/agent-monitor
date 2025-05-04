@@ -12,7 +12,8 @@ const AIAgentDetail: React.FC<AIAgentDetailProps> = ({ agent }) => {
   const { theme } = useTheme();
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   return (
-    <div className="flex-1 flex flex-col">
+    <div className="flex-1 flex flex-col h-full">
+      {/* A3 area - Fixed header */}
       <div className={`${theme === 'dark' ? 'bg-blue-800' : 'bg-blue-600'} text-white p-4 border-b`}>
         <div className="flex items-center justify-between">
           <div className="flex items-center">
@@ -38,54 +39,55 @@ const AIAgentDetail: React.FC<AIAgentDetailProps> = ({ agent }) => {
             >
               <Edit size={18} />
             </button>
-            <button className="p-2 hover:bg-white hover:bg-opacity-10 rounded">
+            <button className="p-2 hover:bg-white hover:bg-opacity-10 rounded" title="Toggle Agent Status">
               <Power size={18} />
             </button>
-            <button className="p-2 hover:bg-white hover:bg-opacity-10 rounded">
+            <button className="p-2 hover:bg-white hover:bg-opacity-10 rounded" title="Agent Settings">
               <Settings size={18} />
             </button>
           </div>
         </div>
       </div>
 
-      <div className={`p-4 ${theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-gray-50 border-gray-200'} border-b`}>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div className={`${theme === 'dark' ? 'bg-gray-700' : 'bg-white'} p-3 rounded shadow-sm flex items-center space-x-3`}>
-            <MessageCircle size={18} className="text-blue-500" />
-            <div>
-              <div className={`text-xs ${theme === 'dark' ? 'text-gray-300' : 'text-gray-500'}`}>Conversations</div>
-              <div className={`font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>{agent.conversationsProcessed}</div>
+      {/* B2 area - Scrollable content */}
+      <div className="flex-1 overflow-y-auto">
+        <div className={`p-4 ${theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-gray-50 border-gray-200'} border-b`}>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className={`${theme === 'dark' ? 'bg-gray-700' : 'bg-white'} p-3 rounded shadow-sm flex items-center space-x-3`}>
+              <MessageCircle size={18} className="text-blue-500" />
+              <div>
+                <div className={`text-xs ${theme === 'dark' ? 'text-gray-300' : 'text-gray-500'}`}>Conversations</div>
+                <div className={`font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>{agent.conversationsProcessed}</div>
+              </div>
             </div>
-          </div>
 
-          <div className={`${theme === 'dark' ? 'bg-gray-700' : 'bg-white'} p-3 rounded shadow-sm flex items-center space-x-3`}>
-            <CheckCircle size={18} className="text-green-500" />
-            <div>
-              <div className={`text-xs ${theme === 'dark' ? 'text-gray-300' : 'text-gray-500'}`}>Success Rate</div>
-              <div className={`font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>{agent.successRate}</div>
+            <div className={`${theme === 'dark' ? 'bg-gray-700' : 'bg-white'} p-3 rounded shadow-sm flex items-center space-x-3`}>
+              <CheckCircle size={18} className="text-green-500" />
+              <div>
+                <div className={`text-xs ${theme === 'dark' ? 'text-gray-300' : 'text-gray-500'}`}>Success Rate</div>
+                <div className={`font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>{agent.successRate}</div>
+              </div>
             </div>
-          </div>
 
-          <div className={`${theme === 'dark' ? 'bg-gray-700' : 'bg-white'} p-3 rounded shadow-sm flex items-center space-x-3`}>
-            <Clock size={18} className="text-purple-500" />
-            <div>
-              <div className={`text-xs ${theme === 'dark' ? 'text-gray-300' : 'text-gray-500'}`}>Avg Response</div>
-              <div className={`font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>{agent.avgResponseTime}</div>
+            <div className={`${theme === 'dark' ? 'bg-gray-700' : 'bg-white'} p-3 rounded shadow-sm flex items-center space-x-3`}>
+              <Clock size={18} className="text-purple-500" />
+              <div>
+                <div className={`text-xs ${theme === 'dark' ? 'text-gray-300' : 'text-gray-500'}`}>Avg Response</div>
+                <div className={`font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>{agent.avgResponseTime}</div>
+              </div>
             </div>
-          </div>
 
-          <div className={`${theme === 'dark' ? 'bg-gray-700' : 'bg-white'} p-3 rounded shadow-sm flex items-center space-x-3`}>
-            <Activity size={18} className="text-orange-500" />
-            <div>
-              <div className={`text-xs ${theme === 'dark' ? 'text-gray-300' : 'text-gray-500'}`}>Last Active</div>
-              <div className={`font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>{agent.lastActive}</div>
+            <div className={`${theme === 'dark' ? 'bg-gray-700' : 'bg-white'} p-3 rounded shadow-sm flex items-center space-x-3`}>
+              <Activity size={18} className="text-orange-500" />
+              <div>
+                <div className={`text-xs ${theme === 'dark' ? 'text-gray-300' : 'text-gray-500'}`}>Last Active</div>
+                <div className={`font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>{agent.lastActive}</div>
+              </div>
             </div>
           </div>
         </div>
-      </div>
 
-      <div className={`flex-1 overflow-y-auto ${theme === 'dark' ? 'bg-gray-800' : 'bg-white'}`}>
-        <div className="p-4">
+        <div className={`p-4 ${theme === 'dark' ? 'bg-gray-800' : 'bg-white'}`}>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className={`${theme === 'dark' ? 'bg-gray-700 border-gray-600' : 'bg-white border-gray-200'} rounded-lg shadow-sm border p-4`}>
               <h3 className={`text-lg font-medium mb-3 flex items-center ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>

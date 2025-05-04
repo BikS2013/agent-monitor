@@ -1,5 +1,5 @@
 import React from 'react';
-import { Database } from 'lucide-react';
+import { Database, Calendar, Info } from 'lucide-react';
 import { Group, Collection } from '../data/types';
 import { useTheme } from '../context/ThemeContext';
 
@@ -20,7 +20,7 @@ const GroupDetail: React.FC<GroupDetailProps> = ({
     <div className="p-4">
       <h3 className={`text-lg font-medium mb-4 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>Collections in this Group</h3>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {Array.isArray(collections) && collections.length > 0 ? collections.map((collection) => (
           <div
             key={collection.id}
@@ -34,16 +34,16 @@ const GroupDetail: React.FC<GroupDetailProps> = ({
               {collection.description || 'No description available'}
             </p>
 
-            <div className={`flex items-center justify-between text-xs ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
-              <div className="flex items-center">
-                <Database size={12} className="mr-1" />
+            <div className="flex items-center justify-between mt-2">
+              <div className={`flex items-center text-xs ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
+                <Database size={14} className="mr-1 text-indigo-500" />
                 <span>
                   {collection.conversations && Array.isArray(collection.conversations)
                     ? `${collection.conversations.length} conversations`
                     : '0 conversations'}
                 </span>
               </div>
-              <div>
+              <div className={`text-xs ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
                 Created {collection.creationTimestamp
                   ? new Date(collection.creationTimestamp).toLocaleDateString()
                   : 'unknown date'}

@@ -118,16 +118,16 @@ const GroupsView: React.FC<GroupsViewProps> = ({
                 </div>
               </div>
               <div className="flex items-center space-x-2">
-                <button className="p-2 hover:bg-white hover:bg-opacity-10 rounded">
+                <button className="p-2 hover:bg-white hover:bg-opacity-10 rounded" title="Edit Group">
                   <Edit size={18} />
                 </button>
-                <button className="p-2 hover:bg-white hover:bg-opacity-10 rounded">
+                <button className="p-2 hover:bg-white hover:bg-opacity-10 rounded" title="Share Group">
                   <Share2 size={18} />
                 </button>
-                <button className="p-2 hover:bg-white hover:bg-opacity-10 rounded">
+                <button className="p-2 hover:bg-white hover:bg-opacity-10 rounded" title="Download Group Data">
                   <Download size={18} />
                 </button>
-                <button className="p-2 hover:bg-white hover:bg-opacity-10 rounded">
+                <button className="p-2 hover:bg-white hover:bg-opacity-10 rounded" title="Group Settings">
                   <Settings size={18} />
                 </button>
               </div>

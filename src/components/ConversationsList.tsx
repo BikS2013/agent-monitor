@@ -60,9 +60,9 @@ const ConversationsList = memo<ConversationsListProps>(({
   }, [conversations, searchTerm, statusFilter, conclusionFilter, agentFilter]);
 
   return (
-    <div className={`${theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} flex flex-col`}>
-      {/* Sticky header */}
-      <div className={`sticky top-0 z-10 ${theme === 'dark' ? 'bg-gray-800' : 'bg-white'}`}>
+    <div className={`${theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} flex flex-col h-full`}>
+      {/* A2 area - Fixed header */}
+      <div className={`${theme === 'dark' ? 'bg-gray-800' : 'bg-white'}`}>
         <div className={`p-4 ${theme === 'dark' ? 'border-gray-700' : 'border-gray-200'} border-b`}>
           <div className="flex items-center justify-between mb-4">
             <h2 className={`text-lg font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>Conversations</h2>
@@ -135,8 +135,8 @@ const ConversationsList = memo<ConversationsListProps>(({
         )}
       </div>
 
-      {/* Scrollable content */}
-      <div className="overflow-y-auto">
+      {/* B1 area - Scrollable content */}
+      <div className="flex-1 overflow-y-auto">
         {filteredConversations.map((conversation) => (
         <div
           key={conversation.id}

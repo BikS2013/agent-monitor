@@ -19,7 +19,8 @@ const ConversationDetail = memo<ConversationDetailProps>(({
 }) => {
   const { theme } = useTheme();
   return (
-    <div className="flex-1 flex flex-col">
+    <div className="flex-1 flex flex-col h-full">
+      {/* A3 area - Fixed header */}
       <div className={`${theme === 'dark' ? 'bg-blue-800' : 'bg-blue-500'} text-white p-4 border-b`}>
         <div className="flex items-center justify-between">
           <div>
@@ -40,6 +41,7 @@ const ConversationDetail = memo<ConversationDetailProps>(({
         </div>
       </div>
 
+      {/* B2 area - Scrollable content */}
       <div className={`flex-1 overflow-y-auto p-6 ${theme === 'dark' ? 'bg-gray-800' : 'bg-gray-50'}`}>
         {loading ? (
           <div className="flex justify-center items-center h-full">
@@ -94,6 +96,7 @@ const ConversationDetail = memo<ConversationDetailProps>(({
         )}
       </div>
 
+      {/* Fixed footer */}
       <div className={`p-4 ${theme === 'dark' ? 'bg-gray-700 border-gray-600' : 'bg-white border-t'}`}>
         <div className="flex items-center">
           <input
@@ -110,27 +113,27 @@ const ConversationDetail = memo<ConversationDetailProps>(({
   );
 }, (prevProps, nextProps) => {
   // Only re-render if something important changes
-  
+
   // Check if conversation ID has changed (most important check)
   if (prevProps.conversation.id !== nextProps.conversation.id) {
     return false; // Re-render needed
   }
-  
+
   // Check loading state
   if (prevProps.loading !== nextProps.loading) {
     return false; // Re-render needed
   }
-  
+
   // Check error state
   if (prevProps.error !== nextProps.error) {
     return false; // Re-render needed
   }
-  
+
   // Efficient message comparison - first check length
   if (prevProps.messages.length !== nextProps.messages.length) {
     return false; // Re-render needed
   }
-  
+
   // Only do deep comparison if everything else is the same
   // Compare message IDs to detect content changes
   // This avoids expensive JSON.stringify operations
@@ -139,7 +142,7 @@ const ConversationDetail = memo<ConversationDetailProps>(({
       return false; // Re-render needed
     }
   }
-  
+
   // If we got here, no changes require a re-render
   return true;
 });
