@@ -44,78 +44,50 @@ const ConversationsView: React.FC<ConversationsViewProps> = ({
     }
   }, [conversations, selectedConversation, setSelectedConversation, loading.conversations]);
 
-  // Load messages when selected conversation changes
+  // Disable message loading for testing UI stability
   useEffect(() => {
-    // Reference flag to prevent race conditions
-    let isMounted = true;
-    
-    // Debounced message loading function to prevent UI hanging
-    const loadMessages = async () => {
-      if (!selectedConversation) {
-        setConversationMessages([]);
-        return;
-      }
-
-      // Store the conversation ID to avoid referencing a potentially stale object
-      const conversationId = selectedConversation.id;
-
-      try {
-        // Only update state if the component is still mounted
-        if (isMounted) {
-          setLoadingMessages(true);
-          setMessageError(null);
+    // Just set placeholder messages instead of loading them
+    if (selectedConversation) {
+      console.log(`ConversationsView: Message loading disabled for testing, using placeholders`);
+      
+      // Create dummy placeholder messages (2 messages)
+      const placeholderMessages: Message[] = [
+        {
+          id: 'placeholder1',
+          content: 'This is a placeholder message from the user.',
+          timestamp: new Date().toISOString(),
+          sender: 'user',
+          senderName: selectedConversation.userName,
+          messageType: 'text',
+          readStatus: true,
+          metadata: {
+            tags: ['placeholder'],
+            priority: 'medium'
+          }
+        },
+        {
+          id: 'placeholder2',
+          content: 'This is a placeholder response message from the AI.',
+          timestamp: new Date().toISOString(),
+          sender: 'ai',
+          senderName: selectedConversation.aiAgentName,
+          messageType: 'text',
+          readStatus: true,
+          metadata: {
+            tags: ['placeholder'],
+            priority: 'medium',
+            confidence: '95%'
+          }
         }
-        
-        console.log(`ConversationsView: Loading messages for conversation ${conversationId}`);
-        
-        // Fetch messages with a small delay to allow UI to update first
-        const messages = await new Promise<Message[]>((resolve) => {
-          // Use a small timeout to ensure the UI doesn't hang
-          const timeoutId = setTimeout(async () => {
-            try {
-              // Check if component is still mounted and selectedConversation hasn't changed
-              if (isMounted && selectedConversation && selectedConversation.id === conversationId) {
-                const result = await getMessagesByConversationId(conversationId);
-                resolve(result);
-              } else {
-                // If not mounted or conversation changed, return empty array
-                resolve([]);
-              }
-            } catch (error) {
-              console.error('Error in delayed message loading:', error);
-              resolve([]);
-            }
-          }, 100); // Use a slightly longer delay (100ms) for better UI responsiveness
-          
-          // Clean up the timeout if the component unmounts or effect re-runs
-          return () => clearTimeout(timeoutId);
-        });
-        
-        // Only update state if the component is still mounted and the conversation is still selected
-        if (isMounted && selectedConversation && selectedConversation.id === conversationId) {
-          setConversationMessages(messages);
-          console.log(`ConversationsView: Loaded ${messages.length} messages for conversation ${conversationId}`);
-          setLoadingMessages(false);
-        }
-      } catch (error) {
-        console.error('Error loading messages:', error);
-        // Only update state if the component is still mounted
-        if (isMounted) {
-          setMessageError('Failed to load messages');
-          setConversationMessages([]);
-          setLoadingMessages(false);
-        }
-      }
-    };
-
-    // Run message loading
-    loadMessages();
-    
-    // Cleanup function to prevent state updates after unmount
-    return () => {
-      isMounted = false;
-    };
-  }, [selectedConversation, getMessagesByConversationId]);
+      ];
+      
+      setConversationMessages(placeholderMessages);
+      setLoadingMessages(false);
+      setMessageError(null);
+    } else {
+      setConversationMessages([]);
+    }
+  }, [selectedConversation]);
 
   return (
     <div className="flex flex-1 bg-gray-50">
