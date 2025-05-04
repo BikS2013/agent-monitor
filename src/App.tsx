@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { DataProvider } from './context/DataContext';
 import Navigation from './components/Navigation';
 import DashboardView from './views/DashboardView';
 import ConversationsView from './views/ConversationsView';
@@ -76,12 +75,10 @@ const App: React.FC = () => {
   };
 
   return (
-    <DataProvider>
-      <div className="flex flex-col h-screen bg-gray-100">
-        <Navigation currentView={currentView} setCurrentView={handleViewChange} />
-        {renderContent()}
-      </div>
-    </DataProvider>
+    <div className="flex flex-col h-screen bg-gray-100">
+      <Navigation currentView={currentView} setCurrentView={handleViewChange} />
+      {renderContent()}
+    </div>
   );
 };
 

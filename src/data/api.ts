@@ -48,11 +48,41 @@ export const getMessagesByConversationId = (conversationId: string): Message[] =
 
 // Conversations
 export const getConversations = (): Record<string, Conversation> => {
+  // Add the conversationTimestamp virtual property and getOrderedMessages method to all conversations
+  Object.keys(conversations).forEach(id => {
+    const conversation = conversations[id];
+    const msgs = getMessagesByConversationId(id);
+    
+    // Set the conversationTimestamp
+    conversation.conversationTimestamp = msgs.length > 0 
+      ? msgs[0].timestamp 
+      : conversation.startTimestamp;
+    
+    // Add the getOrderedMessages method
+    conversation.getOrderedMessages = () => {
+      return getMessagesByConversationId(id);
+    };
+  });
+  
   return conversations;
 };
 
 export const getConversation = (id: string): Conversation | undefined => {
-  return conversations[id];
+  const conversation = conversations[id];
+  if (conversation) {
+    const msgs = getMessagesByConversationId(id);
+    
+    // Add the conversationTimestamp virtual property
+    conversation.conversationTimestamp = msgs.length > 0 
+      ? msgs[0].timestamp 
+      : conversation.startTimestamp;
+    
+    // Add the getOrderedMessages method
+    conversation.getOrderedMessages = () => {
+      return getMessagesByConversationId(id);
+    };
+  }
+  return conversation;
 };
 
 export const getConversationsByCollectionId = (collectionId: string): Conversation[] => {
@@ -60,17 +90,84 @@ export const getConversationsByCollectionId = (collectionId: string): Conversati
   if (!collection) return [];
 
   return collection.conversations
-    .map(conversationId => conversations[conversationId])
+    .map(conversationId => {
+      const conversation = conversations[conversationId];
+      if (conversation) {
+        const msgs = getMessagesByConversationId(conversationId);
+        
+        // Ensure the conversationTimestamp is set
+        conversation.conversationTimestamp = msgs.length > 0 
+          ? msgs[0].timestamp 
+          : conversation.startTimestamp;
+        
+        // Add the getOrderedMessages method
+        conversation.getOrderedMessages = () => {
+          return getMessagesByConversationId(conversationId);
+        };
+      }
+      return conversation;
+    })
     .filter(Boolean);
 };
 
 // Collections
 export const getCollections = (): Record<string, Collection> => {
+  // Add methods to all collections
+  Object.keys(collections).forEach(id => {
+    const collection = collections[id];
+    
+    // Add the getConversations method
+    collection.getConversations = () => {
+      return getConversationsByCollectionId(id);
+    };
+    
+    // Add the refreshConversations method
+    collection.refreshConversations = () => {
+      collection.conversations = filterConversationsByCollectionCriteria(
+        conversations,
+        collection.filterCriteria
+      );
+      
+      // Update metadata
+      collection.metadata = {
+        ...collection.metadata,
+        totalConversations: collection.conversations.length,
+        avgDuration: collection.conversations.length > 0
+          ? calculateAverageDuration(collection.conversations)
+          : '0m'
+      };
+    };
+  });
+  
   return collections;
 };
 
 export const getCollection = (id: string): Collection | undefined => {
-  return collections[id];
+  const collection = collections[id];
+  if (collection) {
+    // Add the getConversations method
+    collection.getConversations = () => {
+      return getConversationsByCollectionId(id);
+    };
+    
+    // Add the refreshConversations method
+    collection.refreshConversations = () => {
+      collection.conversations = filterConversationsByCollectionCriteria(
+        conversations,
+        collection.filterCriteria
+      );
+      
+      // Update metadata
+      collection.metadata = {
+        ...collection.metadata,
+        totalConversations: collection.conversations.length,
+        avgDuration: collection.conversations.length > 0
+          ? calculateAverageDuration(collection.conversations)
+          : '0m'
+      };
+    };
+  }
+  return collection;
 };
 
 export const getCollectionsByGroupId = (groupId: string): Collection[] => {
@@ -78,7 +175,33 @@ export const getCollectionsByGroupId = (groupId: string): Collection[] => {
   if (!group) return [];
 
   return group.collectionIds
-    .map(collectionId => collections[collectionId])
+    .map(collectionId => {
+      const collection = collections[collectionId];
+      if (collection) {
+        // Add the getConversations method
+        collection.getConversations = () => {
+          return getConversationsByCollectionId(collectionId);
+        };
+        
+        // Add the refreshConversations method
+        collection.refreshConversations = () => {
+          collection.conversations = filterConversationsByCollectionCriteria(
+            conversations,
+            collection.filterCriteria
+          );
+          
+          // Update metadata
+          collection.metadata = {
+            ...collection.metadata,
+            totalConversations: collection.conversations.length,
+            avgDuration: collection.conversations.length > 0
+              ? calculateAverageDuration(collection.conversations)
+              : '0m'
+          };
+        };
+      }
+      return collection;
+    })
     .filter(Boolean);
 };
 
@@ -135,6 +258,8 @@ export const createCollection = (collectionData: Omit<Collection, 'id'> & { id?:
     }
   };
 
+  let resultCollection: Collection;
+
   // If id is provided, update existing collection
   if (updatedData.id && collections[updatedData.id]) {
     const { id, ...data } = updatedData;
@@ -144,18 +269,41 @@ export const createCollection = (collectionData: Omit<Collection, 'id'> & { id?:
     };
 
     collections[id] = updatedCollection;
-    return updatedCollection;
-  }
+    resultCollection = updatedCollection;
+  } else {
+    // Otherwise create a new collection
+    const id = `c${Object.keys(collections).length + 1}`;
+    const newCollection: Collection = {
+      id,
+      ...updatedData
+    };
 
-  // Otherwise create a new collection
-  const id = `c${Object.keys(collections).length + 1}`;
-  const newCollection: Collection = {
-    id,
-    ...updatedData
+    collections[id] = newCollection;
+    resultCollection = newCollection;
+  }
+  
+  // Add methods to the collection
+  resultCollection.getConversations = () => {
+    return getConversationsByCollectionId(resultCollection.id);
+  };
+  
+  resultCollection.refreshConversations = () => {
+    resultCollection.conversations = filterConversationsByCollectionCriteria(
+      conversations,
+      resultCollection.filterCriteria
+    );
+    
+    // Update metadata
+    resultCollection.metadata = {
+      ...resultCollection.metadata,
+      totalConversations: resultCollection.conversations.length,
+      avgDuration: resultCollection.conversations.length > 0
+        ? calculateAverageDuration(resultCollection.conversations)
+        : '0m'
+    };
   };
 
-  collections[id] = newCollection;
-  return newCollection;
+  return resultCollection;
 };
 
 // Helper function to calculate average duration of conversations

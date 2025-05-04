@@ -33,6 +33,12 @@ export interface Conversation {
   duration: string;
   messageCount: number;
   confidence: string;
+  
+  // Virtual properties - these are not actually stored but computed on demand
+  conversationTimestamp?: string; // Will be set to the timestamp of the first message
+  
+  // Methods
+  getOrderedMessages?: () => Message[]; // Returns all messages in chronological order
 }
 
 export interface Collection {
@@ -54,6 +60,10 @@ export interface Collection {
   accessPermissions: string[];
   metadata: Record<string, any>;
   conversations: string[]; // Conversation IDs
+  
+  // Methods
+  getConversations?: () => Conversation[]; // Returns conversations based on filter criteria
+  refreshConversations?: () => void; // Re-evaluates all conversations against filter criteria
 }
 
 export interface Group {
