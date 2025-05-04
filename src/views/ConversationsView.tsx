@@ -44,8 +44,17 @@ const ConversationsView: React.FC<ConversationsViewProps> = ({
     }
   }, [conversations, selectedConversation, setSelectedConversation, loading.conversations]);
 
+  // Store the last loaded conversation ID to prevent reload loops
+  const [lastLoadedConversationId, setLastLoadedConversationId] = useState<string | null>(null);
+
   // Load messages when selected conversation changes - Improved stability
   useEffect(() => {
+    // If no conversation selected or it's the same one we just loaded, don't reload
+    if (!selectedConversation || 
+        (lastLoadedConversationId === selectedConversation.id && conversationMessages.length > 0)) {
+      return;
+    }
+
     // Reference ID to manage this effect's lifecycle
     const effectId = Date.now();
     
@@ -72,9 +81,6 @@ const ConversationsView: React.FC<ConversationsViewProps> = ({
         
         console.log(`ConversationsView: Loading messages for conversation ${conversationId}, effect #${effectId}`);
         
-        // Small artificial delay to ensure UI responsiveness
-        await new Promise(resolve => setTimeout(resolve, 10));
-        
         // Only continue if this effect is still active
         if (!isActive) {
           console.log(`ConversationsView: Effect #${effectId} no longer active, aborting message load`);
@@ -88,6 +94,8 @@ const ConversationsView: React.FC<ConversationsViewProps> = ({
         if (isActive && selectedConversation && selectedConversation.id === conversationId) {
           setConversationMessages(messages);
           setLoadingMessages(false);
+          // Remember that we've loaded this conversation
+          setLastLoadedConversationId(conversationId);
           console.log(`ConversationsView: Loaded ${messages.length} messages for conversation ${conversationId}`);
         }
       } catch (error) {
@@ -110,7 +118,7 @@ const ConversationsView: React.FC<ConversationsViewProps> = ({
       console.log(`ConversationsView: Cleaning up message loading effect #${effectId}`);
       isActive = false;
     };
-  }, [selectedConversation, getMessagesByConversationId]);
+  }, [selectedConversation, getMessagesByConversationId, lastLoadedConversationId, conversationMessages.length]);
 
   return (
     <div className="flex flex-1 bg-gray-50">

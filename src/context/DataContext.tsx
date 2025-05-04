@@ -240,17 +240,52 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   };
 
+  // Store the last loaded conversation ID and timestamp to prevent excessive loading
+  const [lastConversationMessageLoad, setLastConversationMessageLoad] = useState<{
+    id: string,
+    timestamp: number
+  } | null>(null);
+
   /**
    * Get messages for a conversation (lazy loading)
    * Added request cancellation and loading state management to prevent UI flickering
    */
   const getMessagesByConversationId = async (conversationId: string): Promise<Message[]> => {
+    // Throttle message loading requests for the same conversation (no more than once per second)
+    if (lastConversationMessageLoad && 
+        lastConversationMessageLoad.id === conversationId &&
+        Date.now() - lastConversationMessageLoad.timestamp < 1000) {
+      console.log(`DataContext: Throttling message load for ${conversationId}, last load was ${Date.now() - lastConversationMessageLoad.timestamp}ms ago`);
+      
+      // First check if we already have the messages in our local state cache
+      const conversation = conversations[conversationId];
+      if (!conversation) {
+        return [];
+      }
+
+      // Return any cached messages we already have
+      const cachedMessages = conversation.messages
+        .filter(msgId => messages[msgId])
+        .map(msgId => messages[msgId])
+        .sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
+      
+      if (cachedMessages.length > 0) {
+        return cachedMessages;
+      }
+    }
+    
     // Track if this specific request is the most recent one
     const requestId = Date.now();
     let isLatestRequest = true;
     
     // Store the latest request ID to track cancellations
     (window as any)._latestMessageRequest = requestId;
+    
+    // Update the last load timestamp
+    setLastConversationMessageLoad({
+      id: conversationId,
+      timestamp: Date.now()
+    });
     
     if (!initialized || !messageRepository || !conversationRepository) {
       return [];
