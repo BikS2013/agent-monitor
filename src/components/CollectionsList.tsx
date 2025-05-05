@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { Database, Calendar, CheckCircle, Users, Plus, Bot, Search } from 'lucide-react';
+import { Database, Calendar, CheckCircle, Users, Bot } from 'lucide-react';
 import { Collection } from '../data/types';
 import NewCollectionModal from './modals/NewCollectionModal';
 import { useTheme } from '../context/ThemeContext';

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import Modal from '../common/Modal';
 import { useData } from '../../context/DataContext';
-import { Collection, AIAgent, Conversation } from '../../data/types';
+import { Collection, User } from '../../data/types';
 import { Calendar, Bot, CheckCircle, Filter, Plus, Trash2, MessageCircle, AlertCircle } from 'lucide-react';
 import { filterConversationsByCollectionCriteria } from '../../data/filterUtils';
 import { useTheme } from '../../context/ThemeContext';
@@ -14,8 +14,21 @@ interface NewCollectionModalProps {
 
 const NewCollectionModal: React.FC<NewCollectionModalProps> = ({ isOpen, onClose, collectionToEdit }) => {
   const { addCollection, getCurrentUser, aiAgents, conversations } = useData();
-  const currentUser = getCurrentUser();
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
   const { theme } = useTheme();
+  
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const user = await getCurrentUser();
+        setCurrentUser(user);
+      } catch (error) {
+        console.error('Error fetching current user:', error);
+      }
+    };
+    
+    fetchUser();
+  }, [getCurrentUser]);
 
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
@@ -170,8 +183,8 @@ const NewCollectionModal: React.FC<NewCollectionModalProps> = ({ isOpen, onClose
       description,
       filterCriteria,
       creationTimestamp: collectionToEdit?.creationTimestamp || new Date().toISOString(),
-      creator: collectionToEdit?.creator || currentUser.id,
-      accessPermissions: collectionToEdit?.accessPermissions || [currentUser.id],
+      creator: collectionToEdit?.creator || (currentUser ? currentUser.id : ''),
+      accessPermissions: collectionToEdit?.accessPermissions || (currentUser ? [currentUser.id] : []),
       metadata: collectionToEdit?.metadata || {
         totalConversations: 0,
         avgDuration: '0m'

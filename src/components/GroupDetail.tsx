@@ -1,5 +1,5 @@
 import React from 'react';
-import { Database, Calendar, Info } from 'lucide-react';
+import { Database } from 'lucide-react';
 import { Group, Collection } from '../data/types';
 import { useTheme } from '../context/ThemeContext';
 

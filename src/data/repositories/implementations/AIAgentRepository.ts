@@ -1,9 +1,5 @@
-import { 
-  IAIAgentRepository, 
-  QueryOptions, 
-  FilterOptions, 
-  QueryResult 
-} from '../interfaces/IAIAgentRepository';
+import { IAIAgentRepository } from '../interfaces/IAIAgentRepository';
+import { QueryOptions, FilterOptions, QueryResult } from '../interfaces/IRepository';
 import { AIAgent, Conversation } from '../../types';
 import { BaseRepository } from './BaseRepository';
 import { IDataSource } from '../../sources/IDataSource';

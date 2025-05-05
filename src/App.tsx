@@ -41,7 +41,7 @@ const App: React.FC = () => {
   // Track scroll state
   const scrollState = useRef({
     isScrolling: false,
-    scrollTimeout: null as NodeJS.Timeout | null,
+    scrollTimeout: null as ReturnType<typeof setTimeout> | null,
     lastScrollX: 0,
     scrollThreshold: 50, // Minimum scroll distance to trigger navigation
   });
@@ -167,7 +167,6 @@ const App: React.FC = () => {
         handleViewChange(navigationOrder[currentIndex - 1]);
       }
     },
-    preventDefaultTouchmoveEvent: true,
     trackMouse: false,
     delta: 10, // Minimum swipe distance
     swipeDuration: 500, // Maximum time in ms for a swipe

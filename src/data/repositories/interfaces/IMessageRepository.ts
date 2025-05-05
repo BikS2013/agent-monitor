@@ -1,4 +1,4 @@
-import { IRepository, FilterOptions, QueryResult } from './IRepository';
+import { IRepository, FilterOptions, QueryResult, QueryOptions } from './IRepository';
 import { Message } from '../../types';
 
 /**

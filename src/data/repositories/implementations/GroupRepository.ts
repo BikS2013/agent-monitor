@@ -1,9 +1,5 @@
-import { 
-  IGroupRepository, 
-  QueryOptions, 
-  FilterOptions, 
-  QueryResult 
-} from '../interfaces/IGroupRepository';
+import { IGroupRepository } from '../interfaces/IGroupRepository';
+import { QueryOptions, FilterOptions, QueryResult } from '../interfaces/IRepository';
 import { Group, Collection } from '../../types';
 import { BaseRepository } from './BaseRepository';
 import { IDataSource } from '../../sources/IDataSource';

@@ -1,9 +1,5 @@
-import { 
-  ICollectionRepository, 
-  QueryOptions, 
-  FilterOptions, 
-  QueryResult 
-} from '../interfaces/ICollectionRepository';
+import { ICollectionRepository } from '../interfaces/ICollectionRepository';
+import { QueryOptions, FilterOptions, QueryResult } from '../interfaces/IRepository';
 import { Collection, Conversation } from '../../types';
 import { BaseRepository } from './BaseRepository';
 import { IDataSource } from '../../sources/IDataSource';

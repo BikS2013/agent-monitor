@@ -1,12 +1,26 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Settings, User, Bell, Shield, Database, Bot, Save } from 'lucide-react';
 import { useData } from '../context/DataContext';
 import { useTheme } from '../context/ThemeContext';
+import { User as UserType } from '../data/types';
 
 const SettingsView: React.FC = () => {
   const { getCurrentUser } = useData();
-  const currentUser = getCurrentUser();
+  const [currentUser, setCurrentUser] = useState<UserType | null>(null);
   const { theme } = useTheme();
+  
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const user = await getCurrentUser();
+        setCurrentUser(user);
+      } catch (error) {
+        console.error('Error fetching current user:', error);
+      }
+    };
+    
+    fetchUser();
+  }, [getCurrentUser]);
 
   return (
     <div className={`flex-1 overflow-y-auto ${theme === 'dark' ? 'bg-gray-800' : 'bg-gray-50'}`}>
@@ -65,7 +79,7 @@ const SettingsView: React.FC = () => {
                         ? 'bg-gray-600 border-gray-500 text-white'
                         : 'bg-white border-gray-300 text-gray-900'
                     }`}
-                    value={currentUser.name}
+                    value={currentUser?.name || ''}
                     readOnly
                   />
                 </div>
@@ -81,7 +95,7 @@ const SettingsView: React.FC = () => {
                         ? 'bg-gray-600 border-gray-500 text-white'
                         : 'bg-white border-gray-300 text-gray-900'
                     }`}
-                    value={currentUser.role}
+                    value={currentUser?.role || ''}
                     readOnly
                   />
                 </div>

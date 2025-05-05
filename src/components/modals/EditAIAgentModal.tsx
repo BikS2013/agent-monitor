@@ -133,7 +133,7 @@ const EditAIAgentModal: React.FC<EditAIAgentModalProps> = ({ isOpen, onClose, ag
           <select
             id="status"
             value={status}
-            onChange={(e) => setStatus(e.target.value)}
+            onChange={(e) => setStatus(e.target.value as 'active' | 'inactive' | 'training')}
             className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
               theme === 'dark' 
                 ? 'bg-gray-600 border-gray-500 text-white' 

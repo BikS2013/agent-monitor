@@ -1,9 +1,5 @@
-import { 
-  IMessageRepository, 
-  QueryOptions, 
-  FilterOptions, 
-  QueryResult 
-} from '../interfaces/IMessageRepository';
+import { IMessageRepository } from '../interfaces/IMessageRepository';
+import { QueryOptions, FilterOptions, QueryResult } from '../interfaces/IRepository';
 import { Message } from '../../types';
 import { BaseRepository } from './BaseRepository';
 import { IDataSource } from '../../sources/IDataSource';

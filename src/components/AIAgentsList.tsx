@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Bot, Plus, Activity, Clock, CheckCircle, Search, Filter } from 'lucide-react';
+import { Bot, Activity, Clock, CheckCircle } from 'lucide-react';
 import { AIAgent } from '../data/types';
 import NewAIAgentModal from './modals/NewAIAgentModal';
 import { useTheme } from '../context/ThemeContext';

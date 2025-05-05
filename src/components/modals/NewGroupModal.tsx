@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Modal from '../common/Modal';
 import { useData } from '../../context/DataContext';
 import { Activity, Shield, Zap } from 'lucide-react';
 import { useTheme } from '../../context/ThemeContext';
+import { User } from '../../data/types';
 
 interface NewGroupModalProps {
   isOpen: boolean;
@@ -11,8 +12,21 @@ interface NewGroupModalProps {
 
 const NewGroupModal: React.FC<NewGroupModalProps> = ({ isOpen, onClose }) => {
   const { addGroup, getCurrentUser, collections } = useData();
-  const currentUser = getCurrentUser();
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
   const { theme } = useTheme();
+  
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const user = await getCurrentUser();
+        setCurrentUser(user);
+      } catch (error) {
+        console.error('Error fetching current user:', error);
+      }
+    };
+    
+    fetchUser();
+  }, [getCurrentUser]);
 
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
@@ -31,16 +45,18 @@ const NewGroupModal: React.FC<NewGroupModalProps> = ({ isOpen, onClose }) => {
     e.preventDefault();
 
     // Create new group
-    addGroup({
-      name,
-      description,
-      purpose,
-      collectionIds: selectedCollections,
-      adminUsers: [currentUser.id],
-      permissionLevels: {
-        [currentUser.id]: 'full'
-      }
-    });
+    if (currentUser) {
+      addGroup({
+        name,
+        description,
+        purpose,
+        collectionIds: selectedCollections,
+        adminUsers: [currentUser.id],
+        permissionLevels: {
+          [currentUser.id]: 'full'
+        }
+      });
+    }
 
     // Reset form and close modal
     setName('');

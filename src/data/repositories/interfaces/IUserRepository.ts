@@ -1,4 +1,4 @@
-import { IRepository, QueryOptions, QueryResult } from './IRepository';
+import { IRepository, QueryOptions, QueryResult, FilterOptions } from './IRepository';
 import { User, Conversation, Collection, Group } from '../../types';
 
 /**
