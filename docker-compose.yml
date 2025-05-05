@@ -1,0 +1,13 @@
+version: '3.8'
+
+services:
+  agent-monitor:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8080:80"
+    restart: unless-stopped
+    # If you need environment variables, uncomment and add them:
+    # environment:
+    #   - NODE_ENV=production

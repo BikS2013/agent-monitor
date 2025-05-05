@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback, useRef, useEffect } from 'react';
+import { useSwipeable } from 'react-swipeable';
 import Navigation from './components/Navigation';
 import DashboardView from './views/DashboardView';
 import ConversationsView from './views/ConversationsView';
@@ -16,12 +17,85 @@ const App: React.FC = () => {
   const [selectedCollection, setSelectedCollection] = useState<Collection | null>(null);
   const [selectedGroup, setSelectedGroup] = useState<Group | null>(null);
 
+  // Define the navigation order for swipe gestures
+  const navigationOrder = [
+    'dashboard',
+    'conversations',
+    'collections',
+    'groups',
+    'agents',
+    'analytics',
+    'settings'
+  ];
+
   // Custom navigation handler that maintains selected items across views
   const handleViewChange = (view: string) => {
     // We don't reset selected items anymore to maintain consistency
     // This allows selections to persist when navigating between related views
     setCurrentView(view);
   };
+
+  // Reference to the content div
+  const contentRef = useRef<HTMLDivElement>(null);
+
+  // Track scroll state
+  const scrollState = useRef({
+    isScrolling: false,
+    scrollTimeout: null as NodeJS.Timeout | null,
+    lastScrollX: 0,
+    scrollThreshold: 50, // Minimum scroll distance to trigger navigation
+  });
+
+  // Handle horizontal scroll (navigate between views)
+  const handleScroll = useCallback((e: WheelEvent) => {
+    // Only respond to horizontal scrolling with shift key or trackpad horizontal gesture
+    if (Math.abs(e.deltaX) > Math.abs(e.deltaY) && Math.abs(e.deltaX) > 5) {
+      e.preventDefault(); // Prevent actual scrolling
+
+      // Clear previous timeout
+      if (scrollState.current.scrollTimeout) {
+        clearTimeout(scrollState.current.scrollTimeout);
+      }
+
+      // Update scroll state
+      scrollState.current.lastScrollX += e.deltaX;
+
+      // Set a timeout to detect end of scrolling
+      scrollState.current.scrollTimeout = setTimeout(() => {
+        // Check if scroll distance exceeds threshold
+        if (Math.abs(scrollState.current.lastScrollX) >= scrollState.current.scrollThreshold) {
+          const currentIndex = navigationOrder.indexOf(currentView);
+
+          // Navigate based on scroll direction
+          if (scrollState.current.lastScrollX > 0 && currentIndex < navigationOrder.length - 1) {
+            // Scrolled right, go to next view
+            handleViewChange(navigationOrder[currentIndex + 1]);
+          } else if (scrollState.current.lastScrollX < 0 && currentIndex > 0) {
+            // Scrolled left, go to previous view
+            handleViewChange(navigationOrder[currentIndex - 1]);
+          }
+        }
+
+        // Reset scroll state
+        scrollState.current.lastScrollX = 0;
+        scrollState.current.isScrolling = false;
+      }, 150); // Wait for scrolling to stop
+
+      scrollState.current.isScrolling = true;
+    }
+  }, [currentView, navigationOrder, handleViewChange]);
+
+  // Set up scroll event listener
+  useEffect(() => {
+    const contentElement = contentRef.current;
+    if (contentElement) {
+      contentElement.addEventListener('wheel', handleScroll as any, { passive: false });
+
+      return () => {
+        contentElement.removeEventListener('wheel', handleScroll as any);
+      };
+    }
+  }, [handleScroll]);
 
   const renderContent = () => {
     switch (currentView) {
@@ -77,10 +151,36 @@ const App: React.FC = () => {
 
   const { theme } = useTheme();
 
+  // Configure swipe gesture handlers for mobile devices
+  const swipeHandlers = useSwipeable({
+    onSwipedLeft: () => {
+      // Navigate to next view (right navigation direction)
+      const currentIndex = navigationOrder.indexOf(currentView);
+      if (currentIndex < navigationOrder.length - 1) {
+        handleViewChange(navigationOrder[currentIndex + 1]);
+      }
+    },
+    onSwipedRight: () => {
+      // Navigate to previous view (left navigation direction)
+      const currentIndex = navigationOrder.indexOf(currentView);
+      if (currentIndex > 0) {
+        handleViewChange(navigationOrder[currentIndex - 1]);
+      }
+    },
+    preventDefaultTouchmoveEvent: true,
+    trackMouse: false,
+    delta: 10, // Minimum swipe distance
+    swipeDuration: 500, // Maximum time in ms for a swipe
+  });
+
   return (
     <div className={`flex flex-col h-screen ${theme === 'dark' ? 'bg-gray-900' : 'bg-gray-100'}`}>
-      <Navigation currentView={currentView} setCurrentView={handleViewChange} />
-      <div className="flex-1">
+      <Navigation
+        currentView={currentView}
+        setCurrentView={handleViewChange}
+        navigationOrder={navigationOrder}
+      />
+      <div className="flex-1" {...swipeHandlers}>
         {renderContent()}
       </div>
     </div>
