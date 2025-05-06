@@ -18,7 +18,7 @@ const App: React.FC = () => {
   const [selectedCollection, setSelectedCollection] = useState<Collection | null>(null);
   const [selectedGroup, setSelectedGroup] = useState<Group | null>(null);
   const [useLargeDataset, setUseLargeDataset] = useState<boolean>(false);
-  
+
   // Access repositories context
   const { initialize, initialized } = useRepositories();
 
@@ -184,7 +184,8 @@ const App: React.FC = () => {
         setCurrentView={handleViewChange}
         navigationOrder={navigationOrder}
       />
-      <div className="flex-1" {...swipeHandlers}>
+      {/* Add padding-top to account for the fixed navigation bar (h-12 + swipe indicators height) */}
+      <div className="flex-1 pt-[calc(3rem+1.5rem)]" {...swipeHandlers}>
         {renderContent()}
       </div>
     </div>

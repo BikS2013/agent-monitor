@@ -44,7 +44,7 @@ const Navigation: React.FC<NavigationProps> = ({
   const showRightArrow = currentIndex < navigationOrder.length - 1 && currentIndex >= 0;
 
   return (
-    <div>
+    <div className="fixed top-0 left-0 right-0 z-50 w-full">
       <nav className={`${theme === 'dark' ? 'bg-gray-800' : 'bg-indigo-900'} text-white flex items-center justify-between h-12`}>
         <div className="flex items-center">
           {navItems.map((item, index) => (
@@ -70,7 +70,7 @@ const Navigation: React.FC<NavigationProps> = ({
       </nav>
 
       {/* Swipe indicators */}
-      <div className="flex justify-between px-4 py-1 text-xs text-gray-500">
+      <div className={`flex justify-between px-4 py-1 text-xs text-gray-500 ${theme === 'dark' ? 'bg-gray-800' : 'bg-white'} border-b ${theme === 'dark' ? 'border-gray-700' : 'border-gray-200'}`}>
         {showLeftArrow ? (
           <div className="flex items-center">
             <FontAwesomeIcon icon={faChevronLeft} size="xs" className="mr-1" />
