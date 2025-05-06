@@ -10,12 +10,17 @@ import AnalyticsView from './views/AnalyticsView';
 import SettingsView from './views/SettingsView';
 import { Conversation, Collection, Group } from './data/types';
 import { useTheme } from './context/ThemeContext';
+import { useRepositories } from './context/RepositoryContext';
 
 const App: React.FC = () => {
   const [currentView, setCurrentView] = useState('dashboard');
   const [selectedConversation, setSelectedConversation] = useState<Conversation | null>(null);
   const [selectedCollection, setSelectedCollection] = useState<Collection | null>(null);
   const [selectedGroup, setSelectedGroup] = useState<Group | null>(null);
+  const [useLargeDataset, setUseLargeDataset] = useState<boolean>(false);
+  
+  // Access repositories context
+  const { initialize, initialized } = useRepositories();
 
   // Define the navigation order for swipe gestures
   const navigationOrder = [

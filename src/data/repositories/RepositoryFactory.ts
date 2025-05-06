@@ -1,5 +1,6 @@
 import { IDataSource } from '../sources/IDataSource';
 import { JsonDataSource } from '../sources/JsonDataSource';
+import { JsonDataSource as ExternalJsonDataSource, DataSize } from '../jsonDataSource';
 
 import {
   IMessageRepository,
@@ -30,11 +31,17 @@ export class RepositoryFactory {
    * Initialize the factory with a data source
    * @param dataSource Data source to use for repositories (defaults to JsonDataSource)
    */
-  static async initialize(dataSource?: IDataSource): Promise<void> {
+  static async initialize(dataSource?: IDataSource, dataSize?: DataSize): Promise<void> {
     if (!dataSource) {
-      // Default to JsonDataSource if none provided
-      // We don't need a real file path since we're directly importing from sampleData.ts
-      this.dataSource = new JsonDataSource('mock-data');
+      if (dataSize) {
+        // Use dataset with specified size loaded from JSON file
+        console.log(`RepositoryFactory: Using ${dataSize} JSON dataset from file`);
+        this.dataSource = new ExternalJsonDataSource(dataSize);
+      } else {
+        // Default to in-memory JsonDataSource
+        console.log('RepositoryFactory: Using in-memory sample dataset');
+        this.dataSource = new JsonDataSource('mock-data');
+      }
     } else {
       this.dataSource = dataSource;
     }

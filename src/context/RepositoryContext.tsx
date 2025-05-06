@@ -11,6 +11,7 @@ import {
 
 import { RepositoryFactory } from '../data/repositories/RepositoryFactory';
 import { IDataSource } from '../data/sources/IDataSource';
+import { DataSize } from '../data/jsonDataSource';
 
 interface RepositoryContextType {
   initialized: boolean;
@@ -20,7 +21,7 @@ interface RepositoryContextType {
   groupRepository: IGroupRepository | null;
   aiAgentRepository: IAIAgentRepository | null;
   userRepository: IUserRepository | null;
-  initialize: (dataSource?: IDataSource) => Promise<void>;
+  initialize: (dataSource?: IDataSource, dataSize?: DataSize) => Promise<void>;
 }
 
 const RepositoryContext = createContext<RepositoryContextType | undefined>(undefined);
@@ -37,10 +38,10 @@ export const RepositoryProvider: React.FC<{ children: ReactNode }> = ({ children
   /**
    * Initialize all repositories
    */
-  const initialize = async (dataSource?: IDataSource): Promise<void> => {
+  const initialize = async (dataSource?: IDataSource, dataSize?: DataSize): Promise<void> => {
     try {
-      // Initialize the repository factory
-      await RepositoryFactory.initialize(dataSource);
+      // Initialize the repository factory with optional dataset size
+      await RepositoryFactory.initialize(dataSource, dataSize);
       
       // Create repositories
       setMessageRepository(RepositoryFactory.getMessageRepository());
