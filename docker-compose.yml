@@ -8,6 +8,11 @@ services:
     ports:
       - "8080:80"
     restart: unless-stopped
-    # If you need environment variables, uncomment and add them:
-    # environment:
-    #   - NODE_ENV=production
+    # Environment variables for configuration
+    environment:
+      - NODE_ENV=production
+      # Dataset configuration options
+      - ENV_DATASET_SIZE=medium     # Options: small, medium, large, internal
+      # - ENV_CUSTOM_DATASET_PATH=/path/to/custom/dataset.json
+      - ENV_ALLOW_UI_DATASET_CHANGE=true
+      - ENV_PREFER_LOCAL_STORAGE=true

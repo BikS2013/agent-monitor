@@ -66,7 +66,9 @@ node build-dataset.js small && node build-dataset.js medium && node build-datase
 
 3. In the Settings view, select the desired dataset size under the "Data Source" section
 
-For more detailed information about the datasets, see [Dataset Guide](./docs/DATASET_GUIDE.md).
+For more detailed information about the datasets, see:
+- [Dataset Guide](./docs/DATASET_GUIDE.md)
+- [Data Source Configuration Guide](./docs/DATA_SOURCE_CONFIGURATION.md)
 
 ## Docker Support
 

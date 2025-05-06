@@ -5,6 +5,21 @@
     <link rel="icon" type="image/svg+xml" href="/favicon.ico" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>AI Contact Center Management System</title>
+    <!-- Application environment configuration -->
+    <script>
+      // Runtime environment variables - these can be injected during deployment
+      window.ENV_DATASET_SIZE = '%ENV_DATASET_SIZE%';
+      window.ENV_CUSTOM_DATASET_PATH = '%ENV_CUSTOM_DATASET_PATH%';
+      window.ENV_ALLOW_UI_DATASET_CHANGE = '%ENV_ALLOW_UI_DATASET_CHANGE%';
+      window.ENV_PREFER_LOCAL_STORAGE = '%ENV_PREFER_LOCAL_STORAGE%';
+      
+      // Clean up environment variables that weren't replaced during build/deployment
+      Object.keys(window).forEach(key => {
+        if (key.startsWith('ENV_') && window[key].startsWith('%') && window[key].endsWith('%')) {
+          window[key] = undefined;
+        }
+      });
+    </script>
   </head>
   <body>
     <div id="root"></div>

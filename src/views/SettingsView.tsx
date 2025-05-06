@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { Settings, User, Bell, Shield, Database, Bot, Save, HardDrive } from 'lucide-react';
+import { Settings, User, Bell, Shield, Database, Bot, Save, HardDrive, AlertCircle } from 'lucide-react';
 import { useData } from '../context/DataContext';
 import { useTheme } from '../context/ThemeContext';
 import { useRepositories } from '../context/RepositoryContext';
 import { DataSize } from '../data/jsonDataSource';
 import { User as UserType } from '../data/types';
+import config from '../config';
 
 const SettingsView: React.FC = () => {
   const { getCurrentUser } = useData();
@@ -258,83 +259,105 @@ const SettingsView: React.FC = () => {
                   theme === 'dark' ? 'bg-gray-600' : 'bg-gray-50'
                 }`}>
                   <h3 className={`font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'} mb-4`}>Dataset Size</h3>
-                  <p className={`text-sm ${theme === 'dark' ? 'text-gray-300' : 'text-gray-500'} mb-4`}>
-                    Select the size of the dataset to load from JSON file. Larger datasets provide a more realistic experience but may take longer to load.
-                  </p>
                   
-                  {isLoading && (
-                    <div className="flex items-center my-2 text-sm text-blue-500">
-                      <div className="animate-spin h-4 w-4 border-2 border-blue-500 rounded-full border-t-transparent mr-2"></div>
-                      <span>Loading data...</span>
+                  {!config.dataSource.allowUIDatasetChange ? (
+                    <div className="flex items-center p-3 mb-4 text-sm bg-amber-100 text-amber-800 rounded-md">
+                      <AlertCircle size={16} className="mr-2 flex-shrink-0" />
+                      <p>
+                        Dataset size changes are restricted by configuration settings. 
+                        Current dataset size: <strong>{config.dataSource.datasetSize}</strong>
+                      </p>
                     </div>
+                  ) : (
+                    <>
+                      <p className={`text-sm ${theme === 'dark' ? 'text-gray-300' : 'text-gray-500'} mb-4`}>
+                        Select the size of the dataset to load from JSON file. Larger datasets provide a more realistic experience but may take longer to load.
+                      </p>
+                      
+                      {isLoading && (
+                        <div className="flex items-center my-2 text-sm text-blue-500">
+                          <div className="animate-spin h-4 w-4 border-2 border-blue-500 rounded-full border-t-transparent mr-2"></div>
+                          <span>Loading data...</span>
+                        </div>
+                      )}
+                      
+                      <div className="flex flex-col space-y-2">
+                        <div className="flex items-center">
+                          <input 
+                            type="radio" 
+                            id="small-dataset" 
+                            name="dataset-size"
+                            value="small"
+                            checked={dataSize === 'small'}
+                            onChange={() => !isLoading && handleDataSizeChange('small')}
+                            disabled={isLoading || !config.dataSource.allowUIDatasetChange}
+                            className="mr-2 h-4 w-4 text-blue-600 border-gray-300 focus:ring-blue-500"
+                          />
+                          <label htmlFor="small-dataset" className={`${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+                            Small Dataset
+                            <span className={`block text-xs ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
+                              ~200 messages, ~100 conversations
+                            </span>
+                          </label>
+                        </div>
+                        
+                        <div className="flex items-center">
+                          <input 
+                            type="radio" 
+                            id="medium-dataset" 
+                            name="dataset-size"
+                            value="medium"
+                            checked={dataSize === 'medium'}
+                            onChange={() => !isLoading && handleDataSizeChange('medium')}
+                            disabled={isLoading || !config.dataSource.allowUIDatasetChange}
+                            className="mr-2 h-4 w-4 text-blue-600 border-gray-300 focus:ring-blue-500"
+                          />
+                          <label htmlFor="medium-dataset" className={`${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+                            Medium Dataset
+                            <span className={`block text-xs ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
+                              ~5,000 messages, ~500 conversations
+                            </span>
+                          </label>
+                        </div>
+                        
+                        <div className="flex items-center">
+                          <input 
+                            type="radio" 
+                            id="large-dataset" 
+                            name="dataset-size"
+                            value="large"
+                            checked={dataSize === 'large'}
+                            onChange={() => !isLoading && handleDataSizeChange('large')}
+                            disabled={isLoading || !config.dataSource.allowUIDatasetChange}
+                            className="mr-2 h-4 w-4 text-blue-600 border-gray-300 focus:ring-blue-500"
+                          />
+                          <label htmlFor="large-dataset" className={`${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+                            Large Dataset
+                            <span className={`block text-xs ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
+                              ~20,000 messages, ~2,000 conversations
+                            </span>
+                          </label>
+                        </div>
+                      </div>
+                      
+                      <p className={`text-xs ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'} mt-4`}>
+                        Currently using the <strong>{dataSize}</strong> dataset.
+                      </p>
+                      
+                      <p className="text-xs mt-2 text-amber-500">
+                        Note: Changing the dataset size will reload the application.
+                      </p>
+                    </>
                   )}
                   
-                  <div className="flex flex-col space-y-2">
-                    <div className="flex items-center">
-                      <input 
-                        type="radio" 
-                        id="small-dataset" 
-                        name="dataset-size"
-                        value="small"
-                        checked={dataSize === 'small'}
-                        onChange={() => !isLoading && handleDataSizeChange('small')}
-                        disabled={isLoading}
-                        className="mr-2 h-4 w-4 text-blue-600 border-gray-300 focus:ring-blue-500"
-                      />
-                      <label htmlFor="small-dataset" className={`${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
-                        Small Dataset
-                        <span className={`block text-xs ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
-                          ~200 messages, ~100 conversations
-                        </span>
-                      </label>
+                  {!config.preferLocalStorage && (
+                    <div className="mt-4 p-3 text-sm bg-blue-100 text-blue-800 rounded-md">
+                      <p>
+                        <strong>Note:</strong> Configuration settings are set to override localStorage preferences.
+                        Your selected dataset may be overridden on the next application restart.
+                      </p>
                     </div>
-                    
-                    <div className="flex items-center">
-                      <input 
-                        type="radio" 
-                        id="medium-dataset" 
-                        name="dataset-size"
-                        value="medium"
-                        checked={dataSize === 'medium'}
-                        onChange={() => !isLoading && handleDataSizeChange('medium')}
-                        disabled={isLoading}
-                        className="mr-2 h-4 w-4 text-blue-600 border-gray-300 focus:ring-blue-500"
-                      />
-                      <label htmlFor="medium-dataset" className={`${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
-                        Medium Dataset
-                        <span className={`block text-xs ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
-                          ~5,000 messages, ~500 conversations
-                        </span>
-                      </label>
-                    </div>
-                    
-                    <div className="flex items-center">
-                      <input 
-                        type="radio" 
-                        id="large-dataset" 
-                        name="dataset-size"
-                        value="large"
-                        checked={dataSize === 'large'}
-                        onChange={() => !isLoading && handleDataSizeChange('large')}
-                        disabled={isLoading}
-                        className="mr-2 h-4 w-4 text-blue-600 border-gray-300 focus:ring-blue-500"
-                      />
-                      <label htmlFor="large-dataset" className={`${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
-                        Large Dataset
-                        <span className={`block text-xs ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
-                          ~20,000 messages, ~2,000 conversations
-                        </span>
-                      </label>
-                    </div>
-                  </div>
-                  
-                  <p className={`text-xs ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'} mt-4`}>
-                    Currently using the <strong>{dataSize}</strong> dataset.
-                  </p>
-                  
-                  <p className="text-xs mt-2 text-amber-500">
-                    Note: Changing the dataset size will reload the application.
-                  </p>
+                  )}
                 </div>
               </div>
             </div>

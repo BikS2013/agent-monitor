@@ -12,6 +12,7 @@ import {
 import { RepositoryFactory } from '../data/repositories/RepositoryFactory';
 import { IDataSource } from '../data/sources/IDataSource';
 import { DataSize } from '../data/jsonDataSource';
+import config from '../config';
 
 interface RepositoryContextType {
   initialized: boolean;
@@ -58,18 +59,30 @@ export const RepositoryProvider: React.FC<{ children: ReactNode }> = ({ children
     }
   };
 
-  // Initialize repositories on component mount (with saved data size from localStorage)
+  // Initialize repositories on component mount
   useEffect(() => {
     if (!initialized) {
-      // Check if there's a saved dataset size in localStorage
+      let datasetToUse: DataSize | undefined;
+      
+      // Determine which dataset to use based on config and localStorage
       const savedDataSize = localStorage.getItem('dataSize') as DataSize | null;
-      if (savedDataSize && ['small', 'medium', 'large'].includes(savedDataSize)) {
+      
+      if (config.preferLocalStorage && savedDataSize && ['small', 'medium', 'large'].includes(savedDataSize)) {
+        // Use localStorage setting if preferLocalStorage is true and a valid setting exists
         console.log(`RepositoryContext: Using saved dataset size from localStorage: ${savedDataSize}`);
-        initialize(undefined, savedDataSize).catch(console.error);
+        datasetToUse = savedDataSize as DataSize;
+      } else if (config.dataSource.datasetSize !== 'internal') {
+        // Use config setting if it's not set to 'internal'
+        console.log(`RepositoryContext: Using dataset size from config: ${config.dataSource.datasetSize}`);
+        datasetToUse = config.dataSource.datasetSize as DataSize;
       } else {
-        console.log('RepositoryContext: No saved dataset size, using default');
-        initialize().catch(console.error);
+        // Default to in-memory dataset
+        console.log('RepositoryContext: Using in-memory dataset');
+        datasetToUse = undefined;
       }
+      
+      // Initialize repositories with selected dataset
+      initialize(undefined, datasetToUse).catch(console.error);
     }
   }, [initialized]);
 

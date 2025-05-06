@@ -2,8 +2,8 @@
  * Utility to export data to JSON file
  * This can be used to generate a static JSON file from the large sample data
  */
-import fs from 'fs';
-import path from 'path';
+import * as fs from 'fs';
+import * as path from 'path';
 import { fileURLToPath } from 'url';
 import { messages, conversations, collections, groups, aiAgents, users } from './largeSampleData.js';
 
