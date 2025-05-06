@@ -29,6 +29,14 @@ export class JsonDataSource implements IDataSource {
     this.dataUrl = `/${size}SampleData.json`;
   }
 
+  /**
+   * Initialize the data source
+   * This is required by the IDataSource interface
+   */
+  async initialize(): Promise<void> {
+    return this.loadData();
+  }
+
   private async loadData(): Promise<void> {
     if (this.data !== null) return;
     if (this.loadPromise) return this.loadPromise;
@@ -64,14 +72,26 @@ export class JsonDataSource implements IDataSource {
   }
 
   // Messages
-  async getMessages(): Promise<Message[]> {
-    await this.loadData();
-    return Object.values(this.data?.messages || {});
-  }
-
-  async getMessage(id: string): Promise<Message | null> {
+  async getMessageById(id: string): Promise<Message | null> {
     await this.loadData();
     return this.data?.messages[id] || null;
+  }
+
+  async getMessages(ids?: string[]): Promise<Record<string, Message>> {
+    await this.loadData();
+
+    if (!ids) {
+      return { ...(this.data?.messages || {}) };
+    }
+
+    const result: Record<string, Message> = {};
+    for (const id of ids) {
+      if (this.data?.messages[id]) {
+        result[id] = this.data.messages[id];
+      }
+    }
+
+    return result;
   }
 
   async getMessagesByConversationId(conversationId: string): Promise<Message[]> {
@@ -84,15 +104,65 @@ export class JsonDataSource implements IDataSource {
       .filter(Boolean) as Message[];
   }
 
-  // Conversations
-  async getConversations(): Promise<Conversation[]> {
+  async createMessage(data: Omit<Message, 'id'>): Promise<Message> {
     await this.loadData();
-    return Object.values(this.data?.conversations || {});
+    const id = `m${Object.keys(this.data?.messages || {}).length + 1}`;
+    const newMessage: Message = {
+      id,
+      ...data
+    };
+
+    if (this.data?.messages) {
+      this.data.messages[id] = newMessage;
+    }
+
+    return newMessage;
   }
 
-  async getConversation(id: string): Promise<Conversation | null> {
+  async updateMessage(id: string, data: Partial<Message>): Promise<Message | null> {
+    await this.loadData();
+    if (!this.data?.messages[id]) return null;
+
+    this.data.messages[id] = {
+      ...this.data.messages[id],
+      ...data
+    };
+
+    return this.data.messages[id];
+  }
+
+  async deleteMessage(id: string): Promise<boolean> {
+    await this.loadData();
+    if (!this.data?.messages[id]) return false;
+
+    if (this.data?.messages) {
+      delete this.data.messages[id];
+    }
+
+    return true;
+  }
+
+  // Conversations
+  async getConversationById(id: string): Promise<Conversation | null> {
     await this.loadData();
     return this.data?.conversations[id] || null;
+  }
+
+  async getConversations(ids?: string[]): Promise<Record<string, Conversation>> {
+    await this.loadData();
+
+    if (!ids) {
+      return { ...(this.data?.conversations || {}) };
+    }
+
+    const result: Record<string, Conversation> = {};
+    for (const id of ids) {
+      if (this.data?.conversations[id]) {
+        result[id] = this.data.conversations[id];
+      }
+    }
+
+    return result;
   }
 
   async getConversationsByCollectionId(collectionId: string): Promise<Conversation[]> {
@@ -105,15 +175,77 @@ export class JsonDataSource implements IDataSource {
       .filter(Boolean) as Conversation[];
   }
 
-  // Collections
-  async getCollections(): Promise<Collection[]> {
+  async getConversationsByAIAgentId(aiAgentId: string): Promise<Conversation[]> {
     await this.loadData();
-    return Object.values(this.data?.collections || {});
+    return Object.values(this.data?.conversations || {})
+      .filter(conv => conv.aiAgentId === aiAgentId);
   }
 
-  async getCollection(id: string): Promise<Collection | null> {
+  async getConversationsByUserId(userId: string): Promise<Conversation[]> {
+    await this.loadData();
+    return Object.values(this.data?.conversations || {})
+      .filter(conv => conv.userId === userId);
+  }
+
+  async createConversation(data: Omit<Conversation, 'id'>): Promise<Conversation> {
+    await this.loadData();
+    const id = `c${Object.keys(this.data?.conversations || {}).length + 1}`;
+    const newConversation: Conversation = {
+      id,
+      ...data
+    };
+
+    if (this.data?.conversations) {
+      this.data.conversations[id] = newConversation;
+    }
+
+    return newConversation;
+  }
+
+  async updateConversation(id: string, data: Partial<Conversation>): Promise<Conversation | null> {
+    await this.loadData();
+    if (!this.data?.conversations[id]) return null;
+
+    this.data.conversations[id] = {
+      ...this.data.conversations[id],
+      ...data
+    };
+
+    return this.data.conversations[id];
+  }
+
+  async deleteConversation(id: string): Promise<boolean> {
+    await this.loadData();
+    if (!this.data?.conversations[id]) return false;
+
+    if (this.data?.conversations) {
+      delete this.data.conversations[id];
+    }
+
+    return true;
+  }
+
+  // Collections
+  async getCollectionById(id: string): Promise<Collection | null> {
     await this.loadData();
     return this.data?.collections[id] || null;
+  }
+
+  async getCollections(ids?: string[]): Promise<Record<string, Collection>> {
+    await this.loadData();
+
+    if (!ids) {
+      return { ...(this.data?.collections || {}) };
+    }
+
+    const result: Record<string, Collection> = {};
+    for (const id of ids) {
+      if (this.data?.collections[id]) {
+        result[id] = this.data.collections[id];
+      }
+    }
+
+    return result;
   }
 
   async getCollectionsByGroupId(groupId: string): Promise<Collection[]> {
@@ -126,36 +258,273 @@ export class JsonDataSource implements IDataSource {
       .filter(Boolean) as Collection[];
   }
 
-  // Groups
-  async getGroups(): Promise<Group[]> {
+  async getCollectionsByCreatorId(creatorId: string): Promise<Collection[]> {
     await this.loadData();
-    return Object.values(this.data?.groups || {});
+    return Object.values(this.data?.collections || {})
+      .filter(collection => collection.creator === creatorId);
   }
 
-  async getGroup(id: string): Promise<Group | null> {
+  async createCollection(data: Omit<Collection, 'id'>): Promise<Collection> {
+    await this.loadData();
+    const id = `col${Object.keys(this.data?.collections || {}).length + 1}`;
+    const newCollection: Collection = {
+      id,
+      ...data
+    };
+
+    if (this.data?.collections) {
+      this.data.collections[id] = newCollection;
+    }
+
+    return newCollection;
+  }
+
+  async updateCollection(id: string, data: Partial<Collection>): Promise<Collection | null> {
+    await this.loadData();
+    if (!this.data?.collections[id]) return null;
+
+    this.data.collections[id] = {
+      ...this.data.collections[id],
+      ...data
+    };
+
+    return this.data.collections[id];
+  }
+
+  async deleteCollection(id: string): Promise<boolean> {
+    await this.loadData();
+    if (!this.data?.collections[id]) return false;
+
+    if (this.data?.collections) {
+      delete this.data.collections[id];
+    }
+
+    return true;
+  }
+
+  // Groups
+  async getGroupById(id: string): Promise<Group | null> {
     await this.loadData();
     return this.data?.groups[id] || null;
   }
 
-  // AI Agents
-  async getAIAgents(): Promise<AIAgent[]> {
+  async getGroups(ids?: string[]): Promise<Record<string, Group>> {
     await this.loadData();
-    return Object.values(this.data?.aiAgents || {});
+
+    if (!ids) {
+      return { ...(this.data?.groups || {}) };
+    }
+
+    const result: Record<string, Group> = {};
+    for (const id of ids) {
+      if (this.data?.groups[id]) {
+        result[id] = this.data.groups[id];
+      }
+    }
+
+    return result;
   }
 
-  async getAIAgent(id: string): Promise<AIAgent | null> {
+  async getGroupsByAdminUserId(userId: string): Promise<Group[]> {
+    await this.loadData();
+    return Object.values(this.data?.groups || {})
+      .filter(group => group.adminUsers.includes(userId));
+  }
+
+  async createGroup(data: Omit<Group, 'id'>): Promise<Group> {
+    await this.loadData();
+    const id = `g${Object.keys(this.data?.groups || {}).length + 1}`;
+    const newGroup: Group = {
+      id,
+      ...data
+    };
+
+    if (this.data?.groups) {
+      this.data.groups[id] = newGroup;
+    }
+
+    return newGroup;
+  }
+
+  async updateGroup(id: string, data: Partial<Group>): Promise<Group | null> {
+    await this.loadData();
+    if (!this.data?.groups[id]) return null;
+
+    this.data.groups[id] = {
+      ...this.data.groups[id],
+      ...data
+    };
+
+    return this.data.groups[id];
+  }
+
+  async deleteGroup(id: string): Promise<boolean> {
+    await this.loadData();
+    if (!this.data?.groups[id]) return false;
+
+    if (this.data?.groups) {
+      delete this.data.groups[id];
+    }
+
+    return true;
+  }
+
+  // AI Agents
+  async getAIAgentById(id: string): Promise<AIAgent | null> {
     await this.loadData();
     return this.data?.aiAgents[id] || null;
   }
 
-  // Users
-  async getUsers(): Promise<User[]> {
+  async getAIAgents(ids?: string[]): Promise<Record<string, AIAgent>> {
     await this.loadData();
-    return Object.values(this.data?.users || {});
+
+    if (!ids) {
+      return { ...(this.data?.aiAgents || {}) };
+    }
+
+    const result: Record<string, AIAgent> = {};
+    for (const id of ids) {
+      if (this.data?.aiAgents[id]) {
+        result[id] = this.data.aiAgents[id];
+      }
+    }
+
+    return result;
   }
 
-  async getUser(id: string): Promise<User | null> {
+  async getAIAgentsByStatus(status: 'active' | 'inactive' | 'training'): Promise<AIAgent[]> {
+    await this.loadData();
+    return Object.values(this.data?.aiAgents || {})
+      .filter(agent => agent.status === status);
+  }
+
+  async createAIAgent(data: Omit<AIAgent, 'id'>): Promise<AIAgent> {
+    await this.loadData();
+    const id = `ai${Object.keys(this.data?.aiAgents || {}).length + 1}`;
+    const newAIAgent: AIAgent = {
+      id,
+      ...data
+    };
+
+    if (this.data?.aiAgents) {
+      this.data.aiAgents[id] = newAIAgent;
+    }
+
+    return newAIAgent;
+  }
+
+  async updateAIAgent(id: string, data: Partial<AIAgent>): Promise<AIAgent | null> {
+    await this.loadData();
+    if (!this.data?.aiAgents[id]) return null;
+
+    this.data.aiAgents[id] = {
+      ...this.data.aiAgents[id],
+      ...data
+    };
+
+    return this.data.aiAgents[id];
+  }
+
+  async deleteAIAgent(id: string): Promise<boolean> {
+    await this.loadData();
+    if (!this.data?.aiAgents[id]) return false;
+
+    if (this.data?.aiAgents) {
+      delete this.data.aiAgents[id];
+    }
+
+    return true;
+  }
+
+  // Users
+  async getUserById(id: string): Promise<User | null> {
     await this.loadData();
     return this.data?.users[id] || null;
+  }
+
+  async getUsers(ids?: string[]): Promise<Record<string, User>> {
+    await this.loadData();
+
+    if (!ids) {
+      return { ...(this.data?.users || {}) };
+    }
+
+    const result: Record<string, User> = {};
+    for (const id of ids) {
+      if (this.data?.users[id]) {
+        result[id] = this.data.users[id];
+      }
+    }
+
+    return result;
+  }
+
+  async getUsersByRole(role: string): Promise<User[]> {
+    await this.loadData();
+    return Object.values(this.data?.users || {})
+      .filter(user => user.role === role);
+  }
+
+  async createUser(data: Omit<User, 'id'>): Promise<User> {
+    await this.loadData();
+    const id = `u${Object.keys(this.data?.users || {}).length + 1}`;
+    const newUser: User = {
+      id,
+      ...data
+    };
+
+    if (this.data?.users) {
+      this.data.users[id] = newUser;
+    }
+
+    return newUser;
+  }
+
+  async updateUser(id: string, data: Partial<User>): Promise<User | null> {
+    await this.loadData();
+    if (!this.data?.users[id]) return null;
+
+    this.data.users[id] = {
+      ...this.data.users[id],
+      ...data
+    };
+
+    return this.data.users[id];
+  }
+
+  async deleteUser(id: string): Promise<boolean> {
+    await this.loadData();
+    if (!this.data?.users[id]) return false;
+
+    if (this.data?.users) {
+      delete this.data.users[id];
+    }
+
+    return true;
+  }
+
+  async getCurrentUser(): Promise<User | null> {
+    await this.loadData();
+    // Return the first admin user as the current user
+    const adminUsers = Object.values(this.data?.users || {})
+      .filter(user => user.role === 'admin');
+
+    return adminUsers.length > 0 ? adminUsers[0] : null;
+  }
+
+  async filterConversations(filterCriteria: any): Promise<string[]> {
+    await this.loadData();
+    // Simple implementation - in a real app this would be more sophisticated
+    return Object.keys(this.data?.conversations || {});
+  }
+
+  async saveData(): Promise<void> {
+    // In a real app, this would save data to persistent storage
+    console.log('Saving data to persistent storage (mock)');
+  }
+
+  async clearCache(): Promise<void> {
+    this.data = null;
+    this.loadPromise = null;
   }
 }
