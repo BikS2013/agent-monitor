@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API No-Auth Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        h1 {
+            color: #333;
+        }
+        pre {
+            background-color: #f5f5f5;
+            padding: 10px;
+            border-radius: 5px;
+            overflow-x: auto;
+        }
+        button {
+            padding: 8px 16px;
+            margin: 5px;
+            border: none;
+            border-radius: 4px;
+            background-color: #4CAF50;
+            color: white;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+        .box {
+            flex: 1;
+            min-width: 300px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+        .clear {
+            background-color: #f44336;
+        }
+        .clear:hover {
+            background-color: #d32f2f;
+        }
+    </style>
+</head>
+<body>
+    <h1>API No-Auth Test</h1>
+    
+    <div class="container">
+        <div class="box">
+            <h2>Current localStorage Settings</h2>
+            <pre id="current-settings"></pre>
+            <button onclick="refreshSettings()">Refresh</button>
+            <button class="clear" onclick="clearSettings()">Clear All</button>
+        </div>
+        
+        <div class="box">
+            <h2>Set API Settings</h2>
+            <div>
+                <button onclick="setNoAuth()">Set No-Auth</button>
+                <button onclick="setTokenAuth()">Set Token Auth</button>
+                <button onclick="setApiKeyAuth()">Set API Key Auth</button>
+            </div>
+            <h3>API Status</h3>
+            <div>
+                <button onclick="enableApi()">Enable API</button>
+                <button onclick="disableApi()">Disable API</button>
+            </div>
+        </div>
+    </div>
+    
+    <div class="box">
+        <h2>API Configuration Simulation</h2>
+        <p>This simulates how the application would interpret your localStorage settings.</p>
+        <pre id="simulation-result"></pre>
+        <button onclick="runSimulation()">Run Simulation</button>
+    </div>
+
+    <script>
+        // Display current localStorage settings
+        function refreshSettings() {
+            const apiSettingsDiv = document.getElementById('current-settings');
+            const apiSettings = {};
+            
+            // Get API-related settings
+            const keys = [
+                'apiEnabled', 
+                'apiAuthMethod', 
+                'agent_monitor_api_token',
+                'agent_monitor_token_expiry',
+                'apiClientSecret',
+                'apiClientId'
+            ];
+            
+            keys.forEach(key => {
+                apiSettings[key] = localStorage.getItem(key);
+            });
+            
+            apiSettingsDiv.textContent = JSON.stringify(apiSettings, null, 2);
+        }
+        
+        // Clear all localStorage settings
+        function clearSettings() {
+            const keys = [
+                'apiEnabled', 
+                'apiAuthMethod', 
+                'agent_monitor_api_token',
+                'agent_monitor_token_expiry',
+                'apiClientSecret',
+                'apiClientId'
+            ];
+            
+            keys.forEach(key => {
+                localStorage.removeItem(key);
+            });
+            
+            refreshSettings();
+        }
+        
+        // Set up for No-Auth
+        function setNoAuth() {
+            localStorage.setItem('apiAuthMethod', 'none');
+            localStorage.removeItem('agent_monitor_api_token');
+            localStorage.removeItem('agent_monitor_token_expiry');
+            localStorage.removeItem('apiClientSecret');
+            localStorage.removeItem('apiClientId');
+            refreshSettings();
+        }
+        
+        // Set up for Token Auth
+        function setTokenAuth() {
+            localStorage.setItem('apiAuthMethod', 'token');
+            localStorage.setItem('agent_monitor_api_token', 'test-jwt-token');
+            localStorage.setItem('agent_monitor_token_expiry', String(Date.now() + 3600000)); // 1 hour from now
+            localStorage.removeItem('apiClientSecret');
+            localStorage.removeItem('apiClientId');
+            refreshSettings();
+        }
+        
+        // Set up for API Key Auth
+        function setApiKeyAuth() {
+            localStorage.setItem('apiAuthMethod', 'api-key');
+            localStorage.removeItem('agent_monitor_api_token');
+            localStorage.removeItem('agent_monitor_token_expiry');
+            localStorage.setItem('apiClientSecret', 'test-client-secret');
+            localStorage.setItem('apiClientId', 'test-client-id');
+            refreshSettings();
+        }
+        
+        // Enable API
+        function enableApi() {
+            localStorage.setItem('apiEnabled', 'true');
+            refreshSettings();
+        }
+        
+        // Disable API
+        function disableApi() {
+            localStorage.setItem('apiEnabled', 'false');
+            refreshSettings();
+        }
+        
+        // Simulate the application logic for API initialization
+        function runSimulation() {
+            const simulationDiv = document.getElementById('simulation-result');
+            
+            // Mock configuration
+            const config = {
+                api: {
+                    enabled: true,
+                    baseUrl: 'http://localhost:8000',
+                    authMethod: 'token',
+                    token: 'default-token',
+                    clientSecret: 'default-secret',
+                    clientId: 'default-id'
+                },
+                preferLocalStorage: true
+            };
+            
+            // Simulate the logic from RepositoryContext
+            function getApiSettings() {
+                // Check if API is enabled
+                const savedApiEnabled = localStorage.getItem('apiEnabled');
+                const useApi = config.preferLocalStorage && savedApiEnabled !== null
+                    ? savedApiEnabled === 'true'
+                    : config.api.enabled;
+                
+                if (!useApi) {
+                    return { enabled: false, message: 'API not enabled in settings' };
+                }
+                
+                // Get authentication method from localStorage if available
+                const savedAuthMethod = localStorage.getItem('apiAuthMethod');
+                const authMethod = config.preferLocalStorage && savedAuthMethod 
+                    ? savedAuthMethod
+                    : config.api.authMethod;
+                
+                // Determine if we're using no authentication
+                const useNoAuth = authMethod === 'none';
+                
+                // Get token from localStorage if using token auth
+                const savedToken = authMethod === 'token' 
+                    ? localStorage.getItem('agent_monitor_api_token') 
+                    : undefined;
+                    
+                // Get client secret and ID from localStorage if using API key auth
+                const savedClientSecret = authMethod === 'api-key' 
+                    ? localStorage.getItem('apiClientSecret') 
+                    : undefined;
+                const savedClientId = authMethod === 'api-key' 
+                    ? localStorage.getItem('apiClientId') 
+                    : undefined;
+                
+                return {
+                    enabled: true,
+                    baseUrl: config.api.baseUrl,
+                    authMethod,
+                    token: authMethod === 'token' ? (savedToken || config.api.token) : undefined,
+                    clientSecret: authMethod === 'api-key' ? (savedClientSecret || config.api.clientSecret) : undefined,
+                    clientId: authMethod === 'api-key' ? (savedClientId || config.api.clientId) : undefined,
+                    useNoAuth
+                };
+            }
+            
+            const settings = getApiSettings();
+            simulationDiv.textContent = JSON.stringify(settings, null, 2);
+        }
+        
+        // Initialize
+        refreshSettings();
+        runSimulation();
+    </script>
+</body>
+</html>

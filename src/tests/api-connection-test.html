@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API Connection Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        h1, h2 {
+            color: #333;
+        }
+        pre {
+            background-color: #f5f5f5;
+            padding: 10px;
+            border-radius: 5px;
+            overflow-x: auto;
+        }
+        button {
+            padding: 8px 16px;
+            margin: 5px;
+            border: none;
+            border-radius: 4px;
+            background-color: #4CAF50;
+            color: white;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .box {
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+        .input-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+        }
+        input, select {
+            width: 100%;
+            padding: 8px;
+            box-sizing: border-box;
+            margin-bottom: 10px;
+        }
+        .response {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>API Connection Test</h1>
+    
+    <div class="box">
+        <h2>Test API Connection</h2>
+        <div class="input-group">
+            <label for="baseUrl">API Base URL:</label>
+            <input type="text" id="baseUrl" value="http://localhost:8000" placeholder="http://localhost:8000">
+            
+            <label for="authMethod">Authentication Method:</label>
+            <select id="authMethod">
+                <option value="none">No Authentication</option>
+                <option value="token">JWT Token</option>
+                <option value="api-key">API Key</option>
+            </select>
+            
+            <div id="tokenAuthFields" style="display: none;">
+                <label for="token">JWT Token:</label>
+                <input type="text" id="token" placeholder="JWT Token">
+            </div>
+            
+            <div id="apiKeyAuthFields" style="display: none;">
+                <label for="clientSecret">Client Secret:</label>
+                <input type="text" id="clientSecret" placeholder="Client Secret">
+                
+                <label for="clientId">Client ID (Optional):</label>
+                <input type="text" id="clientId" placeholder="Client ID">
+            </div>
+            
+            <button onclick="testConnection()">Test Connection</button>
+        </div>
+        
+        <h3>Response</h3>
+        <pre id="response" class="response">Response will appear here...</pre>
+    </div>
+    
+    <div class="box">
+        <h2>localStorage Settings</h2>
+        <button onclick="setAndReload()">Set localStorage & Reload</button>
+        <p>This will set the localStorage values based on your settings above and reload the page.</p>
+        <p>Use this to test how the page reloads with specific localStorage settings.</p>
+    </div>
+
+    <script>
+        // Update auth fields based on selected method
+        document.getElementById('authMethod').addEventListener('change', function() {
+            const method = this.value;
+            document.getElementById('tokenAuthFields').style.display = method === 'token' ? 'block' : 'none';
+            document.getElementById('apiKeyAuthFields').style.display = method === 'api-key' ? 'block' : 'none';
+        });
+        
+        // Test API connection
+        async function testConnection() {
+            const responseElem = document.getElementById('response');
+            responseElem.textContent = 'Connecting to API...';
+            
+            const baseUrl = document.getElementById('baseUrl').value;
+            const authMethod = document.getElementById('authMethod').value;
+            let token, clientSecret, clientId;
+            
+            if (authMethod === 'token') {
+                token = document.getElementById('token').value;
+            } else if (authMethod === 'api-key') {
+                clientSecret = document.getElementById('clientSecret').value;
+                clientId = document.getElementById('clientId').value;
+            }
+            
+            try {
+                // Build request headers
+                const headers = {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                };
+                
+                if (authMethod === 'token' && token) {
+                    headers['Authorization'] = `Bearer ${token}`;
+                } else if (authMethod === 'api-key' && clientSecret) {
+                    headers['X-API-KEY'] = clientSecret;
+                    if (clientId) {
+                        headers['X-CLIENT-ID'] = clientId;
+                    }
+                }
+                
+                // Make API request (to system/status or another endpoint that doesn't require auth)
+                const response = await fetch(`${baseUrl}/system/status`, {
+                    method: 'GET',
+                    headers: headers
+                });
+                
+                // Parse response
+                const data = await response.json();
+                responseElem.textContent = `Status: ${response.status}\n\n${JSON.stringify(data, null, 2)}`;
+            } catch (error) {
+                responseElem.textContent = `Error: ${error.message}\n\nMake sure the API server is running and accessible.`;
+            }
+        }
+        
+        // Set localStorage values and reload
+        function setAndReload() {
+            const baseUrl = document.getElementById('baseUrl').value;
+            const authMethod = document.getElementById('authMethod').value;
+            
+            // Set localStorage values
+            localStorage.setItem('apiEnabled', 'true');
+            localStorage.setItem('apiAuthMethod', authMethod);
+            
+            if (authMethod === 'token') {
+                const token = document.getElementById('token').value;
+                if (token) {
+                    localStorage.setItem('agent_monitor_api_token', token);
+                    localStorage.setItem('agent_monitor_token_expiry', String(Date.now() + 3600000));
+                }
+                localStorage.removeItem('apiClientSecret');
+                localStorage.removeItem('apiClientId');
+            } else if (authMethod === 'api-key') {
+                const clientSecret = document.getElementById('clientSecret').value;
+                const clientId = document.getElementById('clientId').value;
+                if (clientSecret) {
+                    localStorage.setItem('apiClientSecret', clientSecret);
+                }
+                if (clientId) {
+                    localStorage.setItem('apiClientId', clientId);
+                }
+                localStorage.removeItem('agent_monitor_api_token');
+                localStorage.removeItem('agent_monitor_token_expiry');
+            } else {
+                // No auth
+                localStorage.removeItem('agent_monitor_api_token');
+                localStorage.removeItem('agent_monitor_token_expiry');
+                localStorage.removeItem('apiClientSecret');
+                localStorage.removeItem('apiClientId');
+            }
+            
+            // Reload page
+            document.location.reload();
+        }
+        
+        // Load any existing localStorage values when page loads
+        function loadStoredSettings() {
+            const authMethod = localStorage.getItem('apiAuthMethod') || 'none';
+            document.getElementById('authMethod').value = authMethod;
+            
+            if (authMethod === 'token') {
+                document.getElementById('tokenAuthFields').style.display = 'block';
+                document.getElementById('token').value = localStorage.getItem('agent_monitor_api_token') || '';
+            } else if (authMethod === 'api-key') {
+                document.getElementById('apiKeyAuthFields').style.display = 'block';
+                document.getElementById('clientSecret').value = localStorage.getItem('apiClientSecret') || '';
+                document.getElementById('clientId').value = localStorage.getItem('apiClientId') || '';
+            }
+        }
+        
+        // Initialize
+        loadStoredSettings();
+    </script>
+</body>
+</html>

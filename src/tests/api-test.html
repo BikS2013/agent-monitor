@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>API Connection Test</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      margin: 0;
+      padding: 20px;
+      background-color: #f5f7f9;
+      color: #333;
+    }
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      background-color: white;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    h1 {
+      color: #2c3e50;
+      border-bottom: 1px solid #eee;
+      padding-bottom: 10px;
+    }
+    .section {
+      margin-bottom: 20px;
+      padding: 15px;
+      background-color: #f9f9f9;
+      border-radius: 5px;
+      border-left: 4px solid #3498db;
+    }
+    button {
+      background-color: #3498db;
+      color: white;
+      border: none;
+      padding: 8px 15px;
+      border-radius: 4px;
+      cursor: pointer;
+      margin-right: 10px;
+      font-size: 14px;
+    }
+    button:hover {
+      background-color: #2980b9;
+    }
+    button.danger {
+      background-color: #e74c3c;
+    }
+    button.danger:hover {
+      background-color: #c0392b;
+    }
+    pre {
+      background-color: #f5f5f5;
+      padding: 10px;
+      border-radius: 4px;
+      overflow-x: auto;
+      white-space: pre-wrap;
+      max-height: 300px;
+      overflow-y: auto;
+      border: 1px solid #ddd;
+    }
+    label {
+      font-weight: bold;
+      margin-right: 10px;
+    }
+    input {
+      padding: 6px;
+      margin-right: 10px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+    }
+    .control-group {
+      margin-bottom: 15px;
+    }
+    .logs {
+      height: 200px;
+      overflow-y: auto;
+      background-color: #2c3e50;
+      color: #ecf0f1;
+      padding: 10px;
+      border-radius: 4px;
+      font-family: monospace;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>API Connection Test</h1>
+    
+    <div class="section">
+      <h2>API Configuration</h2>
+      <div class="control-group">
+        <label for="api-url">API URL:</label>
+        <input type="text" id="api-url" value="http://localhost:8000">
+      </div>
+      <div class="control-group">
+        <label for="auth-method">Auth Method:</label>
+        <select id="auth-method">
+          <option value="none" selected>None (No Authentication)</option>
+          <option value="token">JWT Token</option>
+          <option value="api-key">API Key</option>
+        </select>
+      </div>
+      
+      <div id="token-auth" style="display:none">
+        <div class="control-group">
+          <label for="token">JWT Token:</label>
+          <input type="text" id="token" placeholder="Enter your JWT token">
+        </div>
+      </div>
+      
+      <div id="apikey-auth" style="display:none">
+        <div class="control-group">
+          <label for="client-secret">API Key:</label>
+          <input type="text" id="client-secret" placeholder="Enter your API key">
+        </div>
+        <div class="control-group">
+          <label for="client-id">Client ID (optional):</label>
+          <input type="text" id="client-id" placeholder="Enter your client ID">
+        </div>
+      </div>
+    </div>
+    
+    <div class="section">
+      <h2>Test API Connection</h2>
+      <div>
+        <button id="test-connection">Test Connection</button>
+        <button id="save-settings">Save Settings to localStorage</button>
+        <button id="clear-settings" class="danger">Clear Settings</button>
+      </div>
+      <div id="connection-result" style="margin-top: 15px;"></div>
+    </div>
+    
+    <div class="section">
+      <h2>API Tests</h2>
+      <div>
+        <button id="test-health">Test Health Endpoint</button>
+        <button id="test-ai-agents">Get AI Agents</button>
+        <button id="test-conversations">Get Conversations</button>
+        <button id="test-collections">Get Collections</button>
+      </div>
+      <div style="margin-top: 15px;">
+        <h3>API Response</h3>
+        <pre id="api-response">No API response yet</pre>
+      </div>
+    </div>
+    
+    <div class="section">
+      <h2>Logs</h2>
+      <div class="logs" id="logs"></div>
+    </div>
+  </div>
+  
+  <script>
+    // Elements
+    const apiUrlInput = document.getElementById('api-url');
+    const authMethodSelect = document.getElementById('auth-method');
+    const tokenAuthDiv = document.getElementById('token-auth');
+    const apikeyAuthDiv = document.getElementById('apikey-auth');
+    const tokenInput = document.getElementById('token');
+    const clientSecretInput = document.getElementById('client-secret');
+    const clientIdInput = document.getElementById('client-id');
+    const logsEl = document.getElementById('logs');
+    const connectionResultEl = document.getElementById('connection-result');
+    const apiResponseEl = document.getElementById('api-response');
+    
+    // Buttons
+    const testConnectionBtn = document.getElementById('test-connection');
+    const saveSettingsBtn = document.getElementById('save-settings');
+    const clearSettingsBtn = document.getElementById('clear-settings');
+    const testHealthBtn = document.getElementById('test-health');
+    const testAIAgentsBtn = document.getElementById('test-ai-agents');
+    const testConversationsBtn = document.getElementById('test-conversations');
+    const testCollectionsBtn = document.getElementById('test-collections');
+    
+    // Show/hide auth options based on selection
+    authMethodSelect.addEventListener('change', () => {
+      const authMethod = authMethodSelect.value;
+      tokenAuthDiv.style.display = authMethod === 'token' ? 'block' : 'none';
+      apikeyAuthDiv.style.display = authMethod === 'api-key' ? 'block' : 'none';
+    });
+    
+    // Load settings from localStorage
+    function loadSettings() {
+      const apiEnabled = localStorage.getItem('apiEnabled');
+      const apiAuthMethod = localStorage.getItem('apiAuthMethod');
+      const apiUrl = localStorage.getItem('apiUrl') || 'http://localhost:8000';
+      const token = localStorage.getItem('agent_monitor_api_token');
+      const clientSecret = localStorage.getItem('apiClientSecret');
+      const clientId = localStorage.getItem('apiClientId');
+      
+      if (apiEnabled === 'true' && apiAuthMethod) {
+        log(`Loaded settings from localStorage (authMethod: ${apiAuthMethod})`);
+        
+        apiUrlInput.value = apiUrl;
+        authMethodSelect.value = apiAuthMethod;
+        
+        // Trigger change event to show/hide auth options
+        const event = new Event('change');
+        authMethodSelect.dispatchEvent(event);
+        
+        if (apiAuthMethod === 'token' && token) {
+          tokenInput.value = token;
+        } else if (apiAuthMethod === 'api-key') {
+          if (clientSecret) clientSecretInput.value = clientSecret;
+          if (clientId) clientIdInput.value = clientId;
+        }
+      } else {
+        log('No saved settings found, using defaults');
+      }
+    }
+    
+    // Save settings to localStorage
+    saveSettingsBtn.addEventListener('click', () => {
+      const apiUrl = apiUrlInput.value;
+      const authMethod = authMethodSelect.value;
+      
+      localStorage.setItem('apiEnabled', 'true');
+      localStorage.setItem('apiAuthMethod', authMethod);
+      localStorage.setItem('apiUrl', apiUrl);
+      
+      // Clear any existing auth credentials
+      localStorage.removeItem('agent_monitor_api_token');
+      localStorage.removeItem('apiClientSecret');
+      localStorage.removeItem('apiClientId');
+      
+      if (authMethod === 'token' && tokenInput.value) {
+        localStorage.setItem('agent_monitor_api_token', tokenInput.value);
+      } else if (authMethod === 'api-key') {
+        if (clientSecretInput.value) {
+          localStorage.setItem('apiClientSecret', clientSecretInput.value);
+        }
+        
+        if (clientIdInput.value) {
+          localStorage.setItem('apiClientId', clientIdInput.value);
+        }
+      }
+      
+      log('Settings saved to localStorage');
+      updateConnectionResult('Settings saved to localStorage. You can now reload the main application.');
+    });
+    
+    // Clear settings from localStorage
+    clearSettingsBtn.addEventListener('click', () => {
+      localStorage.removeItem('apiEnabled');
+      localStorage.removeItem('apiAuthMethod');
+      localStorage.removeItem('apiUrl');
+      localStorage.removeItem('agent_monitor_api_token');
+      localStorage.removeItem('apiClientSecret');
+      localStorage.removeItem('apiClientId');
+      
+      log('All API settings cleared from localStorage');
+      updateConnectionResult('Settings cleared. The application will use local data on next reload.');
+    });
+    
+    // Test connection
+    testConnectionBtn.addEventListener('click', async () => {
+      const apiUrl = apiUrlInput.value;
+      const authMethod = authMethodSelect.value;
+      let token, clientSecret, clientId, noAuth;
+      
+      if (authMethod === 'token') {
+        token = tokenInput.value;
+        noAuth = false;
+      } else if (authMethod === 'api-key') {
+        clientSecret = clientSecretInput.value;
+        clientId = clientIdInput.value;
+        noAuth = false;
+      } else {
+        noAuth = true;
+      }
+      
+      try {
+        log(`Testing connection to ${apiUrl} with auth method: ${authMethod}${noAuth ? ' (no auth)' : ''}`);
+        updateConnectionResult('Testing connection...');
+        
+        // Simple fetch with the appropriate headers
+        const headers = new Headers();
+        headers.append('Content-Type', 'application/json');
+        
+        if (!noAuth) {
+          if (token) {
+            headers.append('Authorization', `Bearer ${token}`);
+          } else if (clientSecret) {
+            headers.append('X-API-KEY', clientSecret);
+            if (clientId) {
+              headers.append('X-CLIENT-ID', clientId);
+            }
+          }
+        }
+        
+        const response = await fetch(`${apiUrl}/system/health`, {
+          method: 'GET',
+          headers,
+          timeout: 5000
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          log('Connection successful!');
+          updateConnectionResult('Connection successful! API is available.');
+          showApiResponse(data);
+        } else {
+          const errText = await response.text();
+          log(`Connection failed with status ${response.status}: ${errText}`);
+          updateConnectionResult(`Connection failed with status: ${response.status}`);
+          showApiResponse({
+            error: `HTTP ${response.status}`,
+            message: errText
+          });
+        }
+      } catch (error) {
+        log(`Connection error: ${error.message}`);
+        updateConnectionResult(`Connection error: ${error.message}. API server may not be running.`);
+        showApiResponse({
+          error: 'Connection Error',
+          message: error.message
+        });
+      }
+    });
+    
+    // Test health endpoint
+    testHealthBtn.addEventListener('click', async () => {
+      await makeApiRequest('/system/health');
+    });
+    
+    // Test AI Agents endpoint
+    testAIAgentsBtn.addEventListener('click', async () => {
+      await makeApiRequest('/aiagent');
+    });
+    
+    // Test Conversations endpoint
+    testConversationsBtn.addEventListener('click', async () => {
+      await makeApiRequest('/conversation');
+    });
+    
+    // Test Collections endpoint
+    testCollectionsBtn.addEventListener('click', async () => {
+      await makeApiRequest('/collection');
+    });
+    
+    // Make an API request
+    async function makeApiRequest(endpoint) {
+      const apiUrl = apiUrlInput.value;
+      const authMethod = authMethodSelect.value;
+      let token, clientSecret, clientId, noAuth;
+      
+      if (authMethod === 'token') {
+        token = tokenInput.value;
+        noAuth = false;
+      } else if (authMethod === 'api-key') {
+        clientSecret = clientSecretInput.value;
+        clientId = clientIdInput.value;
+        noAuth = false;
+      } else {
+        noAuth = true;
+      }
+      
+      try {
+        log(`Making request to ${endpoint} with auth method: ${authMethod}${noAuth ? ' (no auth)' : ''}`);
+        
+        // Build headers
+        const headers = new Headers();
+        headers.append('Content-Type', 'application/json');
+        
+        if (!noAuth) {
+          if (token) {
+            headers.append('Authorization', `Bearer ${token}`);
+          } else if (clientSecret) {
+            headers.append('X-API-KEY', clientSecret);
+            if (clientId) {
+              headers.append('X-CLIENT-ID', clientId);
+            }
+          }
+        }
+        
+        const response = await fetch(`${apiUrl}${endpoint}`, {
+          method: 'GET',
+          headers
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          log(`Request to ${endpoint} successful!`);
+          showApiResponse(data);
+        } else {
+          const errText = await response.text();
+          log(`Request to ${endpoint} failed with status ${response.status}: ${errText}`);
+          showApiResponse({
+            error: `HTTP ${response.status}`,
+            message: errText
+          });
+        }
+      } catch (error) {
+        log(`API error: ${error.message}`);
+        showApiResponse({
+          error: 'API Error',
+          message: error.message
+        });
+      }
+    }
+    
+    // Logger function
+    function log(message) {
+      const timestamp = new Date().toLocaleTimeString();
+      const logEntry = document.createElement('div');
+      logEntry.textContent = `[${timestamp}] ${message}`;
+      logsEl.appendChild(logEntry);
+      logsEl.scrollTop = logsEl.scrollHeight;
+    }
+    
+    // Update connection result
+    function updateConnectionResult(message) {
+      connectionResultEl.textContent = message;
+    }
+    
+    // Show API response
+    function showApiResponse(data) {
+      apiResponseEl.textContent = JSON.stringify(data, null, 2);
+    }
+    
+    // Initialize
+    document.addEventListener('DOMContentLoaded', () => {
+      loadSettings();
+      log('API Test Tool loaded');
+    });
+  </script>
+</body>
+</html>

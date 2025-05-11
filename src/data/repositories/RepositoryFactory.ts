@@ -47,10 +47,20 @@ export class RepositoryFactory {
     }
 
     try {
+      // Determine if we're using an API data source
+      const isApiDataSource = this.dataSource.constructor.name === 'ApiDataSource';
+      console.log(`RepositoryFactory: Using ${isApiDataSource ? 'API' : 'Local'} data source`);
+
       // Initialize the data source
       console.log('RepositoryFactory: Initializing data source...');
-      await this.dataSource.initialize();
-      console.log('RepositoryFactory: Data source initialized successfully');
+      try {
+        await this.dataSource.initialize();
+        console.log('RepositoryFactory: Data source initialized successfully');
+      } catch (initError) {
+        console.error('RepositoryFactory: Data source initialization failed:', initError);
+        // We need to re-throw this to properly propagate API errors
+        throw initError;
+      }
 
       // Test data access
       console.log('RepositoryFactory: Testing data access...');

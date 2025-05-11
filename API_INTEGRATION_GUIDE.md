@@ -87,11 +87,32 @@ See the `api-controller-example.ts` file for an example of how to implement cont
 
 ## Authentication and Security
 
-The API uses Bearer token authentication. When implementing or consuming the API, make sure to:
+The API supports three authentication methods:
 
-1. Validate JWT tokens on the server-side
-2. Include a valid Bearer token in the Authorization header of all requests
-3. Implement proper RBAC (Role-Based Access Control) based on user permissions
+### 1. JWT Token Authentication
+
+Use Bearer token authentication for user-based access:
+
+- Validate JWT tokens on the server-side
+- Include a valid Bearer token in the Authorization header of all requests
+- Implement proper RBAC (Role-Based Access Control) based on user permissions
+
+### 2. API Key Authentication
+
+For service-to-service communication:
+
+- Use client secret as API key in the X-API-KEY header
+- Optionally provide a client ID in the X-CLIENT-ID header
+- Implement proper service account permissions
+
+### 3. No Authentication
+
+For development, testing, or public API access:
+
+- No tokens or keys required
+- Access only to public endpoints
+- Limited functionality based on server configuration
+- Not recommended for production environments with sensitive data
 
 ## Using the API
 

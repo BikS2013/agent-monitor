@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Conversation and Messages Debug Tool</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+      line-height: 1.6;
+      color: #333;
+      margin: 0;
+      padding: 20px;
+      background-color: #f7f9fc;
+    }
+    
+    .container {
+      max-width: 1000px;
+      margin: 0 auto;
+      background-color: #fff;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    }
+    
+    h1, h2, h3 {
+      color: #2c3e50;
+      margin-top: 0;
+    }
+    
+    h2 {
+      margin-top: 30px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid #eee;
+    }
+    
+    .panel {
+      background-color: #f8f9fa;
+      border: 1px solid #e9ecef;
+      border-radius: 4px;
+      padding: 15px;
+      margin-bottom: 20px;
+    }
+    
+    pre {
+      background-color: #282c34;
+      color: #abb2bf;
+      padding: 15px;
+      border-radius: 4px;
+      overflow-x: auto;
+      white-space: pre-wrap;
+      font-size: 14px;
+    }
+    
+    button {
+      background-color: #3498db;
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
+      margin-right: 8px;
+      margin-bottom: 8px;
+    }
+    
+    button:hover {
+      background-color: #2980b9;
+    }
+    
+    input, select {
+      padding: 8px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-size: 14px;
+      margin-right: 8px;
+      margin-bottom: 16px;
+    }
+    
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+      gap: 10px;
+    }
+    
+    .card {
+      background-color: #fff;
+      border: 1px solid #e1e4e8;
+      border-radius: 6px;
+      padding: 15px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    
+    .card:hover {
+      border-color: #3498db;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    }
+    
+    .messages-container {
+      max-height: 400px;
+      overflow-y: auto;
+      padding: 10px;
+      background-color: #f9f9f9;
+      border-radius: 4px;
+      margin-top: 10px;
+    }
+    
+    .message {
+      margin-bottom: 10px;
+      padding: 10px;
+      border-radius: 8px;
+      max-width: 80%;
+    }
+    
+    .message.human {
+      background-color: #e8f4fd;
+      margin-right: auto;
+    }
+    
+    .message.assistant {
+      background-color: #f1f1f1;
+      margin-left: auto;
+    }
+    
+    .message-meta {
+      font-size: 12px;
+      color: #666;
+      margin-bottom: 4px;
+    }
+    
+    .tabs {
+      display: flex;
+      margin-bottom: 15px;
+      border-bottom: 1px solid #ddd;
+    }
+    
+    .tab {
+      padding: 8px 16px;
+      cursor: pointer;
+      background: none;
+      border: none;
+      border-bottom: 2px solid transparent;
+      margin: 0;
+      color: #666;
+    }
+    
+    .tab.active {
+      border-bottom: 2px solid #3498db;
+      color: #3498db;
+    }
+    
+    .success {
+      color: #2ecc71;
+    }
+    
+    .error {
+      color: #e74c3c;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Conversation and Messages Debug Tool</h1>
+    <p>This tool helps debug issues with conversation and message loading from the API.</p>
+    
+    <div class="panel">
+      <h2>API Configuration</h2>
+      <div>
+        <label for="api-url">API URL:</label>
+        <input type="text" id="api-url" value="http://localhost:8000" size="40">
+        
+        <div>
+          <label for="api-auth-method">Authentication Method:</label>
+          <select id="api-auth-method">
+            <option value="none">No Authentication</option>
+            <option value="token">JWT Token</option>
+            <option value="api-key">API Key</option>
+          </select>
+        </div>
+        
+        <div id="token-settings" style="display: none;">
+          <label for="api-token">JWT Token:</label>
+          <input type="text" id="api-token" placeholder="Enter JWT token" size="40">
+        </div>
+        
+        <div id="apikey-settings" style="display: none;">
+          <label for="api-key">API Key:</label>
+          <input type="text" id="api-key" placeholder="Enter API key" size="40">
+          
+          <div>
+            <label for="api-client-id">Client ID (Optional):</label>
+            <input type="text" id="api-client-id" placeholder="Enter client ID" size="40">
+          </div>
+        </div>
+        
+        <button id="test-connection">Test Connection</button>
+      </div>
+    </div>
+    
+    <div class="panel">
+      <h2>Test Conversations</h2>
+      <div class="tabs">
+        <button class="tab active" data-tab="fetch">Fetch Conversations</button>
+        <button class="tab" data-tab="details">Conversation Details</button>
+        <button class="tab" data-tab="messages">Messages</button>
+      </div>
+      
+      <div id="tab-fetch" class="tab-content">
+        <div>
+          <button id="fetch-conversations">Fetch All Conversations</button>
+          <button id="fetch-recent">Fetch Recent Conversations</button>
+        </div>
+        
+        <div id="conversations-result"></div>
+        
+        <h3>Conversation List</h3>
+        <div id="conversation-list" class="grid"></div>
+      </div>
+      
+      <div id="tab-details" class="tab-content" style="display: none;">
+        <div>
+          <label for="conversation-id">Conversation ID:</label>
+          <input type="text" id="conversation-id" placeholder="Enter conversation ID" size="20">
+          <button id="fetch-conversation">Fetch Conversation</button>
+        </div>
+        
+        <div>
+          <input type="checkbox" id="include-relations" checked>
+          <label for="include-relations">Include Related Data (Messages)</label>
+        </div>
+        
+        <div id="conversation-details"></div>
+      </div>
+      
+      <div id="tab-messages" class="tab-content" style="display: none;">
+        <div>
+          <label for="message-conversation-id">Conversation ID:</label>
+          <input type="text" id="message-conversation-id" placeholder="Enter conversation ID" size="20">
+          <button id="fetch-messages">Fetch Messages</button>
+        </div>
+        
+        <div id="messages-count"></div>
+        
+        <div id="messages-container" class="messages-container"></div>
+      </div>
+    </div>
+    
+    <div class="panel">
+      <h2>API Response</h2>
+      <pre id="api-response">// API responses will appear here</pre>
+    </div>
+  </div>
+  
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      // Elements
+      const apiUrlInput = document.getElementById('api-url');
+      const apiAuthMethodSelect = document.getElementById('api-auth-method');
+      const apiTokenInput = document.getElementById('api-token');
+      const apiKeyInput = document.getElementById('api-key');
+      const apiClientIdInput = document.getElementById('api-client-id');
+      const tokenSettings = document.getElementById('token-settings');
+      const apikeySettings = document.getElementById('apikey-settings');
+      
+      const testConnectionBtn = document.getElementById('test-connection');
+      const fetchConversationsBtn = document.getElementById('fetch-conversations');
+      const fetchRecentBtn = document.getElementById('fetch-recent');
+      const fetchConversationBtn = document.getElementById('fetch-conversation');
+      const fetchMessagesBtn = document.getElementById('fetch-messages');
+      
+      const conversationIdInput = document.getElementById('conversation-id');
+      const messageConversationIdInput = document.getElementById('message-conversation-id');
+      const includeRelationsCheckbox = document.getElementById('include-relations');
+      
+      const conversationsResultDiv = document.getElementById('conversations-result');
+      const conversationListDiv = document.getElementById('conversation-list');
+      const conversationDetailsDiv = document.getElementById('conversation-details');
+      const messagesCountDiv = document.getElementById('messages-count');
+      const messagesContainerDiv = document.getElementById('messages-container');
+      const apiResponsePre = document.getElementById('api-response');
+      
+      // Tabs
+      const tabs = document.querySelectorAll('.tab');
+      const tabContents = document.querySelectorAll('.tab-content');
+      
+      // Toggle auth settings based on selection
+      apiAuthMethodSelect.addEventListener('change', function() {
+        const authMethod = this.value;
+        tokenSettings.style.display = authMethod === 'token' ? 'block' : 'none';
+        apikeySettings.style.display = authMethod === 'api-key' ? 'block' : 'none';
+      });
+      
+      // Tab switching
+      tabs.forEach(tab => {
+        tab.addEventListener('click', function() {
+          tabs.forEach(t => t.classList.remove('active'));
+          this.classList.add('active');
+          
+          const tabId = this.dataset.tab;
+          tabContents.forEach(content => {
+            content.style.display = content.id === `tab-${tabId}` ? 'block' : 'none';
+          });
+        });
+      });
+      
+      // Helper functions
+      function getApiUrl() {
+        return apiUrlInput.value.trim();
+      }
+      
+      function getAuthHeaders() {
+        const headers = {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        };
+        
+        const authMethod = apiAuthMethodSelect.value;
+        
+        if (authMethod === 'token' && apiTokenInput.value) {
+          headers['Authorization'] = `Bearer ${apiTokenInput.value}`;
+        } else if (authMethod === 'api-key' && apiKeyInput.value) {
+          headers['X-API-KEY'] = apiKeyInput.value;
+          
+          if (apiClientIdInput.value) {
+            headers['X-CLIENT-ID'] = apiClientIdInput.value;
+          }
+        }
+        
+        return headers;
+      }
+      
+      function displayApiResponse(data) {
+        if (typeof data === 'string') {
+          apiResponsePre.textContent = data;
+        } else {
+          apiResponsePre.textContent = JSON.stringify(data, null, 2);
+        }
+      }
+      
+      function displayError(message) {
+        apiResponsePre.textContent = `Error: ${message}`;
+      }
+      
+      async function makeApiRequest(endpoint, method = 'GET', data = null) {
+        const url = `${getApiUrl()}${endpoint}`;
+        const headers = getAuthHeaders();
+        
+        const options = {
+          method,
+          headers
+        };
+        
+        if (data && (method === 'POST' || method === 'PUT')) {
+          options.body = JSON.stringify(data);
+        }
+        
+        try {
+          const response = await fetch(url, options);
+          
+          if (response.ok) {
+            const result = await response.json();
+            displayApiResponse(result);
+            return result;
+          } else {
+            const errorText = await response.text();
+            displayError(`${response.status} ${response.statusText}: ${errorText}`);
+            return null;
+          }
+        } catch (error) {
+          displayError(error.message);
+          return null;
+        }
+      }
+      
+      function renderMessages(messages) {
+        messagesContainerDiv.innerHTML = '';
+        
+        if (!messages || messages.length === 0) {
+          messagesContainerDiv.textContent = 'No messages found.';
+          return;
+        }
+        
+        messages.forEach(message => {
+          const messageEl = document.createElement('div');
+          messageEl.className = `message ${message.sender}`;
+          
+          const metaEl = document.createElement('div');
+          metaEl.className = 'message-meta';
+          metaEl.textContent = `${message.sender} - ${new Date(message.timestamp).toLocaleString()}`;
+          
+          const contentEl = document.createElement('div');
+          contentEl.className = 'message-content';
+          contentEl.textContent = message.content;
+          
+          messageEl.appendChild(metaEl);
+          messageEl.appendChild(contentEl);
+          messagesContainerDiv.appendChild(messageEl);
+        });
+      }
+      
+      // Event handlers
+      testConnectionBtn.addEventListener('click', async function() {
+        const result = await makeApiRequest('/system/health');
+        if (result) {
+          alert('Connection successful!');
+        }
+      });
+      
+      fetchConversationsBtn.addEventListener('click', async function() {
+        const result = await makeApiRequest('/conversation');
+        
+        if (result) {
+          const conversations = Array.isArray(result) ? result : (result.items || []);
+          conversationsResultDiv.textContent = `Found ${conversations.length} conversations.`;
+          
+          // Render conversation cards
+          conversationListDiv.innerHTML = '';
+          conversations.forEach(conversation => {
+            const card = document.createElement('div');
+            card.className = 'card';
+            
+            const title = document.createElement('div');
+            title.textContent = conversation.title || `Conversation ${conversation.id}`;
+            
+            const meta = document.createElement('div');
+            meta.className = 'message-meta';
+            meta.textContent = `ID: ${conversation.id}`;
+            
+            const status = document.createElement('div');
+            status.textContent = conversation.status || 'Unknown status';
+            
+            card.appendChild(title);
+            card.appendChild(meta);
+            card.appendChild(status);
+            
+            card.addEventListener('click', function() {
+              conversationIdInput.value = conversation.id;
+              messageConversationIdInput.value = conversation.id;
+              
+              // Switch to details tab
+              document.querySelector('.tab[data-tab="details"]').click();
+              fetchConversationBtn.click();
+            });
+            
+            conversationListDiv.appendChild(card);
+          });
+        }
+      });
+      
+      fetchRecentBtn.addEventListener('click', async function() {
+        const result = await makeApiRequest('/conversation?limit=5&sort_by=createdAt&sort_order=desc');
+        
+        if (result) {
+          const conversations = Array.isArray(result) ? result : (result.items || []);
+          conversationsResultDiv.textContent = `Found ${conversations.length} recent conversations.`;
+          
+          // Render conversation cards
+          conversationListDiv.innerHTML = '';
+          conversations.forEach(conversation => {
+            const card = document.createElement('div');
+            card.className = 'card';
+            
+            const title = document.createElement('div');
+            title.textContent = conversation.title || `Conversation ${conversation.id}`;
+            
+            const meta = document.createElement('div');
+            meta.className = 'message-meta';
+            meta.textContent = `ID: ${conversation.id}`;
+            
+            const status = document.createElement('div');
+            status.textContent = conversation.status || 'Unknown status';
+            
+            card.appendChild(title);
+            card.appendChild(meta);
+            card.appendChild(status);
+            
+            card.addEventListener('click', function() {
+              conversationIdInput.value = conversation.id;
+              messageConversationIdInput.value = conversation.id;
+              
+              // Switch to details tab
+              document.querySelector('.tab[data-tab="details"]').click();
+              fetchConversationBtn.click();
+            });
+            
+            conversationListDiv.appendChild(card);
+          });
+        }
+      });
+      
+      fetchConversationBtn.addEventListener('click', async function() {
+        const conversationId = conversationIdInput.value.trim();
+        if (!conversationId) {
+          alert('Please enter a conversation ID');
+          return;
+        }
+        
+        const includeRelations = includeRelationsCheckbox.checked;
+        const result = await makeApiRequest(`/conversation/${conversationId}?include_messages=${includeRelations}&expand=messages`);
+        
+        if (result) {
+          conversationDetailsDiv.innerHTML = '';
+          
+          const details = document.createElement('div');
+          
+          // Basic info
+          const title = document.createElement('h3');
+          title.textContent = result.title || `Conversation ${result.id}`;
+          
+          const meta = document.createElement('div');
+          meta.innerHTML = `
+            <div><strong>ID:</strong> ${result.id}</div>
+            <div><strong>Status:</strong> ${result.status || 'Unknown'}</div>
+            <div><strong>Created:</strong> ${new Date(result.startTimestamp || result.createdAt).toLocaleString()}</div>
+            <div><strong>User:</strong> ${result.userName || result.userId || 'Unknown'}</div>
+            <div><strong>AI Agent:</strong> ${result.aiAgentId || 'Unknown'}</div>
+          `;
+          
+          // Messages info
+          const hasMessages = !!(result.decodedMessages || result.decoded_messages || result.messages);
+          const messagesField = result.decodedMessages || result.decoded_messages || result.messages || [];
+          const messagesInfo = document.createElement('div');
+          messagesInfo.innerHTML = `
+            <div><strong>Has Message Data:</strong> ${hasMessages ? 'Yes' : 'No'}</div>
+            <div><strong>Message Field Type:</strong> ${Array.isArray(messagesField) ? 'Array' : typeof messagesField}</div>
+            <div><strong>Message Count:</strong> ${Array.isArray(messagesField) ? messagesField.length : 0}</div>
+          `;
+          
+          details.appendChild(title);
+          details.appendChild(meta);
+          details.appendChild(document.createElement('hr'));
+          details.appendChild(messagesInfo);
+          
+          // Message IDs
+          if (result.messages && Array.isArray(result.messages)) {
+            const messageIds = document.createElement('div');
+            messageIds.innerHTML = `<div><strong>Message IDs:</strong> ${result.messages.length > 0 ? result.messages.join(', ') : 'No message IDs'}</div>`;
+            details.appendChild(messageIds);
+          }
+          
+          conversationDetailsDiv.appendChild(details);
+          
+          // If messages are included, also update messages tab
+          if (hasMessages && Array.isArray(messagesField)) {
+            messageConversationIdInput.value = conversationId;
+            
+            // Transform messages into our format
+            const transformedMessages = messagesField.map(msg => {
+              return {
+                id: msg.id || `msg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+                conversationId: conversationId,
+                timestamp: msg.timestamp || msg.createdAt || new Date().toISOString(),
+                content: msg.content || '',
+                sender: (msg.type === 'user' || msg.role === 'user') ? 'human' : 'assistant',
+                metadata: msg.metadata || {}
+              };
+            });
+            
+            messagesCountDiv.textContent = `Found ${transformedMessages.length} messages.`;
+            renderMessages(transformedMessages);
+          }
+        }
+      });
+      
+      fetchMessagesBtn.addEventListener('click', async function() {
+        const conversationId = messageConversationIdInput.value.trim();
+        if (!conversationId) {
+          alert('Please enter a conversation ID');
+          return;
+        }
+        
+        const result = await makeApiRequest(`/conversation/${conversationId}?include_messages=true&expand=messages`);
+        
+        if (result) {
+          const messagesField = result.decodedMessages || result.decoded_messages || result.messages || [];
+          
+          if (Array.isArray(messagesField)) {
+            messagesCountDiv.textContent = `Found ${messagesField.length} messages.`;
+            
+            // Transform messages
+            const transformedMessages = messagesField.map(msg => {
+              return {
+                id: msg.id || `msg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+                conversationId: conversationId,
+                timestamp: msg.timestamp || msg.createdAt || new Date().toISOString(),
+                content: msg.content || '',
+                sender: (msg.type === 'user' || msg.role === 'user') ? 'human' : 'assistant',
+                metadata: msg.metadata || {}
+              };
+            });
+            
+            renderMessages(transformedMessages);
+          } else {
+            messagesCountDiv.textContent = 'No messages found or messages field is not an array.';
+            messagesContainerDiv.textContent = 'No messages found.';
+          }
+        }
+      });
+      
+      // Initialize with default authentication method
+      apiAuthMethodSelect.dispatchEvent(new Event('change'));
+    });
+  </script>
+</body>
+</html>

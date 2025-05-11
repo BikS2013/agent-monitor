@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { Settings, User, Bell, Shield, Database, Bot, Save, HardDrive, AlertCircle } from 'lucide-react';
+import { Settings, User, Bell, Shield, Database, Bot, Save, HardDrive, AlertCircle, Globe } from 'lucide-react';
 import { useData } from '../context/DataContext';
 import { useTheme } from '../context/ThemeContext';
 import { useRepositories } from '../context/RepositoryContext';
 import { DataSize } from '../data/jsonDataSource';
 import { User as UserType } from '../data/types';
 import config from '../config';
+import ApiSettings from '../components/settings/ApiSettings';
 
 const SettingsView: React.FC = () => {
   const { getCurrentUser } = useData();
@@ -93,7 +94,14 @@ const SettingsView: React.FC = () => {
             </nav>
           </div>
 
-          <div className="p-6">
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              console.log('Settings form submitted');
+              // Add your form submission logic here
+            }}
+            className="p-6"
+          >
             <div className="mb-8">
               <h2 className={`text-lg font-medium mb-4 flex items-center ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
                 <User size={20} className="text-blue-500 mr-2" />
@@ -112,7 +120,7 @@ const SettingsView: React.FC = () => {
                         ? 'bg-gray-600 border-gray-500 text-white'
                         : 'bg-white border-gray-300 text-gray-900'
                     }`}
-                    value={currentUser?.name || ''}
+                    defaultValue={currentUser?.name || ''}
                     readOnly
                   />
                 </div>
@@ -128,7 +136,7 @@ const SettingsView: React.FC = () => {
                         ? 'bg-gray-600 border-gray-500 text-white'
                         : 'bg-white border-gray-300 text-gray-900'
                     }`}
-                    value={currentUser?.role || ''}
+                    defaultValue={currentUser?.role || ''}
                     readOnly
                   />
                 </div>
@@ -144,7 +152,8 @@ const SettingsView: React.FC = () => {
                         ? 'bg-gray-600 border-gray-500 text-white'
                         : 'bg-white border-gray-300 text-gray-900'
                     }`}
-                    value="admin@example.com"
+                    defaultValue="admin@example.com"
+                    onChange={(e) => {/* Handle email change */}}
                   />
                 </div>
 
@@ -181,7 +190,7 @@ const SettingsView: React.FC = () => {
                     <p className={`text-sm ${theme === 'dark' ? 'text-gray-300' : 'text-gray-500'}`}>Receive email alerts for important events</p>
                   </div>
                   <label className="relative inline-flex items-center cursor-pointer">
-                    <input type="checkbox" className="sr-only peer" checked />
+                    <input type="checkbox" className="sr-only peer" defaultChecked />
                     <div className={`w-11 h-6 ${theme === 'dark' ? 'bg-gray-700' : 'bg-gray-200'} peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600`}></div>
                   </label>
                 </div>
@@ -194,7 +203,7 @@ const SettingsView: React.FC = () => {
                     <p className={`text-sm ${theme === 'dark' ? 'text-gray-300' : 'text-gray-500'}`}>Get notified when AI agents fail to resolve conversations</p>
                   </div>
                   <label className="relative inline-flex items-center cursor-pointer">
-                    <input type="checkbox" className="sr-only peer" checked />
+                    <input type="checkbox" className="sr-only peer" defaultChecked />
                     <div className={`w-11 h-6 ${theme === 'dark' ? 'bg-gray-700' : 'bg-gray-200'} peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600`}></div>
                   </label>
                 </div>
@@ -254,17 +263,30 @@ const SettingsView: React.FC = () => {
                 Data Source
               </h2>
 
-              <div className="space-y-3">
+              <div className="space-y-4">
+                {/* API Settings Section */}
+                <div className={`p-4 rounded-md ${
+                  theme === 'dark' ? 'bg-gray-600' : 'bg-gray-50'
+                }`}>
+                  <h3 className={`font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'} mb-4 flex items-center`}>
+                    <Globe size={16} className="text-blue-500 mr-2" />
+                    API Connection
+                  </h3>
+
+                  <ApiSettings />
+                </div>
+
+                {/* Local Dataset Settings */}
                 <div className={`p-4 rounded-md ${
                   theme === 'dark' ? 'bg-gray-600' : 'bg-gray-50'
                 }`}>
                   <h3 className={`font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'} mb-4`}>Dataset Size</h3>
-                  
+
                   {!config.dataSource.allowUIDatasetChange ? (
                     <div className="flex items-center p-3 mb-4 text-sm bg-amber-100 text-amber-800 rounded-md">
                       <AlertCircle size={16} className="mr-2 flex-shrink-0" />
                       <p>
-                        Dataset size changes are restricted by configuration settings. 
+                        Dataset size changes are restricted by configuration settings.
                         Current dataset size: <strong>{config.dataSource.datasetSize}</strong>
                       </p>
                     </div>
@@ -273,21 +295,21 @@ const SettingsView: React.FC = () => {
                       <p className={`text-sm ${theme === 'dark' ? 'text-gray-300' : 'text-gray-500'} mb-4`}>
                         Select the size of the dataset to load from JSON file. Larger datasets provide a more realistic experience but may take longer to load.
                       </p>
-                      
+
                       {isLoading && (
                         <div className="flex items-center my-2 text-sm text-blue-500">
                           <div className="animate-spin h-4 w-4 border-2 border-blue-500 rounded-full border-t-transparent mr-2"></div>
                           <span>Loading data...</span>
                         </div>
                       )}
-                      
+
                       <div className="flex flex-col space-y-2">
                         <div className="flex items-center">
-                          <input 
-                            type="radio" 
-                            id="small-dataset" 
+                          <input
+                            type="radio"
+                            id="small-dataset"
                             name="dataset-size"
-                            value="small"
+                            defaultValue="small"
                             checked={dataSize === 'small'}
                             onChange={() => !isLoading && handleDataSizeChange('small')}
                             disabled={isLoading || !config.dataSource.allowUIDatasetChange}
@@ -300,13 +322,13 @@ const SettingsView: React.FC = () => {
                             </span>
                           </label>
                         </div>
-                        
+
                         <div className="flex items-center">
-                          <input 
-                            type="radio" 
-                            id="medium-dataset" 
+                          <input
+                            type="radio"
+                            id="medium-dataset"
                             name="dataset-size"
-                            value="medium"
+                            defaultValue="medium"
                             checked={dataSize === 'medium'}
                             onChange={() => !isLoading && handleDataSizeChange('medium')}
                             disabled={isLoading || !config.dataSource.allowUIDatasetChange}
@@ -319,13 +341,13 @@ const SettingsView: React.FC = () => {
                             </span>
                           </label>
                         </div>
-                        
+
                         <div className="flex items-center">
-                          <input 
-                            type="radio" 
-                            id="large-dataset" 
+                          <input
+                            type="radio"
+                            id="large-dataset"
                             name="dataset-size"
-                            value="large"
+                            defaultValue="large"
                             checked={dataSize === 'large'}
                             onChange={() => !isLoading && handleDataSizeChange('large')}
                             disabled={isLoading || !config.dataSource.allowUIDatasetChange}
@@ -339,17 +361,17 @@ const SettingsView: React.FC = () => {
                           </label>
                         </div>
                       </div>
-                      
+
                       <p className={`text-xs ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'} mt-4`}>
                         Currently using the <strong>{dataSize}</strong> dataset.
                       </p>
-                      
+
                       <p className="text-xs mt-2 text-amber-500">
                         Note: Changing the dataset size will reload the application.
                       </p>
                     </>
                   )}
-                  
+
                   {!config.preferLocalStorage && (
                     <div className="mt-4 p-3 text-sm bg-blue-100 text-blue-800 rounded-md">
                       <p>
@@ -396,7 +418,7 @@ const SettingsView: React.FC = () => {
                     <p className={`text-sm ${theme === 'dark' ? 'text-gray-300' : 'text-gray-500'}`}>Automatically archive old collections</p>
                   </div>
                   <label className="relative inline-flex items-center cursor-pointer">
-                    <input type="checkbox" className="sr-only peer" checked />
+                    <input type="checkbox" className="sr-only peer" defaultChecked />
                     <div className={`w-11 h-6 ${theme === 'dark' ? 'bg-gray-700' : 'bg-gray-200'} peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600`}></div>
                   </label>
                 </div>
@@ -422,7 +444,7 @@ const SettingsView: React.FC = () => {
                           ? 'bg-gray-600 border-gray-500 text-white'
                           : 'bg-white border-gray-300 text-gray-900'
                       }`}
-                      value="5"
+                      defaultValue="5"
                     />
                     <span className={`ml-2 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>seconds</span>
                   </div>
@@ -443,7 +465,7 @@ const SettingsView: React.FC = () => {
                           ? 'bg-gray-600 border-gray-500 text-white'
                           : 'bg-white border-gray-300 text-gray-900'
                       }`}
-                      value="75"
+                      defaultValue="75"
                     />
                     <span className={`ml-2 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>%</span>
                   </div>
@@ -453,10 +475,18 @@ const SettingsView: React.FC = () => {
                 </div>
               </div>
             </div>
-          </div>
+          </form>
 
           <div className={`${theme === 'dark' ? 'bg-gray-800' : 'bg-gray-50'} px-6 py-3 flex justify-end`}>
-            <button className={`${theme === 'dark' ? 'bg-blue-600 hover:bg-blue-700' : 'bg-blue-500 hover:bg-blue-600'} text-white px-4 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 flex items-center`}>
+            <button
+              type="button"
+              onClick={(e) => {
+                e.preventDefault();
+                console.log('Settings saved');
+                // Add your save logic here
+              }}
+              className={`${theme === 'dark' ? 'bg-blue-600 hover:bg-blue-700' : 'bg-blue-500 hover:bg-blue-600'} text-white px-4 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 flex items-center`}
+            >
               <Save size={16} className="mr-2" />
               Save Settings
             </button>

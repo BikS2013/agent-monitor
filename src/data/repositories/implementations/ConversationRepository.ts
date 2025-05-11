@@ -17,23 +17,40 @@ export class ConversationRepository extends BaseRepository<Conversation> impleme
    * Optionally include related entities
    */
   async getById(id: string, includeRelations: boolean = false): Promise<Conversation | null> {
-    const conversation = await this.dataSource.getConversationById(id);
-    
+    console.log(`ConversationRepository: Getting conversation ${id} with includeRelations=${includeRelations}`);
+    let conversation = await this.dataSource.getConversationById(id);
+
     if (!conversation) {
+      console.warn(`ConversationRepository: Conversation ${id} not found`);
       return null;
     }
-    
+
     if (!includeRelations) {
       // For lazy loading, return just the conversation metadata without messages
-      // Set messages to empty array to save bandwidth
+      console.log(`ConversationRepository: Returning conversation ${id} without messages (lazy loading)`);
       return {
         ...conversation,
-        messages: []
+        messages: [] // Set messages to empty array to save bandwidth
       };
     }
-    
-    // Full loading - include all related data
-    // In real implementation, we'd load related entities as needed
+
+    // We need to load the messages since includeRelations is true
+    if (conversation.messages && conversation.messages.length > 0) {
+      // The conversation already has message IDs, but we need to load the actual messages
+      console.log(`ConversationRepository: Loading messages for conversation ${id} (${conversation.messages.length} message IDs found)`);
+
+      // Now we need to load the actual message content for these IDs
+      const messages = await this.dataSource.getMessagesByConversationId(id);
+      console.log(`ConversationRepository: Loaded ${messages.length} messages for conversation ${id}`);
+
+      // Return conversation with messages loaded
+      return {
+        ...conversation,
+        messagesLoaded: true
+      };
+    }
+
+    console.log(`ConversationRepository: Returning conversation ${id} with no message IDs found`);
     return conversation;
   }
   

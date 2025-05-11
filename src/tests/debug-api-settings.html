@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>API Settings Debug Tool</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      line-height: 1.6;
+      padding: 20px;
+      max-width: 800px;
+      margin: 0 auto;
+    }
+    h1 {
+      border-bottom: 1px solid #ccc;
+      padding-bottom: 10px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 20px;
+    }
+    th, td {
+      border: 1px solid #ddd;
+      padding: 8px;
+      text-align: left;
+    }
+    th {
+      background-color: #f2f2f2;
+    }
+    .section {
+      margin-bottom: 30px;
+      padding: 15px;
+      background-color: #f9f9f9;
+      border-radius: 5px;
+    }
+    .actions {
+      margin-top: 20px;
+      display: flex;
+      gap: 10px;
+    }
+    button {
+      padding: 8px 12px;
+      cursor: pointer;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 4px;
+    }
+    button.delete {
+      background-color: #f44336;
+    }
+    button.reload {
+      background-color: #2196F3;
+    }
+    .key-value {
+      display: flex;
+      margin-bottom: 10px;
+    }
+    .key-value input {
+      padding: 8px;
+      margin-right: 10px;
+    }
+    #output {
+      background-color: #f0f0f0;
+      padding: 10px;
+      border-radius: 5px;
+      white-space: pre-wrap;
+      max-height: 200px;
+      overflow: auto;
+    }
+  </style>
+</head>
+<body>
+  <h1>API Settings Debug Tool</h1>
+  
+  <div class="section">
+    <h2>Current localStorage Settings</h2>
+    <table id="settingsTable">
+      <thead>
+        <tr>
+          <th>Key</th>
+          <th>Value</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody id="settingsBody">
+        <!-- Will be populated by JavaScript -->
+      </tbody>
+    </table>
+  </div>
+  
+  <div class="section">
+    <h2>Add/Update Setting</h2>
+    <div class="key-value">
+      <input type="text" id="settingKey" placeholder="Key">
+      <input type="text" id="settingValue" placeholder="Value">
+      <button onclick="addSetting()">Add/Update</button>
+    </div>
+  </div>
+  
+  <div class="section">
+    <h2>Quick Actions</h2>
+    <div class="actions">
+      <button onclick="setNoAuthMode()">Enable No Auth Mode</button>
+      <button onclick="setTokenMode()">Enable Token Mode</button>
+      <button onclick="setApiKeyMode()">Enable API Key Mode</button>
+      <button class="delete" onclick="clearAllSettings()">Clear All Settings</button>
+      <button class="reload" onclick="location.reload()">Reload Page</button>
+    </div>
+  </div>
+  
+  <div class="section">
+    <h2>Results</h2>
+    <div id="output"></div>
+  </div>
+  
+  <script>
+    // Initialize
+    document.addEventListener('DOMContentLoaded', loadSettings);
+    
+    // Load and display localStorage settings
+    function loadSettings() {
+      const settingsBody = document.getElementById('settingsBody');
+      settingsBody.innerHTML = '';
+      
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        const value = localStorage.getItem(key);
+        
+        const row = document.createElement('tr');
+        
+        const keyCell = document.createElement('td');
+        keyCell.textContent = key;
+        
+        const valueCell = document.createElement('td');
+        valueCell.textContent = value;
+        
+        const actionCell = document.createElement('td');
+        const deleteButton = document.createElement('button');
+        deleteButton.textContent = 'Delete';
+        deleteButton.className = 'delete';
+        deleteButton.onclick = function() { deleteSetting(key); };
+        actionCell.appendChild(deleteButton);
+        
+        row.appendChild(keyCell);
+        row.appendChild(valueCell);
+        row.appendChild(actionCell);
+        
+        settingsBody.appendChild(row);
+      }
+    }
+    
+    // Add or update a setting
+    function addSetting() {
+      const key = document.getElementById('settingKey').value;
+      const value = document.getElementById('settingValue').value;
+      
+      if (!key) {
+        log('Error: Key cannot be empty');
+        return;
+      }
+      
+      localStorage.setItem(key, value);
+      log(`Setting "${key}" updated to "${value}"`);
+      loadSettings();
+    }
+    
+    // Delete a setting
+    function deleteSetting(key) {
+      localStorage.removeItem(key);
+      log(`Setting "${key}" removed`);
+      loadSettings();
+    }
+    
+    // Clear all settings
+    function clearAllSettings() {
+      if (confirm('Are you sure you want to clear all localStorage settings? This will remove all stored API configurations.')) {
+        localStorage.clear();
+        log('All settings cleared');
+        loadSettings();
+      }
+    }
+    
+    // Set up No Auth Mode
+    function setNoAuthMode() {
+      localStorage.setItem('apiEnabled', 'true');
+      localStorage.setItem('apiAuthMethod', 'none');
+      
+      // Remove any existing auth credentials
+      localStorage.removeItem('apiClientSecret');
+      localStorage.removeItem('apiClientId');
+      localStorage.removeItem('agent_monitor_api_token');
+      localStorage.removeItem('agent_monitor_token_expiry');
+      
+      log('No Auth Mode enabled');
+      loadSettings();
+    }
+    
+    // Set up Token Auth Mode
+    function setTokenMode() {
+      localStorage.setItem('apiEnabled', 'true');
+      localStorage.setItem('apiAuthMethod', 'token');
+      
+      // Dummy token for testing
+      localStorage.setItem('agent_monitor_api_token', 'test-jwt-token');
+      
+      // Remove other auth methods
+      localStorage.removeItem('apiClientSecret');
+      localStorage.removeItem('apiClientId');
+      
+      log('Token Auth Mode enabled with dummy token');
+      loadSettings();
+    }
+    
+    // Set up API Key Auth Mode
+    function setApiKeyMode() {
+      localStorage.setItem('apiEnabled', 'true');
+      localStorage.setItem('apiAuthMethod', 'api-key');
+      
+      // Dummy API key for testing
+      localStorage.setItem('apiClientSecret', 'test-api-key');
+      localStorage.setItem('apiClientId', 'test-client-id');
+      
+      // Remove other auth methods
+      localStorage.removeItem('agent_monitor_api_token');
+      localStorage.removeItem('agent_monitor_token_expiry');
+      
+      log('API Key Auth Mode enabled with dummy credentials');
+      loadSettings();
+    }
+    
+    // Log messages to the output div
+    function log(message) {
+      const output = document.getElementById('output');
+      const timestamp = new Date().toLocaleTimeString();
+      output.innerHTML += `[${timestamp}] ${message}\n`;
+      output.scrollTop = output.scrollHeight;
+    }
+  </script>
+</body>
+</html>

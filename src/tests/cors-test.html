@@ -1,0 +1,693 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CORS Test Tool for Agent Monitor API</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        h1, h2, h3 {
+            color: #333;
+        }
+        pre {
+            background-color: #f5f5f5;
+            padding: 10px;
+            border-radius: 5px;
+            overflow-x: auto;
+            max-height: 400px;
+        }
+        code {
+            font-family: monospace;
+            background-color: #f5f5f5;
+            padding: 2px 4px;
+            border-radius: 3px;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px 0;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        input, select {
+            padding: 8px;
+            margin: 5px 0;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        .panel {
+            background-color: #f5f5f5;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+        .row {
+            display: flex;
+            margin-bottom: 10px;
+        }
+        .column {
+            flex: 1;
+            padding: 0 10px;
+        }
+        #response-container {
+            margin-top: 20px;
+            background-color: #f9f9f9;
+            padding: 15px;
+            border-radius: 5px;
+            border-left: 4px solid #4CAF50;
+        }
+        .error {
+            color: #D8000C;
+            background-color: #FFBABA;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+        .success {
+            color: #4F8A10;
+            background-color: #DFF2BF;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+        .tab {
+            overflow: hidden;
+            border: 1px solid #ccc;
+            background-color: #f1f1f1;
+            margin-bottom: 20px;
+        }
+        .tab button {
+            background-color: inherit;
+            float: left;
+            border: none;
+            outline: none;
+            cursor: pointer;
+            padding: 14px 16px;
+            transition: 0.3s;
+            color: black;
+        }
+        .tab button:hover {
+            background-color: #ddd;
+        }
+        .tab button.active {
+            background-color: #ccc;
+        }
+        .tabcontent {
+            display: none;
+            padding: 6px 12px;
+            border: 1px solid #ccc;
+            border-top: none;
+        }
+    </style>
+</head>
+<body>
+    <h1>CORS Test Tool for Agent Monitor API</h1>
+    <p>This tool helps diagnose Cross-Origin Resource Sharing (CORS) issues with your API server.</p>
+
+    <div class="tab">
+        <button class="tablinks active" onclick="openTab(event, 'TestTool')">Test Tool</button>
+        <button class="tablinks" onclick="openTab(event, 'ExpressConfig')">Express.js Config</button>
+        <button class="tablinks" onclick="openTab(event, 'FlaskConfig')">Flask Config</button>
+        <button class="tablinks" onclick="openTab(event, 'DjangoConfig')">Django Config</button>
+        <button class="tablinks" onclick="openTab(event, 'NginxConfig')">Nginx Config</button>
+    </div>
+
+    <div id="TestTool" class="tabcontent" style="display: block;">
+        <h2>Test Your API Endpoints</h2>
+        <div class="row">
+            <div class="column">
+                <label for="api-url">API Endpoint URL:</label>
+                <input type="text" id="api-url" value="http://localhost:8000/conversation" style="width: 100%;" />
+                
+                <div>
+                    <label for="method">HTTP Method:</label>
+                    <select id="method">
+                        <option value="GET">GET</option>
+                        <option value="POST">POST</option>
+                        <option value="PUT">PUT</option>
+                        <option value="DELETE">DELETE</option>
+                        <option value="OPTIONS">OPTIONS</option>
+                    </select>
+                </div>
+                
+                <div>
+                    <label for="auth-type">Authentication:</label>
+                    <select id="auth-type">
+                        <option value="none">No Authentication</option>
+                        <option value="token">JWT Token</option>
+                        <option value="apikey">API Key</option>
+                    </select>
+                </div>
+                
+                <div id="token-container" style="display: none;">
+                    <label for="token">JWT Token:</label>
+                    <input type="text" id="token" placeholder="Bearer token" style="width: 100%;" />
+                </div>
+                
+                <div id="apikey-container" style="display: none;">
+                    <label for="api-key">API Key:</label>
+                    <input type="text" id="api-key" placeholder="API Key" style="width: 100%;" />
+                    <label for="client-id">Client ID:</label>
+                    <input type="text" id="client-id" placeholder="Client ID (optional)" style="width: 100%;" />
+                </div>
+                
+                <button id="test-api">Test API Endpoint</button>
+                <button id="test-common-endpoints">Test Common Endpoints</button>
+            </div>
+            
+            <div class="column">
+                <h3>Request Body (for POST/PUT):</h3>
+                <textarea id="request-body" rows="10" style="width: 100%;" placeholder="{ &quot;key&quot;: &quot;value&quot; }"></textarea>
+            </div>
+        </div>
+        
+        <div id="response-container">
+            <h3>Results:</h3>
+            <div id="response">
+                <p>Results will appear here after testing...</p>
+            </div>
+        </div>
+        
+        <h3>Common CORS Error Messages</h3>
+        <pre>
+Access to fetch at 'http://api.example.com/endpoint' from origin 'http://yourapp.com' 
+has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present 
+on the requested resource.
+        </pre>
+        <p>This error occurs when the API server doesn't include the necessary CORS headers in its responses. See the configuration tabs for solutions.</p>
+    </div>
+
+    <div id="ExpressConfig" class="tabcontent">
+        <h2>Express.js CORS Configuration</h2>
+        <p>Add the following code to your Express.js API server:</p>
+        
+        <h3>1. Install the cors package</h3>
+        <pre>npm install cors</pre>
+        
+        <h3>2. Add to your Express application</h3>
+        <pre>
+const express = require('express');
+const cors = require('cors');
+const app = express();
+
+// Enable CORS for all routes
+app.use(cors());
+
+// Or for specific origins
+app.use(cors({
+  origin: 'http://localhost:5173', // Your frontend URL
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-API-KEY', 'X-Client-ID']
+}));
+        </pre>
+        
+        <h3>3. Custom CORS configuration</h3>
+        <p>If you need more control:</p>
+        <pre>
+// Custom configuration
+app.use((req, res, next) => {
+  res.header('Access-Control-Allow-Origin', 'http://localhost:5173');
+  res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE');
+  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-API-KEY, X-Client-ID');
+  
+  // Handle preflight requests
+  if (req.method === 'OPTIONS') {
+    res.sendStatus(200);
+  } else {
+    next();
+  }
+});
+        </pre>
+    </div>
+
+    <div id="FlaskConfig" class="tabcontent">
+        <h2>Flask CORS Configuration</h2>
+        <p>Add the following code to your Flask API server:</p>
+        
+        <h3>1. Install Flask-CORS</h3>
+        <pre>pip install flask-cors</pre>
+        
+        <h3>2. Basic configuration</h3>
+        <pre>
+from flask import Flask
+from flask_cors import CORS
+
+app = Flask(__name__)
+CORS(app)  # Enable CORS for all routes
+        </pre>
+        
+        <h3>3. Specific origins configuration</h3>
+        <pre>
+from flask import Flask
+from flask_cors import CORS
+
+app = Flask(__name__)
+CORS(app, resources={r"/*": {"origins": "http://localhost:5173"}})
+        </pre>
+        
+        <h3>4. Advanced configuration</h3>
+        <pre>
+from flask import Flask
+from flask_cors import CORS
+
+app = Flask(__name__)
+CORS(app, resources={r"/*": {
+    "origins": "http://localhost:5173",
+    "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    "allow_headers": ["Content-Type", "Authorization", "X-API-KEY", "X-Client-ID"]
+}})
+        </pre>
+    </div>
+
+    <div id="DjangoConfig" class="tabcontent">
+        <h2>Django CORS Configuration</h2>
+        <p>Configure CORS in your Django API project:</p>
+        
+        <h3>1. Install django-cors-headers</h3>
+        <pre>pip install django-cors-headers</pre>
+        
+        <h3>2. Update settings.py</h3>
+        <pre>
+# Add corsheaders to installed apps
+INSTALLED_APPS = [
+    # ...
+    'corsheaders',
+    # ...
+]
+
+# Add the middleware
+MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',
+    'django.middleware.common.CommonMiddleware',
+    # ... other middleware
+]
+
+# Allow all origins (development only)
+CORS_ALLOW_ALL_ORIGINS = True
+
+# Or specify allowed origins
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+]
+
+# Allow credentials (cookies, authorization headers)
+CORS_ALLOW_CREDENTIALS = True
+
+# Allow specific HTTP methods
+CORS_ALLOW_METHODS = [
+    'DELETE',
+    'GET',
+    'OPTIONS',
+    'PATCH',
+    'POST',
+    'PUT',
+]
+
+# Allow specific headers
+CORS_ALLOW_HEADERS = [
+    'accept',
+    'accept-encoding',
+    'authorization',
+    'content-type',
+    'dnt',
+    'origin',
+    'user-agent',
+    'x-csrftoken',
+    'x-requested-with',
+    'x-api-key',
+    'x-client-id',
+]
+        </pre>
+    </div>
+
+    <div id="NginxConfig" class="tabcontent">
+        <h2>Nginx CORS Configuration</h2>
+        <p>If you're using Nginx as a reverse proxy for your API, add these headers to your server block:</p>
+        
+        <pre>
+server {
+    listen 80;
+    server_name api.yourdomain.com;
+    
+    # ... other configuration
+    
+    # CORS configuration
+    add_header 'Access-Control-Allow-Origin' 'http://localhost:5173' always;
+    add_header 'Access-Control-Allow-Methods' 'GET, POST, PUT, DELETE, OPTIONS' always;
+    add_header 'Access-Control-Allow-Headers' 'Content-Type, Authorization, X-API-KEY, X-Client-ID' always;
+    add_header 'Access-Control-Max-Age' '3600' always;
+    
+    # Handle preflight requests
+    if ($request_method = 'OPTIONS') {
+        add_header 'Access-Control-Allow-Origin' 'http://localhost:5173' always;
+        add_header 'Access-Control-Allow-Methods' 'GET, POST, PUT, DELETE, OPTIONS' always;
+        add_header 'Access-Control-Allow-Headers' 'Content-Type, Authorization, X-API-KEY, X-Client-ID' always;
+        add_header 'Access-Control-Max-Age' '3600' always;
+        add_header 'Content-Type' 'text/plain charset=UTF-8';
+        add_header 'Content-Length' '0';
+        return 204;
+    }
+    
+    # ... location blocks and other configuration
+}
+        </pre>
+        
+        <h3>Alternative: Using a Separate Location Block</h3>
+        <pre>
+server {
+    listen 80;
+    server_name api.yourdomain.com;
+    
+    # ... other configuration
+    
+    # Handle CORS preflight requests
+    location / {
+        if ($request_method = 'OPTIONS') {
+            add_header 'Access-Control-Allow-Origin' 'http://localhost:5173';
+            add_header 'Access-Control-Allow-Methods' 'GET, POST, PUT, DELETE, OPTIONS';
+            add_header 'Access-Control-Allow-Headers' 'Content-Type, Authorization, X-API-KEY, X-Client-ID';
+            add_header 'Access-Control-Max-Age' '3600';
+            add_header 'Content-Type' 'text/plain charset=UTF-8';
+            add_header 'Content-Length' '0';
+            return 204;
+        }
+        
+        # Normal request handling
+        proxy_pass http://your_backend_server;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        
+        # Add CORS headers to all responses
+        add_header 'Access-Control-Allow-Origin' 'http://localhost:5173' always;
+        add_header 'Access-Control-Allow-Methods' 'GET, POST, PUT, DELETE, OPTIONS' always;
+        add_header 'Access-Control-Allow-Headers' 'Content-Type, Authorization, X-API-KEY, X-Client-ID' always;
+    }
+}
+        </pre>
+    </div>
+
+    <h2>Understanding CORS</h2>
+    <p>Cross-Origin Resource Sharing (CORS) is a security mechanism that allows a web page to make requests to another domain outside its own domain. For security reasons, browsers restrict cross-origin HTTP requests initiated from scripts. CORS provides a way for servers to indicate any origins (domain, scheme, or port) other than its own from which a browser should permit loading resources.</p>
+    
+    <h3>Why Are You Seeing CORS Errors?</h3>
+    <p>CORS errors appear when:</p>
+    <ul>
+        <li>Your frontend application (running on one origin, like <code>http://localhost:5173</code>) tries to make a request to your API server (running on a different origin, like <code>http://localhost:8000</code>)</li>
+        <li>The API server doesn't include the necessary CORS headers to allow these cross-origin requests</li>
+    </ul>
+    
+    <h3>Required CORS Headers</h3>
+    <p>The main headers needed are:</p>
+    <ul>
+        <li><code>Access-Control-Allow-Origin</code>: Specifies which origins can access the resource (e.g., <code>http://localhost:5173</code> or <code>*</code> for all origins)</li>
+        <li><code>Access-Control-Allow-Methods</code>: Specifies the allowed HTTP methods (GET, POST, PUT, DELETE, OPTIONS)</li>
+        <li><code>Access-Control-Allow-Headers</code>: Specifies which headers can be used in the actual request (e.g., Content-Type, Authorization, X-API-KEY)</li>
+    </ul>
+
+    <script>
+        // Show/hide auth input fields
+        document.getElementById('auth-type').addEventListener('change', function() {
+            document.getElementById('token-container').style.display = 
+                this.value === 'token' ? 'block' : 'none';
+            document.getElementById('apikey-container').style.display = 
+                this.value === 'apikey' ? 'block' : 'none';
+        });
+        
+        function openTab(evt, tabName) {
+            var i, tabcontent, tablinks;
+            tabcontent = document.getElementsByClassName("tabcontent");
+            for (i = 0; i < tabcontent.length; i++) {
+                tabcontent[i].style.display = "none";
+            }
+            tablinks = document.getElementsByClassName("tablinks");
+            for (i = 0; i < tablinks.length; i++) {
+                tablinks[i].className = tablinks[i].className.replace(" active", "");
+            }
+            document.getElementById(tabName).style.display = "block";
+            evt.currentTarget.className += " active";
+        }
+        
+        async function testEndpoint(url, method, authType, token, apiKey, clientId, body) {
+            const responseElement = document.getElementById('response');
+            responseElement.innerHTML = '<p>Testing endpoint, please wait...</p>';
+            
+            const headers = {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            };
+            
+            // Add auth headers if selected
+            if (authType === 'token' && token) {
+                headers['Authorization'] = `Bearer ${token}`;
+            } else if (authType === 'apikey') {
+                if (apiKey) {
+                    headers['X-API-KEY'] = apiKey;
+                }
+                if (clientId) {
+                    headers['X-Client-ID'] = clientId;
+                }
+            }
+            
+            // Prepare request options
+            const options = {
+                method: method,
+                headers: headers,
+                mode: 'cors'
+            };
+            
+            // Add body for POST/PUT requests
+            if ((method === 'POST' || method === 'PUT') && body) {
+                try {
+                    options.body = JSON.stringify(JSON.parse(body));
+                } catch (e) {
+                    responseElement.innerHTML = `<div class="error">Error parsing JSON request body: ${e.message}</div>`;
+                    return;
+                }
+            }
+            
+            try {
+                // First try a preflight OPTIONS request
+                if (method !== 'OPTIONS') {
+                    try {
+                        const preflightOptions = {
+                            method: 'OPTIONS',
+                            headers: {
+                                'Origin': window.location.origin,
+                                'Access-Control-Request-Method': method,
+                                'Access-Control-Request-Headers': Object.keys(headers).join(',')
+                            }
+                        };
+                        
+                        const preflightResponse = await fetch(url, preflightOptions);
+                        const preflightHeaders = {};
+                        
+                        for (const [key, value] of preflightResponse.headers.entries()) {
+                            preflightHeaders[key] = value;
+                        }
+                        
+                        let preflightHtml = '<h4>Preflight Request Results</h4>';
+                        
+                        // Check for CORS headers
+                        const corsHeadersPresent = 
+                            preflightHeaders['access-control-allow-origin'] ||
+                            preflightHeaders['access-control-allow-methods'] ||
+                            preflightHeaders['access-control-allow-headers'];
+                        
+                        if (corsHeadersPresent) {
+                            preflightHtml += `<div class="success">Preflight request successful (Status: ${preflightResponse.status})</div>`;
+                            preflightHtml += '<p><strong>CORS Headers:</strong></p><ul>';
+                            
+                            for (const [key, value] of Object.entries(preflightHeaders)) {
+                                if (key.toLowerCase().startsWith('access-control')) {
+                                    preflightHtml += `<li><code>${key}</code>: ${value}</li>`;
+                                }
+                            }
+                            
+                            preflightHtml += '</ul>';
+                        } else {
+                            preflightHtml += `<div class="error">Preflight request completed (Status: ${preflightResponse.status}) but no CORS headers found.</div>`;
+                            preflightHtml += '<p>This may cause issues with requests that include custom headers or use methods other than GET/POST.</p>';
+                        }
+                        
+                        responseElement.innerHTML = preflightHtml;
+                    } catch (preflightError) {
+                        responseElement.innerHTML = `<div class="error">Preflight request failed: ${preflightError.message}</div>`;
+                        responseElement.innerHTML += '<p>This suggests that the server is not properly configured for CORS.</p>';
+                    }
+                }
+                
+                // Now make the actual request
+                const response = await fetch(url, options);
+                const responseHeaders = {};
+                
+                for (const [key, value] of response.headers.entries()) {
+                    responseHeaders[key] = value;
+                }
+                
+                let resultHtml = responseElement.innerHTML; // Keep preflight results
+                resultHtml += `<h4>${method} Request to ${url}</h4>`;
+                
+                // Check if the request was successful
+                if (response.ok) {
+                    resultHtml += `<div class="success">Request successful (Status: ${response.status} ${response.statusText})</div>`;
+                } else {
+                    resultHtml += `<div class="error">Request failed (Status: ${response.status} ${response.statusText})</div>`;
+                }
+                
+                // Show CORS headers if present
+                const corsHeadersPresent = 
+                    responseHeaders['access-control-allow-origin'] ||
+                    responseHeaders['access-control-expose-headers'];
+                
+                if (corsHeadersPresent) {
+                    resultHtml += '<p><strong>CORS Headers:</strong></p><ul>';
+                    
+                    for (const [key, value] of Object.entries(responseHeaders)) {
+                        if (key.toLowerCase().startsWith('access-control')) {
+                            resultHtml += `<li><code>${key}</code>: ${value}</li>`;
+                        }
+                    }
+                    
+                    resultHtml += '</ul>';
+                } else {
+                    resultHtml += '<div class="error">No CORS headers found in the response. This may cause issues in some browsers.</div>';
+                }
+                
+                // Show all response headers
+                resultHtml += '<p><strong>All Response Headers:</strong></p><ul>';
+                
+                for (const [key, value] of Object.entries(responseHeaders)) {
+                    resultHtml += `<li><code>${key}</code>: ${value}</li>`;
+                }
+                
+                resultHtml += '</ul>';
+                
+                // Show response body
+                try {
+                    const data = await response.json();
+                    resultHtml += '<p><strong>Response Body:</strong></p>';
+                    resultHtml += `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+                } catch (e) {
+                    const text = await response.text();
+                    resultHtml += '<p><strong>Response Body (text):</strong></p>';
+                    resultHtml += `<pre>${text}</pre>`;
+                }
+                
+                responseElement.innerHTML = resultHtml;
+            } catch (error) {
+                let errorHtml = `<div class="error">Request failed: ${error.message}</div>`;
+                
+                if (error.message.includes('CORS')) {
+                    errorHtml += '<p><strong>This is a CORS error.</strong> Your API server needs to include the appropriate CORS headers.</p>';
+                    errorHtml += '<p>See the configuration tabs for instructions on how to fix this for different server types.</p>';
+                }
+                
+                responseElement.innerHTML = errorHtml;
+            }
+        }
+        
+        // Set up the main test endpoint button
+        document.getElementById('test-api').addEventListener('click', function() {
+            const url = document.getElementById('api-url').value.trim();
+            const method = document.getElementById('method').value;
+            const authType = document.getElementById('auth-type').value;
+            const token = document.getElementById('token').value.trim();
+            const apiKey = document.getElementById('api-key').value.trim();
+            const clientId = document.getElementById('client-id').value.trim();
+            const body = document.getElementById('request-body').value.trim();
+            
+            testEndpoint(url, method, authType, token, apiKey, clientId, body);
+        });
+        
+        // Set up the test common endpoints button
+        document.getElementById('test-common-endpoints').addEventListener('click', async function() {
+            const responseElement = document.getElementById('response');
+            responseElement.innerHTML = '<p>Testing common endpoints, please wait...</p>';
+            
+            const baseUrl = document.getElementById('api-url').value.trim().split('/').slice(0, 3).join('/');
+            const endpoints = [
+                '/conversation',
+                '/collection',
+                '/group',
+                '/aiagent',
+                '/user',
+                '/system/auth/status'
+            ];
+            
+            const authType = document.getElementById('auth-type').value;
+            const token = document.getElementById('token').value.trim();
+            const apiKey = document.getElementById('api-key').value.trim();
+            const clientId = document.getElementById('client-id').value.trim();
+            
+            let results = '<h3>Common Endpoints Test Results</h3>';
+            
+            for (const endpoint of endpoints) {
+                const url = baseUrl + endpoint;
+                results += `<h4>Testing ${url}</h4>`;
+                
+                try {
+                    const headers = {
+                        'Accept': 'application/json'
+                    };
+                    
+                    if (authType === 'token' && token) {
+                        headers['Authorization'] = `Bearer ${token}`;
+                    } else if (authType === 'apikey') {
+                        if (apiKey) {
+                            headers['X-API-KEY'] = apiKey;
+                        }
+                        if (clientId) {
+                            headers['X-Client-ID'] = clientId;
+                        }
+                    }
+                    
+                    const response = await fetch(url, {
+                        method: 'GET',
+                        headers: headers,
+                        mode: 'cors'
+                    });
+                    
+                    const corsHeader = response.headers.get('access-control-allow-origin');
+                    
+                    if (response.ok) {
+                        results += `<div class="success">✅ Endpoint accessible (Status: ${response.status})</div>`;
+                        
+                        if (corsHeader) {
+                            results += `<p>CORS header present: <code>Access-Control-Allow-Origin: ${corsHeader}</code></p>`;
+                        } else {
+                            results += `<p>⚠️ No CORS headers found. This might cause issues in production.</p>`;
+                        }
+                    } else {
+                        results += `<div class="error">❌ Failed with status: ${response.status} ${response.statusText}</div>`;
+                    }
+                } catch (error) {
+                    results += `<div class="error">❌ Error: ${error.message}</div>`;
+                    
+                    if (error.message.includes('CORS')) {
+                        results += '<p>This is a CORS error. The server needs to be configured to allow cross-origin requests.</p>';
+                    }
+                }
+                
+                results += '<hr>';
+            }
+            
+            responseElement.innerHTML = results;
+        });
+    </script>
+</body>
+</html>
