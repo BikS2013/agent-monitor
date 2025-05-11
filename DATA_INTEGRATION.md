@@ -13,20 +13,20 @@ The data integration layer consists of the following components:
 5. **Context Providers** - Provide React components with access to repositories
 
 ```
-┌─────────────────┐     ┌─────────────────┐     ┌─────────────────┐
-│  React Components  │     │  Data Context    │     │  Repository      │
-│  (Views/Components) │────▶│  (RepositoryContext) │────▶│  Interfaces    │
-└─────────────────┘     └─────────────────┘     └────────┬──────┘
-                                                         │
-┌─────────────────┐     ┌─────────────────┐     ┌────────▼──────┐
-│  External API     │     │  Data Source    │     │  Repository      │
-│  (Future Implementation) │◀───▶│  Interface     │◀────│  Implementations │
-└─────────────────┘     └────────┬──────┘     └─────────────────┘
-                                 │
-                        ┌────────▼──────┐
-                        │  JsonDataSource   │
-                        │  (Implementation) │
-                        └─────────────────┘
+┌─────────────---───-─┐     ┌───────────────-----──┐     ┌───────────────┐
+│  React Components   │     │  Data Context        │     │  Repository   │
+│  (Views/Components) │────▶│  (RepositoryContext) │────▶│  Interfaces   │
+└────────────────----─┘     └───────────────-----──┘     └────────┬──────┘
+                                                                  │
+┌────────────────---------─┐     ┌─────────────────┐     ┌────────▼─────---─┐
+│  External API            │     │  Data Source    │     │  Repository      │
+│  (Future Implementation) │◀───▶│  Interface      │◀────│  Implementations │
+└─────────────────---------┘     └────────┬─────--─┘     └────────────────-─┘
+                                          │
+                                 ┌────────▼────----──┐
+                                 │  JsonDataSource   │
+                                 │  (Implementation) │
+                                 └──────────────--───┘
 ```
 
 ## Lazy Loading

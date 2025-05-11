@@ -1,0 +1,3000 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Agent Monitor Data Source API",
+    "description": "API for implementing the IDataSource interface with complete CRUD operations for all entity types.",
+    "version": "1.0.0"
+  },
+  "servers": [
+    {
+      "url": "https://api.agent-monitor.example.com/v1",
+      "description": "Main production server"
+    },
+    {
+      "url": "https://api.agent-monitor-staging.example.com/v1",
+      "description": "Staging server"
+    }
+  ],
+  "tags": [
+    {
+      "name": "Messages",
+      "description": "Operations related to message management"
+    },
+    {
+      "name": "Conversations",
+      "description": "Operations related to conversation management"
+    },
+    {
+      "name": "Collections",
+      "description": "Operations related to collection management"
+    },
+    {
+      "name": "Groups",
+      "description": "Operations related to group management"
+    },
+    {
+      "name": "AIAgents",
+      "description": "Operations related to AI agent management"
+    },
+    {
+      "name": "Users",
+      "description": "Operations related to user management"
+    },
+    {
+      "name": "System",
+      "description": "Operations related to system management"
+    }
+  ],
+  "paths": {
+    "/messages": {
+      "get": {
+        "summary": "Get messages",
+        "description": "Retrieve messages by IDs or all messages if no IDs provided",
+        "operationId": "getMessages",
+        "tags": [
+          "Messages"
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "ids",
+            "description": "Comma-separated list of message IDs",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "$ref": "#/components/schemas/Message"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      },
+      "post": {
+        "summary": "Create a message",
+        "description": "Create a new message",
+        "operationId": "createMessage",
+        "tags": [
+          "Messages"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MessageInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successfully created message",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Message"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/messages/{id}": {
+      "get": {
+        "summary": "Get message by ID",
+        "description": "Retrieve a specific message by its ID",
+        "operationId": "getMessageById",
+        "tags": [
+          "Messages"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/IdParam"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Message"
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      },
+      "put": {
+        "summary": "Update message",
+        "description": "Update an existing message",
+        "operationId": "updateMessage",
+        "tags": [
+          "Messages"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/IdParam"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MessageUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successfully updated message",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Message"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Delete message",
+        "description": "Delete an existing message",
+        "operationId": "deleteMessage",
+        "tags": [
+          "Messages"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/IdParam"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully deleted message",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "boolean"
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/conversations/{conversationId}/messages": {
+      "get": {
+        "summary": "Get messages by conversation ID",
+        "description": "Retrieve all messages for a specific conversation",
+        "operationId": "getMessagesByConversationId",
+        "tags": [
+          "Messages"
+        ],
+        "parameters": [
+          {
+            "name": "conversationId",
+            "in": "path",
+            "description": "ID of the conversation",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Message"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/conversations": {
+      "get": {
+        "summary": "Get conversations",
+        "description": "Retrieve conversations by IDs or all conversations if no IDs provided",
+        "operationId": "getConversations",
+        "tags": [
+          "Conversations"
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "ids",
+            "description": "Comma-separated list of conversation IDs",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "$ref": "#/components/schemas/Conversation"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      },
+      "post": {
+        "summary": "Create a conversation",
+        "description": "Create a new conversation",
+        "operationId": "createConversation",
+        "tags": [
+          "Conversations"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConversationInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successfully created conversation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Conversation"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/conversations/{id}": {
+      "get": {
+        "summary": "Get conversation by ID",
+        "description": "Retrieve a specific conversation by its ID",
+        "operationId": "getConversationById",
+        "tags": [
+          "Conversations"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/IdParam"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Conversation"
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      },
+      "put": {
+        "summary": "Update conversation",
+        "description": "Update an existing conversation",
+        "operationId": "updateConversation",
+        "tags": [
+          "Conversations"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/IdParam"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConversationUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successfully updated conversation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Conversation"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Delete conversation",
+        "description": "Delete an existing conversation",
+        "operationId": "deleteConversation",
+        "tags": [
+          "Conversations"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/IdParam"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully deleted conversation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "boolean"
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/collections/{collectionId}/conversations": {
+      "get": {
+        "summary": "Get conversations by collection ID",
+        "description": "Retrieve all conversations for a specific collection",
+        "operationId": "getConversationsByCollectionId",
+        "tags": [
+          "Conversations"
+        ],
+        "parameters": [
+          {
+            "name": "collectionId",
+            "in": "path",
+            "description": "ID of the collection",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Conversation"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/aiagents/{aiAgentId}/conversations": {
+      "get": {
+        "summary": "Get conversations by AI agent ID",
+        "description": "Retrieve all conversations for a specific AI agent",
+        "operationId": "getConversationsByAIAgentId",
+        "tags": [
+          "Conversations"
+        ],
+        "parameters": [
+          {
+            "name": "aiAgentId",
+            "in": "path",
+            "description": "ID of the AI agent",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Conversation"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/users/{userId}/conversations": {
+      "get": {
+        "summary": "Get conversations by user ID",
+        "description": "Retrieve all conversations for a specific user",
+        "operationId": "getConversationsByUserId",
+        "tags": [
+          "Conversations"
+        ],
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "description": "ID of the user",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Conversation"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/conversations/filter": {
+      "post": {
+        "summary": "Filter conversations",
+        "description": "Retrieve conversation IDs based on complex filtering criteria",
+        "operationId": "filterConversations",
+        "tags": [
+          "Conversations"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": true,
+                "description": "Filter criteria object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/collections": {
+      "get": {
+        "summary": "Get collections",
+        "description": "Retrieve collections by IDs or all collections if no IDs provided",
+        "operationId": "getCollections",
+        "tags": [
+          "Collections"
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "ids",
+            "description": "Comma-separated list of collection IDs",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "$ref": "#/components/schemas/Collection"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      },
+      "post": {
+        "summary": "Create a collection",
+        "description": "Create a new collection",
+        "operationId": "createCollection",
+        "tags": [
+          "Collections"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CollectionInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successfully created collection",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Collection"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/collections/{id}": {
+      "get": {
+        "summary": "Get collection by ID",
+        "description": "Retrieve a specific collection by its ID",
+        "operationId": "getCollectionById",
+        "tags": [
+          "Collections"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/IdParam"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Collection"
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      },
+      "put": {
+        "summary": "Update collection",
+        "description": "Update an existing collection",
+        "operationId": "updateCollection",
+        "tags": [
+          "Collections"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/IdParam"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CollectionUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successfully updated collection",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Collection"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Delete collection",
+        "description": "Delete an existing collection",
+        "operationId": "deleteCollection",
+        "tags": [
+          "Collections"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/IdParam"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully deleted collection",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "boolean"
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/groups/{groupId}/collections": {
+      "get": {
+        "summary": "Get collections by group ID",
+        "description": "Retrieve all collections for a specific group",
+        "operationId": "getCollectionsByGroupId",
+        "tags": [
+          "Collections"
+        ],
+        "parameters": [
+          {
+            "name": "groupId",
+            "in": "path",
+            "description": "ID of the group",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Collection"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/users/{creatorId}/collections": {
+      "get": {
+        "summary": "Get collections by creator ID",
+        "description": "Retrieve all collections created by a specific user",
+        "operationId": "getCollectionsByCreatorId",
+        "tags": [
+          "Collections"
+        ],
+        "parameters": [
+          {
+            "name": "creatorId",
+            "in": "path",
+            "description": "ID of the creator user",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Collection"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/groups": {
+      "get": {
+        "summary": "Get groups",
+        "description": "Retrieve groups by IDs or all groups if no IDs provided",
+        "operationId": "getGroups",
+        "tags": [
+          "Groups"
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "ids",
+            "description": "Comma-separated list of group IDs",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "$ref": "#/components/schemas/Group"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      },
+      "post": {
+        "summary": "Create a group",
+        "description": "Create a new group",
+        "operationId": "createGroup",
+        "tags": [
+          "Groups"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GroupInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successfully created group",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Group"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/groups/{id}": {
+      "get": {
+        "summary": "Get group by ID",
+        "description": "Retrieve a specific group by its ID",
+        "operationId": "getGroupById",
+        "tags": [
+          "Groups"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/IdParam"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Group"
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      },
+      "put": {
+        "summary": "Update group",
+        "description": "Update an existing group",
+        "operationId": "updateGroup",
+        "tags": [
+          "Groups"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/IdParam"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GroupUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successfully updated group",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Group"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Delete group",
+        "description": "Delete an existing group",
+        "operationId": "deleteGroup",
+        "tags": [
+          "Groups"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/IdParam"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully deleted group",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "boolean"
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/users/{userId}/admin-groups": {
+      "get": {
+        "summary": "Get groups by admin user ID",
+        "description": "Retrieve all groups where a specific user is an admin",
+        "operationId": "getGroupsByAdminUserId",
+        "tags": [
+          "Groups"
+        ],
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "description": "ID of the admin user",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Group"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/aiagents": {
+      "get": {
+        "summary": "Get AI agents",
+        "description": "Retrieve AI agents by IDs or all AI agents if no IDs provided",
+        "operationId": "getAIAgents",
+        "tags": [
+          "AIAgents"
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "ids",
+            "description": "Comma-separated list of AI agent IDs",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "$ref": "#/components/schemas/AIAgent"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      },
+      "post": {
+        "summary": "Create an AI agent",
+        "description": "Create a new AI agent",
+        "operationId": "createAIAgent",
+        "tags": [
+          "AIAgents"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AIAgentInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successfully created AI agent",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AIAgent"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/aiagents/{id}": {
+      "get": {
+        "summary": "Get AI agent by ID",
+        "description": "Retrieve a specific AI agent by its ID",
+        "operationId": "getAIAgentById",
+        "tags": [
+          "AIAgents"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/IdParam"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AIAgent"
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      },
+      "put": {
+        "summary": "Update AI agent",
+        "description": "Update an existing AI agent",
+        "operationId": "updateAIAgent",
+        "tags": [
+          "AIAgents"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/IdParam"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AIAgentUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successfully updated AI agent",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AIAgent"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Delete AI agent",
+        "description": "Delete an existing AI agent",
+        "operationId": "deleteAIAgent",
+        "tags": [
+          "AIAgents"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/IdParam"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully deleted AI agent",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "boolean"
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/aiagents/status/{status}": {
+      "get": {
+        "summary": "Get AI agents by status",
+        "description": "Retrieve all AI agents with a specific status",
+        "operationId": "getAIAgentsByStatus",
+        "tags": [
+          "AIAgents"
+        ],
+        "parameters": [
+          {
+            "name": "status",
+            "in": "path",
+            "description": "Status of the AI agent (active, inactive, or training)",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "active",
+                "inactive",
+                "training"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AIAgent"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/users": {
+      "get": {
+        "summary": "Get users",
+        "description": "Retrieve users by IDs or all users if no IDs provided",
+        "operationId": "getUsers",
+        "tags": [
+          "Users"
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "ids",
+            "description": "Comma-separated list of user IDs",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "$ref": "#/components/schemas/User"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      },
+      "post": {
+        "summary": "Create a user",
+        "description": "Create a new user",
+        "operationId": "createUser",
+        "tags": [
+          "Users"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UserInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successfully created user",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/User"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/users/{id}": {
+      "get": {
+        "summary": "Get user by ID",
+        "description": "Retrieve a specific user by its ID",
+        "operationId": "getUserById",
+        "tags": [
+          "Users"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/IdParam"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/User"
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      },
+      "put": {
+        "summary": "Update user",
+        "description": "Update an existing user",
+        "operationId": "updateUser",
+        "tags": [
+          "Users"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/IdParam"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UserUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successfully updated user",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/User"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Delete user",
+        "description": "Delete an existing user",
+        "operationId": "deleteUser",
+        "tags": [
+          "Users"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/IdParam"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully deleted user",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "boolean"
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/users/role/{role}": {
+      "get": {
+        "summary": "Get users by role",
+        "description": "Retrieve all users with a specific role",
+        "operationId": "getUsersByRole",
+        "tags": [
+          "Users"
+        ],
+        "parameters": [
+          {
+            "name": "role",
+            "in": "path",
+            "description": "Role of the user (admin, supervisor, executive)",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/User"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/users/current": {
+      "get": {
+        "summary": "Get current user",
+        "description": "Retrieve the currently authenticated user",
+        "operationId": "getCurrentUser",
+        "tags": [
+          "Users"
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/User"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/system/initialize": {
+      "post": {
+        "summary": "Initialize data source",
+        "description": "Initialize the data source and prepare it for use",
+        "operationId": "initialize",
+        "tags": [
+          "System"
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully initialized data source"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/system/save": {
+      "post": {
+        "summary": "Save data",
+        "description": "Save all data to persistent storage",
+        "operationId": "saveData",
+        "tags": [
+          "System"
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully saved data"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/system/cache/clear": {
+      "post": {
+        "summary": "Clear cache",
+        "description": "Clear all cached data",
+        "operationId": "clearCache",
+        "tags": [
+          "System"
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully cleared cache"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "parameters": {
+      "IdParam": {
+        "name": "id",
+        "in": "path",
+        "description": "ID of the resource",
+        "required": true,
+        "schema": {
+          "type": "string"
+        }
+      }
+    },
+    "responses": {
+      "BadRequest": {
+        "description": "Bad request",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        }
+      },
+      "Unauthorized": {
+        "description": "Unauthorized",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        }
+      },
+      "NotFound": {
+        "description": "Resource not found",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        }
+      },
+      "InternalServerError": {
+        "description": "Internal server error",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        }
+      }
+    },
+    "schemas": {
+      "Message": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Unique identifier for the message"
+          },
+          "content": {
+            "type": "string",
+            "description": "Content of the message"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the message was sent"
+          },
+          "sender": {
+            "type": "string",
+            "enum": [
+              "user",
+              "ai"
+            ],
+            "description": "Who sent the message"
+          },
+          "senderName": {
+            "type": "string",
+            "description": "Name of the sender"
+          },
+          "messageType": {
+            "type": "string",
+            "enum": [
+              "text",
+              "attachment",
+              "system"
+            ],
+            "description": "Type of message"
+          },
+          "readStatus": {
+            "type": "boolean",
+            "description": "Whether the message has been read"
+          },
+          "metadata": {
+            "type": "object",
+            "properties": {
+              "tags": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "Tags associated with the message"
+              },
+              "priority": {
+                "type": "string",
+                "enum": [
+                  "low",
+                  "medium",
+                  "high"
+                ],
+                "description": "Priority of the message"
+              },
+              "confidence": {
+                "type": "string",
+                "description": "Confidence level of the message (for AI responses)"
+              }
+            }
+          }
+        },
+        "required": [
+          "id",
+          "content",
+          "timestamp",
+          "sender",
+          "senderName",
+          "messageType",
+          "readStatus",
+          "metadata"
+        ]
+      },
+      "Conversation": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Unique identifier for the conversation"
+          },
+          "userId": {
+            "type": "string",
+            "description": "ID of the user participating in the conversation"
+          },
+          "userName": {
+            "type": "string",
+            "description": "Name of the user participating in the conversation"
+          },
+          "aiAgentId": {
+            "type": "string",
+            "description": "ID of the AI agent participating in the conversation"
+          },
+          "aiAgentName": {
+            "type": "string",
+            "description": "Name of the AI agent participating in the conversation"
+          },
+          "aiAgentType": {
+            "type": "string",
+            "description": "Type of the AI agent participating in the conversation"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "active",
+              "closed"
+            ],
+            "description": "Status of the conversation"
+          },
+          "conclusion": {
+            "type": "string",
+            "enum": [
+              "successful",
+              "unsuccessful",
+              "pending"
+            ],
+            "description": "Conclusion of the conversation"
+          },
+          "startTimestamp": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the conversation started"
+          },
+          "endTimestamp": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the conversation ended (if closed)"
+          },
+          "messages": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "IDs of messages in the conversation"
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Tags associated with the conversation"
+          },
+          "resolutionNotes": {
+            "type": "string",
+            "description": "Notes about how the conversation was resolved"
+          },
+          "priority": {
+            "type": "string",
+            "enum": [
+              "low",
+              "medium",
+              "high"
+            ],
+            "description": "Priority of the conversation"
+          },
+          "duration": {
+            "type": "string",
+            "description": "Duration of the conversation"
+          },
+          "messageCount": {
+            "type": "integer",
+            "description": "Number of messages in the conversation"
+          },
+          "confidence": {
+            "type": "string",
+            "description": "Overall confidence of the AI agent in the conversation"
+          },
+          "conversationTimestamp": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Timestamp of the first message"
+          }
+        },
+        "required": [
+          "id",
+          "userId",
+          "userName",
+          "aiAgentId",
+          "aiAgentName",
+          "aiAgentType",
+          "status",
+          "conclusion",
+          "startTimestamp",
+          "messages",
+          "tags",
+          "priority",
+          "duration",
+          "messageCount",
+          "confidence"
+        ]
+      },
+      "Collection": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Unique identifier for the collection"
+          },
+          "name": {
+            "type": "string",
+            "description": "Name of the collection"
+          },
+          "description": {
+            "type": "string",
+            "description": "Description of the collection"
+          },
+          "filterCriteria": {
+            "type": "object",
+            "properties": {
+              "aiAgentBased": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "AI agent IDs to filter by"
+              },
+              "timeBased": {
+                "type": "object",
+                "properties": {
+                  "startDate": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "Start date for filtering"
+                  },
+                  "endDate": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "End date for filtering"
+                  },
+                  "period": {
+                    "type": "string",
+                    "description": "Time period for filtering"
+                  }
+                }
+              },
+              "outcomeBased": {
+                "type": "string",
+                "enum": [
+                  "successful",
+                  "unsuccessful",
+                  "all"
+                ],
+                "description": "Filter by conversation outcome"
+              },
+              "multiFactorFilters": {
+                "type": "array",
+                "items": {
+                  "type": "object"
+                },
+                "description": "Complex filters combining multiple factors"
+              }
+            },
+            "description": "Criteria for filtering conversations"
+          },
+          "creationTimestamp": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the collection was created"
+          },
+          "creator": {
+            "type": "string",
+            "description": "ID of the user who created the collection"
+          },
+          "accessPermissions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "User IDs with permission to access the collection"
+          },
+          "metadata": {
+            "type": "object",
+            "additionalProperties": true,
+            "description": "Additional data about the collection"
+          },
+          "conversations": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "IDs of conversations in the collection"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "description",
+          "filterCriteria",
+          "creationTimestamp",
+          "creator",
+          "accessPermissions",
+          "metadata",
+          "conversations"
+        ]
+      },
+      "Group": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Unique identifier for the group"
+          },
+          "name": {
+            "type": "string",
+            "description": "Name of the group"
+          },
+          "description": {
+            "type": "string",
+            "description": "Description of the group"
+          },
+          "purpose": {
+            "type": "string",
+            "enum": [
+              "evaluation",
+              "security",
+              "efficiency"
+            ],
+            "description": "Purpose of the group"
+          },
+          "collectionIds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "IDs of collections in the group"
+          },
+          "adminUsers": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "IDs of users who are administrators of the group"
+          },
+          "permissionLevels": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            },
+            "description": "Map of user IDs to permission levels"
+          },
+          "analyticsData": {
+            "type": "object",
+            "additionalProperties": true,
+            "description": "Analytics data for the group"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "description",
+          "purpose",
+          "collectionIds",
+          "adminUsers",
+          "permissionLevels"
+        ]
+      },
+      "AIAgent": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Unique identifier for the AI agent"
+          },
+          "name": {
+            "type": "string",
+            "description": "Name of the AI agent"
+          },
+          "model": {
+            "type": "string",
+            "description": "Model used by the AI agent"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "active",
+              "inactive",
+              "training"
+            ],
+            "description": "Status of the AI agent"
+          },
+          "conversationsProcessed": {
+            "type": "integer",
+            "description": "Number of conversations processed by the AI agent"
+          },
+          "successRate": {
+            "type": "string",
+            "description": "Success rate of the AI agent"
+          },
+          "avgResponseTime": {
+            "type": "string",
+            "description": "Average response time of the AI agent"
+          },
+          "lastActive": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the AI agent was last active"
+          },
+          "capabilities": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Capabilities of the AI agent"
+          },
+          "specializations": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Specializations of the AI agent"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "model",
+          "status",
+          "conversationsProcessed",
+          "successRate",
+          "avgResponseTime",
+          "lastActive"
+        ]
+      },
+      "User": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Unique identifier for the user"
+          },
+          "name": {
+            "type": "string",
+            "description": "Name of the user"
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "admin",
+              "supervisor",
+              "executive"
+            ],
+            "description": "Role of the user"
+          },
+          "permissions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Permissions assigned to the user"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "role",
+          "permissions"
+        ]
+      },
+      "MessageInput": {
+        "type": "object",
+        "properties": {
+          "content": {
+            "type": "string",
+            "description": "Content of the message"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the message was sent"
+          },
+          "sender": {
+            "type": "string",
+            "enum": [
+              "user",
+              "ai"
+            ],
+            "description": "Who sent the message"
+          },
+          "senderName": {
+            "type": "string",
+            "description": "Name of the sender"
+          },
+          "messageType": {
+            "type": "string",
+            "enum": [
+              "text",
+              "attachment",
+              "system"
+            ],
+            "description": "Type of message"
+          },
+          "readStatus": {
+            "type": "boolean",
+            "description": "Whether the message has been read"
+          },
+          "metadata": {
+            "type": "object",
+            "properties": {
+              "tags": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "Tags associated with the message"
+              },
+              "priority": {
+                "type": "string",
+                "enum": [
+                  "low",
+                  "medium",
+                  "high"
+                ],
+                "description": "Priority of the message"
+              },
+              "confidence": {
+                "type": "string",
+                "description": "Confidence level of the message (for AI responses)"
+              }
+            }
+          }
+        },
+        "required": [
+          "content",
+          "timestamp",
+          "sender",
+          "senderName",
+          "messageType",
+          "readStatus",
+          "metadata"
+        ]
+      },
+      "ConversationInput": {
+        "type": "object",
+        "properties": {
+          "userId": {
+            "type": "string",
+            "description": "ID of the user participating in the conversation"
+          },
+          "userName": {
+            "type": "string",
+            "description": "Name of the user participating in the conversation"
+          },
+          "aiAgentId": {
+            "type": "string",
+            "description": "ID of the AI agent participating in the conversation"
+          },
+          "aiAgentName": {
+            "type": "string",
+            "description": "Name of the AI agent participating in the conversation"
+          },
+          "aiAgentType": {
+            "type": "string",
+            "description": "Type of the AI agent participating in the conversation"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "active",
+              "closed"
+            ],
+            "description": "Status of the conversation"
+          },
+          "conclusion": {
+            "type": "string",
+            "enum": [
+              "successful",
+              "unsuccessful",
+              "pending"
+            ],
+            "description": "Conclusion of the conversation"
+          },
+          "startTimestamp": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the conversation started"
+          },
+          "endTimestamp": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the conversation ended (if closed)"
+          },
+          "messages": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "IDs of messages in the conversation"
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Tags associated with the conversation"
+          },
+          "resolutionNotes": {
+            "type": "string",
+            "description": "Notes about how the conversation was resolved"
+          },
+          "priority": {
+            "type": "string",
+            "enum": [
+              "low",
+              "medium",
+              "high"
+            ],
+            "description": "Priority of the conversation"
+          },
+          "duration": {
+            "type": "string",
+            "description": "Duration of the conversation"
+          },
+          "messageCount": {
+            "type": "integer",
+            "description": "Number of messages in the conversation"
+          },
+          "confidence": {
+            "type": "string",
+            "description": "Overall confidence of the AI agent in the conversation"
+          }
+        },
+        "required": [
+          "userId",
+          "userName",
+          "aiAgentId",
+          "aiAgentName",
+          "aiAgentType",
+          "status",
+          "conclusion",
+          "startTimestamp",
+          "messages",
+          "tags",
+          "priority",
+          "duration",
+          "messageCount",
+          "confidence"
+        ]
+      },
+      "CollectionInput": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Name of the collection"
+          },
+          "description": {
+            "type": "string",
+            "description": "Description of the collection"
+          },
+          "filterCriteria": {
+            "type": "object",
+            "properties": {
+              "aiAgentBased": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "AI agent IDs to filter by"
+              },
+              "timeBased": {
+                "type": "object",
+                "properties": {
+                  "startDate": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "Start date for filtering"
+                  },
+                  "endDate": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "End date for filtering"
+                  },
+                  "period": {
+                    "type": "string",
+                    "description": "Time period for filtering"
+                  }
+                }
+              },
+              "outcomeBased": {
+                "type": "string",
+                "enum": [
+                  "successful",
+                  "unsuccessful",
+                  "all"
+                ],
+                "description": "Filter by conversation outcome"
+              },
+              "multiFactorFilters": {
+                "type": "array",
+                "items": {
+                  "type": "object"
+                },
+                "description": "Complex filters combining multiple factors"
+              }
+            },
+            "description": "Criteria for filtering conversations"
+          },
+          "creationTimestamp": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the collection was created"
+          },
+          "creator": {
+            "type": "string",
+            "description": "ID of the user who created the collection"
+          },
+          "accessPermissions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "User IDs with permission to access the collection"
+          },
+          "metadata": {
+            "type": "object",
+            "additionalProperties": true,
+            "description": "Additional data about the collection"
+          },
+          "conversations": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "IDs of conversations in the collection"
+          }
+        },
+        "required": [
+          "name",
+          "description",
+          "filterCriteria",
+          "creationTimestamp",
+          "creator",
+          "accessPermissions",
+          "metadata",
+          "conversations"
+        ]
+      },
+      "GroupInput": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Name of the group"
+          },
+          "description": {
+            "type": "string",
+            "description": "Description of the group"
+          },
+          "purpose": {
+            "type": "string",
+            "enum": [
+              "evaluation",
+              "security",
+              "efficiency"
+            ],
+            "description": "Purpose of the group"
+          },
+          "collectionIds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "IDs of collections in the group"
+          },
+          "adminUsers": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "IDs of users who are administrators of the group"
+          },
+          "permissionLevels": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            },
+            "description": "Map of user IDs to permission levels"
+          },
+          "analyticsData": {
+            "type": "object",
+            "additionalProperties": true,
+            "description": "Analytics data for the group"
+          }
+        },
+        "required": [
+          "name",
+          "description",
+          "purpose",
+          "collectionIds",
+          "adminUsers",
+          "permissionLevels"
+        ]
+      },
+      "AIAgentInput": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Name of the AI agent"
+          },
+          "model": {
+            "type": "string",
+            "description": "Model used by the AI agent"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "active",
+              "inactive",
+              "training"
+            ],
+            "description": "Status of the AI agent"
+          },
+          "conversationsProcessed": {
+            "type": "integer",
+            "description": "Number of conversations processed by the AI agent"
+          },
+          "successRate": {
+            "type": "string",
+            "description": "Success rate of the AI agent"
+          },
+          "avgResponseTime": {
+            "type": "string",
+            "description": "Average response time of the AI agent"
+          },
+          "lastActive": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the AI agent was last active"
+          },
+          "capabilities": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Capabilities of the AI agent"
+          },
+          "specializations": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Specializations of the AI agent"
+          }
+        },
+        "required": [
+          "name",
+          "model",
+          "status",
+          "conversationsProcessed",
+          "successRate",
+          "avgResponseTime",
+          "lastActive"
+        ]
+      },
+      "UserInput": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Name of the user"
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "admin",
+              "supervisor",
+              "executive"
+            ],
+            "description": "Role of the user"
+          },
+          "permissions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Permissions assigned to the user"
+          }
+        },
+        "required": [
+          "name",
+          "role",
+          "permissions"
+        ]
+      },
+      "MessageUpdate": {
+        "type": "object",
+        "properties": {
+          "content": {
+            "type": "string",
+            "description": "Content of the message"
+          },
+          "readStatus": {
+            "type": "boolean",
+            "description": "Whether the message has been read"
+          },
+          "metadata": {
+            "type": "object",
+            "properties": {
+              "tags": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "Tags associated with the message"
+              },
+              "priority": {
+                "type": "string",
+                "enum": [
+                  "low",
+                  "medium",
+                  "high"
+                ],
+                "description": "Priority of the message"
+              },
+              "confidence": {
+                "type": "string",
+                "description": "Confidence level of the message (for AI responses)"
+              }
+            }
+          }
+        }
+      },
+      "ConversationUpdate": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "active",
+              "closed"
+            ],
+            "description": "Status of the conversation"
+          },
+          "conclusion": {
+            "type": "string",
+            "enum": [
+              "successful",
+              "unsuccessful",
+              "pending"
+            ],
+            "description": "Conclusion of the conversation"
+          },
+          "endTimestamp": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the conversation ended (if closed)"
+          },
+          "messages": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "IDs of messages in the conversation"
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Tags associated with the conversation"
+          },
+          "resolutionNotes": {
+            "type": "string",
+            "description": "Notes about how the conversation was resolved"
+          },
+          "priority": {
+            "type": "string",
+            "enum": [
+              "low",
+              "medium",
+              "high"
+            ],
+            "description": "Priority of the conversation"
+          },
+          "duration": {
+            "type": "string",
+            "description": "Duration of the conversation"
+          },
+          "messageCount": {
+            "type": "integer",
+            "description": "Number of messages in the conversation"
+          },
+          "confidence": {
+            "type": "string",
+            "description": "Overall confidence of the AI agent in the conversation"
+          }
+        }
+      },
+      "CollectionUpdate": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Name of the collection"
+          },
+          "description": {
+            "type": "string",
+            "description": "Description of the collection"
+          },
+          "filterCriteria": {
+            "type": "object",
+            "properties": {
+              "aiAgentBased": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "AI agent IDs to filter by"
+              },
+              "timeBased": {
+                "type": "object",
+                "properties": {
+                  "startDate": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "Start date for filtering"
+                  },
+                  "endDate": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "End date for filtering"
+                  },
+                  "period": {
+                    "type": "string",
+                    "description": "Time period for filtering"
+                  }
+                }
+              },
+              "outcomeBased": {
+                "type": "string",
+                "enum": [
+                  "successful",
+                  "unsuccessful",
+                  "all"
+                ],
+                "description": "Filter by conversation outcome"
+              },
+              "multiFactorFilters": {
+                "type": "array",
+                "items": {
+                  "type": "object"
+                },
+                "description": "Complex filters combining multiple factors"
+              }
+            },
+            "description": "Criteria for filtering conversations"
+          },
+          "accessPermissions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "User IDs with permission to access the collection"
+          },
+          "metadata": {
+            "type": "object",
+            "additionalProperties": true,
+            "description": "Additional data about the collection"
+          },
+          "conversations": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "IDs of conversations in the collection"
+          }
+        }
+      },
+      "GroupUpdate": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Name of the group"
+          },
+          "description": {
+            "type": "string",
+            "description": "Description of the group"
+          },
+          "purpose": {
+            "type": "string",
+            "enum": [
+              "evaluation",
+              "security",
+              "efficiency"
+            ],
+            "description": "Purpose of the group"
+          },
+          "collectionIds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "IDs of collections in the group"
+          },
+          "adminUsers": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "IDs of users who are administrators of the group"
+          },
+          "permissionLevels": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            },
+            "description": "Map of user IDs to permission levels"
+          },
+          "analyticsData": {
+            "type": "object",
+            "additionalProperties": true,
+            "description": "Analytics data for the group"
+          }
+        }
+      },
+      "AIAgentUpdate": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Name of the AI agent"
+          },
+          "model": {
+            "type": "string",
+            "description": "Model used by the AI agent"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "active",
+              "inactive",
+              "training"
+            ],
+            "description": "Status of the AI agent"
+          },
+          "conversationsProcessed": {
+            "type": "integer",
+            "description": "Number of conversations processed by the AI agent"
+          },
+          "successRate": {
+            "type": "string",
+            "description": "Success rate of the AI agent"
+          },
+          "avgResponseTime": {
+            "type": "string",
+            "description": "Average response time of the AI agent"
+          },
+          "lastActive": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the AI agent was last active"
+          },
+          "capabilities": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Capabilities of the AI agent"
+          },
+          "specializations": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Specializations of the AI agent"
+          }
+        }
+      },
+      "UserUpdate": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Name of the user"
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "admin",
+              "supervisor",
+              "executive"
+            ],
+            "description": "Role of the user"
+          },
+          "permissions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Permissions assigned to the user"
+          }
+        }
+      },
+      "Error": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "integer",
+            "description": "HTTP status code"
+          },
+          "message": {
+            "type": "string",
+            "description": "Error message"
+          },
+          "details": {
+            "type": "object",
+            "additionalProperties": true,
+            "description": "Additional details about the error"
+          }
+        },
+        "required": [
+          "code",
+          "message"
+        ]
+      }
+    },
+    "securitySchemes": {
+      "BearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    }
+  },
+  "security": [
+    {
+      "BearerAuth": []
+    }
+  ]
+}
