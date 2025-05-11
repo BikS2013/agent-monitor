@@ -100,7 +100,7 @@ export class JsonDataSource implements IDataSource {
       if (Object.keys(this.data.conversations).length > 0) {
         const conversationId = Object.keys(this.data.conversations)[0];
         console.log('Sample conversation:', {
-          id: conversationId,
+          thread_id: this.data.conversations[conversationId].thread_id,
           data: this.data.conversations[conversationId]
         });
       } else {
@@ -163,7 +163,14 @@ export class JsonDataSource implements IDataSource {
   async getMessagesByConversationId(conversationId: string): Promise<Message[]> {
     await this.ensureInitialized();
 
-    const conversation = this.data!.conversations[conversationId];
+    // First try direct access by key
+    let conversation = this.data!.conversations[conversationId];
+
+    // If that fails, look for a conversation with matching thread_id
+    if (!conversation) {
+      conversation = Object.values(this.data!.conversations).find(conv => conv.thread_id === conversationId) || null;
+    }
+
     if (!conversation) return [];
 
     // Get and sort messages by timestamp
@@ -230,7 +237,14 @@ export class JsonDataSource implements IDataSource {
 
   async getConversationById(id: string): Promise<Conversation | null> {
     await this.ensureInitialized();
-    return this.data!.conversations[id] || null;
+
+    // First try direct access by key
+    if (this.data!.conversations[id]) {
+      return this.data!.conversations[id];
+    }
+
+    // If that fails, look for a conversation with matching thread_id
+    return Object.values(this.data!.conversations).find(conv => conv.thread_id === id) || null;
   }
 
   async getConversations(ids?: string[]): Promise<Record<string, Conversation>> {
@@ -242,8 +256,15 @@ export class JsonDataSource implements IDataSource {
 
     const result: Record<string, Conversation> = {};
     for (const id of ids) {
+      // First try direct access by key
       if (this.data!.conversations[id]) {
         result[id] = this.data!.conversations[id];
+      } else {
+        // If that fails, look for a conversation with matching thread_id
+        const conversation = Object.values(this.data!.conversations).find(conv => conv.thread_id === id);
+        if (conversation) {
+          result[id] = conversation;
+        }
       }
     }
 
@@ -257,7 +278,14 @@ export class JsonDataSource implements IDataSource {
     if (!collection) return [];
 
     return collection.conversations
-      .map(conversationId => this.data!.conversations[conversationId])
+      .map(conversationId => {
+        // First try direct access by key
+        if (this.data!.conversations[conversationId]) {
+          return this.data!.conversations[conversationId];
+        }
+        // Then try by thread_id
+        return Object.values(this.data!.conversations).find(conv => conv.thread_id === conversationId);
+      })
       .filter(Boolean);
   }
 
@@ -275,46 +303,77 @@ export class JsonDataSource implements IDataSource {
       .filter(conversation => conversation.userId === userId);
   }
 
-  async createConversation(data: Omit<Conversation, 'id'>): Promise<Conversation> {
+  async createConversation(data: Omit<Conversation, 'thread_id'>): Promise<Conversation> {
     await this.ensureInitialized();
 
-    const id = `c${Object.keys(this.data!.conversations).length + 1}`;
+    const thread_id = `c${Object.keys(this.data!.conversations).length + 1}`;
     const newConversation: Conversation = {
-      id,
+      thread_id,
       ...data
     };
 
-    this.data!.conversations[id] = newConversation;
+    this.data!.conversations[thread_id] = newConversation;
     return newConversation;
   }
 
   async updateConversation(id: string, data: Partial<Conversation>): Promise<Conversation | null> {
     await this.ensureInitialized();
 
-    if (!this.data!.conversations[id]) return null;
+    // First try direct access by key
+    if (this.data!.conversations[id]) {
+      this.data!.conversations[id] = {
+        ...this.data!.conversations[id],
+        ...data
+      };
+      return this.data!.conversations[id];
+    }
 
-    this.data!.conversations[id] = {
-      ...this.data!.conversations[id],
-      ...data
-    };
+    // If that fails, look for a conversation with matching thread_id
+    const conversationKey = Object.keys(this.data!.conversations).find(
+      key => this.data!.conversations[key].thread_id === id
+    );
 
-    return this.data!.conversations[id];
+    if (conversationKey) {
+      this.data!.conversations[conversationKey] = {
+        ...this.data!.conversations[conversationKey],
+        ...data
+      };
+      return this.data!.conversations[conversationKey];
+    }
+
+    return null;
   }
 
   async deleteConversation(id: string): Promise<boolean> {
     await this.ensureInitialized();
 
-    if (!this.data!.conversations[id]) return false;
+    // First try direct access by key
+    let conversationKey = id;
+
+    // If that fails, look for a conversation with matching thread_id
+    if (!this.data!.conversations[id]) {
+      conversationKey = Object.keys(this.data!.conversations).find(
+        key => this.data!.conversations[key].thread_id === id
+      ) || '';
+
+      if (!conversationKey) return false;
+    }
 
     // Remove from collections
     Object.values(this.data!.collections).forEach(collection => {
-      const index = collection.conversations.indexOf(id);
-      if (index !== -1) {
-        collection.conversations.splice(index, 1);
+      // Check for both the key and thread_id in collections
+      const indexByKey = collection.conversations.indexOf(conversationKey);
+      if (indexByKey !== -1) {
+        collection.conversations.splice(indexByKey, 1);
+      }
+
+      const indexByThreadId = collection.conversations.indexOf(id);
+      if (indexByThreadId !== -1 && indexByThreadId !== indexByKey) {
+        collection.conversations.splice(indexByThreadId, 1);
       }
     });
 
-    delete this.data!.conversations[id];
+    delete this.data!.conversations[conversationKey];
     return true;
   }
 

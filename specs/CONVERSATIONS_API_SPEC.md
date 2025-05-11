@@ -12,7 +12,7 @@ The Conversations tab allows users to browse, filter, and view detailed conversa
 
 ```typescript
 interface Conversation {
-  id: string;                       // Unique identifier
+  thread_id: string;                 // Unique identifier
   userId: string;                   // ID of the user who initiated the conversation
   userName: string;                 // Display name of the user
   aiAgentId: string;                // ID of the AI agent
@@ -20,8 +20,8 @@ interface Conversation {
   aiAgentType: string;              // Type/model of the AI agent
   status: 'active' | 'closed';      // Current status
   conclusion: 'successful' | 'unsuccessful' | 'pending'; // Outcome status
-  startTimestamp: string;           // When conversation started (ISO format)
-  endTimestamp?: string;            // When conversation ended (ISO format)
+  created_at: string;               // When conversation was created (ISO format)
+  updated_at?: string;              // When conversation was last updated (ISO format)
   messages: string[];               // Array of message IDs
   tags: string[];                   // Tags/labels for categorization
   resolutionNotes?: string;         // Notes about resolution
@@ -38,16 +38,8 @@ interface Conversation {
 interface Message {
   id: string;                       // Unique identifier
   content: string;                  // Message content
-  timestamp: string;                // When message was sent (ISO format)
   sender: 'user' | 'ai';            // Who sent the message
   senderName: string;               // Display name of the sender
-  messageType: 'text' | 'attachment' | 'system'; // Type of message
-  readStatus: boolean;              // Whether message has been read
-  metadata: {                       // Additional metadata
-    tags: string[];                 // Tags/labels
-    priority: 'low' | 'medium' | 'high'; // Priority level
-    confidence?: string;            // AI confidence level for this message
-  };
 }
 ```
 
@@ -73,7 +65,7 @@ interface Message {
 {
   "items": [
     {
-      "id": "conv-123",
+      "thread_id": "conv-123",
       "userId": "user-456",
       "userName": "John Doe",
       "aiAgentId": "agent-789",
@@ -81,7 +73,7 @@ interface Message {
       "aiAgentType": "customer-support",
       "status": "active",
       "conclusion": "pending",
-      "startTimestamp": "2023-01-01T12:00:00Z",
+      "created_at": "2023-01-01T12:00:00Z",
       "tags": ["billing", "subscription"],
       "priority": "medium",
       "duration": "00:15:23",
@@ -110,7 +102,7 @@ interface Message {
 **Response Format**:
 ```json
 {
-  "id": "conv-123",
+  "thread_id": "conv-123",
   "userId": "user-456",
   "userName": "John Doe",
   "aiAgentId": "agent-789",
@@ -118,8 +110,8 @@ interface Message {
   "aiAgentType": "customer-support",
   "status": "active",
   "conclusion": "pending",
-  "startTimestamp": "2023-01-01T12:00:00Z",
-  "endTimestamp": null,
+  "created_at": "2023-01-01T12:00:00Z",
+  "updated_at": null,
   "tags": ["billing", "subscription"],
   "resolutionNotes": "",
   "priority": "medium",
@@ -130,29 +122,14 @@ interface Message {
     {
       "id": "msg-001",
       "content": "Hello, I need help with my subscription",
-      "timestamp": "2023-01-01T12:00:00Z",
       "sender": "user",
-      "senderName": "John Doe",
-      "messageType": "text",
-      "readStatus": true,
-      "metadata": {
-        "tags": [],
-        "priority": "medium"
-      }
+      "senderName": "John Doe"
     },
     {
       "id": "msg-002",
       "content": "I'd be happy to help with your subscription. What seems to be the issue?",
-      "timestamp": "2023-01-01T12:00:15Z",
       "sender": "ai",
-      "senderName": "Support Bot",
-      "messageType": "text",
-      "readStatus": true,
-      "metadata": {
-        "tags": [],
-        "priority": "medium",
-        "confidence": "92"
-      }
+      "senderName": "Support Bot"
     }
     // More messages...
   ]
@@ -178,29 +155,14 @@ interface Message {
     {
       "id": "msg-001",
       "content": "Hello, I need help with my subscription",
-      "timestamp": "2023-01-01T12:00:00Z",
       "sender": "user",
-      "senderName": "John Doe",
-      "messageType": "text",
-      "readStatus": true,
-      "metadata": {
-        "tags": [],
-        "priority": "medium"
-      }
+      "senderName": "John Doe"
     },
     {
       "id": "msg-002",
       "content": "I'd be happy to help with your subscription. What seems to be the issue?",
-      "timestamp": "2023-01-01T12:00:15Z",
       "sender": "ai",
-      "senderName": "Support Bot",
-      "messageType": "text",
-      "readStatus": true,
-      "metadata": {
-        "tags": [],
-        "priority": "medium",
-        "confidence": "92"
-      }
+      "senderName": "Support Bot"
     }
     // More messages...
   ],
@@ -292,11 +254,11 @@ interface Message {
 For the Conversations tab to function properly, these fields are critical:
 
 1. **Conversation List View**:
-   - `id`: Unique conversation identifier
+   - `thread_id`: Unique conversation identifier
    - `userName`: For displaying who initiated the conversation
    - `aiAgentName`: For displaying which AI handled the conversation
    - `aiAgentType`: For displaying the model/type
-   - `startTimestamp`: For sorting and display
+   - `created_at`: For sorting and display
    - `conclusion`: For status indicators (successful/unsuccessful/pending)
    - `confidence`: For displaying AI confidence level
    - `tags`: For filtering and display
@@ -307,7 +269,6 @@ For the Conversations tab to function properly, these fields are critical:
    - Each message must have:
      - `id`: Unique message identifier
      - `content`: The message text
-     - `timestamp`: When the message was sent
      - `sender`: Who sent the message ('user' or 'ai')
      - `senderName`: Display name of the sender
 
@@ -378,6 +339,4 @@ These fields enhance the user experience but are not critical for basic function
 
 2. **In Conversation Details**:
    - `resolutionNotes`: Additional context about the outcome
-   - `endTimestamp`: When the conversation concluded
-   - Message `readStatus`: Whether messages have been read
-   - Message `metadata`: Additional contextual information
+   - `updated_at`: When the conversation was last updated

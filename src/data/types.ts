@@ -3,20 +3,12 @@
 export interface Message {
   id: string;
   content: string;
-  timestamp: string;
   sender: 'user' | 'ai';
   senderName: string;
-  messageType: 'text' | 'attachment' | 'system';
-  readStatus: boolean;
-  metadata: {
-    tags: string[];
-    priority: 'low' | 'medium' | 'high';
-    confidence?: string;
-  };
 }
 
 export interface Conversation {
-  id: string;
+  thread_id: string;
   userId: string;
   userName: string;
   aiAgentId: string;
@@ -24,8 +16,8 @@ export interface Conversation {
   aiAgentType: string;
   status: 'active' | 'closed';
   conclusion: 'successful' | 'unsuccessful' | 'pending';
-  startTimestamp: string;
-  endTimestamp?: string;
+  created_at: string;
+  updated_at?: string;
   messages: string[]; // Message IDs
   tags: string[];
   resolutionNotes?: string;
@@ -33,10 +25,10 @@ export interface Conversation {
   duration: string;
   messageCount: number;
   confidence: string;
-  
+
   // Virtual properties - these are not actually stored but computed on demand
   conversationTimestamp?: string; // Will be set to the timestamp of the first message
-  
+
   // Methods
   getOrderedMessages?: () => Message[]; // Returns all messages in chronological order
 }

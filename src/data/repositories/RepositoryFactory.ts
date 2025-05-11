@@ -1,5 +1,6 @@
 import { IDataSource } from '../sources/IDataSource';
 import { JsonDataSource } from '../sources/JsonDataSource';
+import { DynamicDataSource } from '../sources/DynamicDataSource';
 import { JsonDataSource as ExternalJsonDataSource, DataSize } from '../jsonDataSource';
 
 import {
@@ -31,9 +32,13 @@ export class RepositoryFactory {
    * Initialize the factory with a data source
    * @param dataSource Data source to use for repositories (defaults to JsonDataSource)
    */
-  static async initialize(dataSource?: IDataSource, dataSize?: DataSize): Promise<void> {
+  static async initialize(dataSource?: IDataSource, dataSize?: DataSize | 'dynamic'): Promise<void> {
     if (!dataSource) {
-      if (dataSize) {
+      if (dataSize === 'dynamic') {
+        // Use dynamically generated data
+        console.log('RepositoryFactory: Using dynamically generated data');
+        this.dataSource = new DynamicDataSource();
+      } else if (dataSize) {
         // Use dataset with specified size loaded from JSON file
         console.log(`RepositoryFactory: Using ${dataSize} JSON dataset from file`);
         this.dataSource = new ExternalJsonDataSource(dataSize);

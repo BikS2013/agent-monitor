@@ -27,14 +27,14 @@ const Dashboard: React.FC<DashboardProps> = ({
 
   // Sort conversations by timestamp, ensuring most recent are first
 const recentConversations = Object.values(conversations)
-    .sort((a, b) => new Date(b.startTimestamp).getTime() - new Date(a.startTimestamp).getTime())
+    .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
     .slice(0, 5);
 
 // Log recent conversations for debugging
 console.log('Recent conversations on dashboard:',
   recentConversations.map(c => ({
-    id: c.id,
-    startTime: c.startTimestamp,
+    id: c.thread_id,
+    createdAt: c.created_at,
     status: c.status,
     tags: c.tags
   }))
@@ -151,13 +151,13 @@ console.log('Recent conversations on dashboard:',
           <div className="space-y-3">
             {recentConversations.map(conversation => (
               <div
-                key={conversation.id}
+                key={conversation.thread_id}
                 className={`p-3 ${theme === 'dark' ? 'border-gray-600 hover:bg-gray-600' : 'border-gray-100 hover:bg-gray-50'} border rounded-lg cursor-pointer`}
                 onClick={() => onSelectConversation(conversation)}
               >
                 <div className="flex items-center justify-between mb-1">
                   <span className={`font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
-                    {conversation.tags.includes('recent') ? '🔴 ' : ''}{conversation.id}
+                    {conversation.tags.includes('recent') ? '🔴 ' : ''}{conversation.thread_id}
                   </span>
                   <div className={`w-2 h-2 rounded-full ${
                     conversation.status === 'active' ? 'bg-green-500' : 'bg-gray-400'
@@ -178,7 +178,7 @@ console.log('Recent conversations on dashboard:',
                   <div className="flex items-center">
                     <Clock size={14} className={`${theme === 'dark' ? 'text-gray-400' : 'text-gray-400'} mr-1`} />
                     <span className={`text-xs ${theme === 'dark' ? 'text-gray-400' : 'text-gray-400'}`}>
-                      {new Date(conversation.startTimestamp).toLocaleString('en-US', {
+                      {new Date(conversation.created_at).toLocaleString('en-US', {
                         month: 'short',
                         day: 'numeric',
                         hour: '2-digit',

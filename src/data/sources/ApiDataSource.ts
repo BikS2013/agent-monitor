@@ -239,10 +239,10 @@ export class ApiDataSource implements IDataSource {
         }, {} as Record<string, Conversation>);
       }
 
-      // Transform to record with IDs as keys
+      // Transform to record with thread_ids as keys
       return conversations.reduce((acc, conv) => {
         const transformed = this.transformApiConversation(conv);
-        acc[transformed.id] = transformed;
+        acc[transformed.thread_id] = transformed;
         return acc;
       }, {} as Record<string, Conversation>);
     } catch (error) {
@@ -899,8 +899,8 @@ export class ApiDataSource implements IDataSource {
    * Transform API conversation format to app format
    */
   private transformApiConversation(apiConversation: any): Conversation {
-    // Extract the conversation ID
-    const id = apiConversation.id || apiConversation.threadId;
+    // Extract the conversation ID - support both id/threadId and thread_id from the API
+    const thread_id = apiConversation.thread_id || apiConversation.id || apiConversation.threadId;
 
     // Extract message IDs or create empty array
     const messageIds: string[] = [];
@@ -908,7 +908,7 @@ export class ApiDataSource implements IDataSource {
     // If the conversation has decoded messages, extract IDs and store messages
     if (apiConversation.decodedMessages || apiConversation.decoded_messages) {
       const messages = apiConversation.decodedMessages || apiConversation.decoded_messages;
-      console.log(`ApiDataSource: Found ${messages?.length || 0} messages in conversation ${id}`);
+      console.log(`ApiDataSource: Found ${messages?.length || 0} messages in conversation ${thread_id}`);
 
       if (Array.isArray(messages)) {
         // Transform and cache each message for later retrieval
@@ -918,10 +918,10 @@ export class ApiDataSource implements IDataSource {
           messageIds.push(msgId);
 
           // Store the transformed message in a temporary cache for later retrieval
-          const transformedMsg = this.transformApiMessage({...msg, id: msgId}, id);
+          const transformedMsg = this.transformApiMessage({...msg, id: msgId}, thread_id);
 
           // Log message details for debugging
-          console.log(`ApiDataSource: Found message ${msgId} in conversation ${id}`, {
+          console.log(`ApiDataSource: Found message ${msgId} in conversation ${thread_id}`, {
             sender: transformedMsg.sender,
             contentLength: transformedMsg.content.length
           });
@@ -931,10 +931,10 @@ export class ApiDataSource implements IDataSource {
 
     // Create the conversation object in our app format
     return {
-      id,
+      thread_id,
       title: apiConversation.title || '',
-      startTimestamp: apiConversation.startTimestamp || apiConversation.createdAt || new Date().toISOString(),
-      endTimestamp: apiConversation.endTimestamp || apiConversation.updatedAt || undefined,
+      created_at: apiConversation.created_at || apiConversation.createdAt || new Date().toISOString(),
+      updated_at: apiConversation.updated_at || apiConversation.updatedAt || undefined,
       status: apiConversation.status || 'active',
       userId: apiConversation.userId || apiConversation.user_id || '',
       userName: apiConversation.userName || apiConversation.user_name || '',
@@ -1058,6 +1058,12 @@ export class ApiDataSource implements IDataSource {
     // Create a copy to avoid modifying the original
     const apiData: any = { ...conversation };
 
+    // Handle thread_id field - convert to id for API backward compatibility
+    if (apiData.thread_id !== undefined) {
+      apiData.id = apiData.thread_id;
+      delete apiData.thread_id;
+    }
+
     // Convert snake_case to camelCase if needed
     if (apiData.user_id === undefined && apiData.userId !== undefined) {
       apiData.user_id = apiData.userId;
@@ -1074,14 +1080,12 @@ export class ApiDataSource implements IDataSource {
       delete apiData.collectionIds;
     }
 
-    if (apiData.start_timestamp === undefined && apiData.startTimestamp !== undefined) {
-      apiData.start_timestamp = apiData.startTimestamp;
-      delete apiData.startTimestamp;
+    if (apiData.created_at === undefined && apiData.created_at !== undefined) {
+      apiData.created_at = apiData.created_at;
     }
 
-    if (apiData.end_timestamp === undefined && apiData.endTimestamp !== undefined) {
-      apiData.end_timestamp = apiData.endTimestamp;
-      delete apiData.endTimestamp;
+    if (apiData.updated_at === undefined && apiData.updated_at !== undefined) {
+      apiData.updated_at = apiData.updated_at;
     }
 
     if (apiData.feedback_text === undefined && apiData.feedbackText !== undefined) {

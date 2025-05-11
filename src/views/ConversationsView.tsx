@@ -61,14 +61,14 @@ const ConversationsView: React.FC<ConversationsViewProps> = ({
 
     // Skip reload if it's the same conversation we just loaded and we have messages
     // This prevents infinite loops and unnecessary reloads
-    if (lastLoadedConversationId === selectedConversation.id && conversationMessages.length > 0) {
+    if (lastLoadedConversationId === selectedConversation.thread_id && conversationMessages.length > 0) {
       return;
     }
 
     // Implement time-based throttling (don't load more than once every 500ms)
     const now = Date.now();
     const timeSinceLastLoad = now - lastLoadTimestamp;
-    if (timeSinceLastLoad < 500 && lastLoadedConversationId === selectedConversation.id) {
+    if (timeSinceLastLoad < 500 && lastLoadedConversationId === selectedConversation.thread_id) {
       console.log(`ConversationsView: Throttling message load, last load was ${timeSinceLastLoad}ms ago`);
       return;
     }
@@ -88,7 +88,7 @@ const ConversationsView: React.FC<ConversationsViewProps> = ({
       }
 
       // Reference the ID to avoid closure issues
-      const conversationId = selectedConversation.id;
+      const conversationId = selectedConversation.thread_id;
 
       try {
         if (isActive && latestEffectIdRef.current === effectId) {
@@ -110,7 +110,7 @@ const ConversationsView: React.FC<ConversationsViewProps> = ({
 
         // Only update state if this effect is still active, latest, and conversation hasn't changed
         if (isActive && latestEffectIdRef.current === effectId &&
-            selectedConversation && selectedConversation.id === conversationId) {
+            selectedConversation && selectedConversation.thread_id === conversationId) {
           setConversationMessages(messages);
           setLoadingMessages(false);
           // Remember that we've loaded this conversation
@@ -122,7 +122,7 @@ const ConversationsView: React.FC<ConversationsViewProps> = ({
 
         // Only update error state if this effect is still active and latest
         if (isActive && latestEffectIdRef.current === effectId &&
-            selectedConversation && selectedConversation.id === conversationId) {
+            selectedConversation && selectedConversation.thread_id === conversationId) {
           setMessageError('Failed to load messages');
           setConversationMessages([]);
           setLoadingMessages(false);

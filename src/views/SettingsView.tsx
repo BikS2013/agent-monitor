@@ -360,6 +360,25 @@ const SettingsView: React.FC = () => {
                             </span>
                           </label>
                         </div>
+
+                        <div className="flex items-center">
+                          <input
+                            type="radio"
+                            id="dynamic-dataset"
+                            name="dataset-size"
+                            defaultValue="dynamic"
+                            checked={dataSize === 'dynamic'}
+                            onChange={() => !isLoading && handleDataSizeChange('dynamic')}
+                            disabled={isLoading || !config.dataSource.allowUIDatasetChange}
+                            className="mr-2 h-4 w-4 text-blue-600 border-gray-300 focus:ring-blue-500"
+                          />
+                          <label htmlFor="dynamic-dataset" className={`${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+                            Dynamic Generated Data
+                            <span className={`block text-xs ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
+                              Generated on-the-fly (500 messages, 100 conversations)
+                            </span>
+                          </label>
+                        </div>
                       </div>
 
                       <p className={`text-xs ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'} mt-4`}>

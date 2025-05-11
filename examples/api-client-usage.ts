@@ -89,7 +89,7 @@ async function main() {
       aiAgentType: createdAgent.model,
       status: 'active',
       conclusion: 'pending',
-      startTimestamp: new Date().toISOString(),
+      created_at: new Date().toISOString(),
       messages: [],
       tags: ['new', 'test'],
       priority: 'medium',

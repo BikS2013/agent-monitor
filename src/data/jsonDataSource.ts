@@ -96,7 +96,16 @@ export class JsonDataSource implements IDataSource {
 
   async getMessagesByConversationId(conversationId: string): Promise<Message[]> {
     await this.loadData();
-    const conversation = this.data?.conversations[conversationId];
+
+    // First try direct access by key
+    let conversation = null;
+    if (this.data?.conversations && this.data.conversations[conversationId]) {
+      conversation = this.data.conversations[conversationId];
+    } else {
+      // If that fails, look for a conversation with matching thread_id
+      conversation = Object.values(this.data?.conversations || {}).find(conv => conv.thread_id === conversationId);
+    }
+
     if (!conversation) return [];
 
     return conversation.messages
@@ -145,7 +154,14 @@ export class JsonDataSource implements IDataSource {
   // Conversations
   async getConversationById(id: string): Promise<Conversation | null> {
     await this.loadData();
-    return this.data?.conversations[id] || null;
+
+    // First try to get the conversation directly by key (which might match thread_id)
+    if (this.data?.conversations && this.data.conversations[id]) {
+      return this.data.conversations[id];
+    }
+
+    // If that fails, look through all conversations for one with matching thread_id
+    return Object.values(this.data?.conversations || {}).find(conv => conv.thread_id === id) || null;
   }
 
   async getConversations(ids?: string[]): Promise<Record<string, Conversation>> {
@@ -157,8 +173,15 @@ export class JsonDataSource implements IDataSource {
 
     const result: Record<string, Conversation> = {};
     for (const id of ids) {
-      if (this.data?.conversations[id]) {
+      // First try direct access by key
+      if (this.data?.conversations && this.data.conversations[id]) {
         result[id] = this.data.conversations[id];
+      } else {
+        // If that fails, look for a conversation with matching thread_id
+        const conversation = Object.values(this.data?.conversations || {}).find(conv => conv.thread_id === id);
+        if (conversation) {
+          result[id] = conversation;
+        }
       }
     }
 
@@ -170,8 +193,16 @@ export class JsonDataSource implements IDataSource {
     const collection = this.data?.collections[collectionId];
     if (!collection) return [];
 
+    // First try direct key access, then fallback to thread_id search
     return collection.conversations
-      .map(convId => this.data?.conversations[convId])
+      .map(convId => {
+        // First try direct access by key
+        if (this.data?.conversations && this.data.conversations[convId]) {
+          return this.data.conversations[convId];
+        }
+        // Then try by thread_id
+        return Object.values(this.data?.conversations || {}).find(conv => conv.thread_id === convId);
+      })
       .filter(Boolean) as Conversation[];
   }
 
@@ -187,16 +218,17 @@ export class JsonDataSource implements IDataSource {
       .filter(conv => conv.userId === userId);
   }
 
-  async createConversation(data: Omit<Conversation, 'id'>): Promise<Conversation> {
+  async createConversation(data: Omit<Conversation, 'thread_id'>): Promise<Conversation> {
     await this.loadData();
-    const id = `c${Object.keys(this.data?.conversations || {}).length + 1}`;
+    const thread_id = `c${Object.keys(this.data?.conversations || {}).length + 1}`;
     const newConversation: Conversation = {
-      id,
+      thread_id,
       ...data
     };
 
     if (this.data?.conversations) {
-      this.data.conversations[id] = newConversation;
+      const conversationId = thread_id; // Use thread_id as the key
+      this.data.conversations[conversationId] = newConversation;
     }
 
     return newConversation;
@@ -204,22 +236,53 @@ export class JsonDataSource implements IDataSource {
 
   async updateConversation(id: string, data: Partial<Conversation>): Promise<Conversation | null> {
     await this.loadData();
-    if (!this.data?.conversations[id]) return null;
 
-    this.data.conversations[id] = {
-      ...this.data.conversations[id],
+    // First check if the conversation exists with the id as key
+    if (this.data?.conversations && this.data.conversations[id]) {
+      this.data.conversations[id] = {
+        ...this.data.conversations[id],
+        ...data
+      };
+      return this.data.conversations[id];
+    }
+
+    // If not, try to find by thread_id
+    const conversationEntry = Object.entries(this.data?.conversations || {}).find(
+      ([key, conv]) => conv.thread_id === id
+    );
+
+    if (!conversationEntry) return null;
+
+    const [storeKey, conversation] = conversationEntry;
+
+    this.data.conversations[storeKey] = {
+      ...conversation,
       ...data
     };
 
-    return this.data.conversations[id];
+    return this.data.conversations[storeKey];
   }
 
   async deleteConversation(id: string): Promise<boolean> {
     await this.loadData();
-    if (!this.data?.conversations[id]) return false;
+
+    // First check if the conversation exists with the id as key
+    if (this.data?.conversations && this.data.conversations[id]) {
+      delete this.data.conversations[id];
+      return true;
+    }
+
+    // If not, try to find by thread_id
+    const conversationEntry = Object.entries(this.data?.conversations || {}).find(
+      ([key, conv]) => conv.thread_id === id
+    );
+
+    if (!conversationEntry) return false;
+
+    const [storeKey] = conversationEntry;
 
     if (this.data?.conversations) {
-      delete this.data.conversations[id];
+      delete this.data.conversations[storeKey];
     }
 
     return true;

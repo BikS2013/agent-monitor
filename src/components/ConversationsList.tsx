@@ -32,7 +32,7 @@ const ConversationsList = memo<ConversationsListProps>(({
       // Apply search filter
       if (searchTerm) {
         const searchMatch =
-          conversation.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          conversation.thread_id.toLowerCase().includes(searchTerm.toLowerCase()) ||
           conversation.userName.toLowerCase().includes(searchTerm.toLowerCase()) ||
           conversation.aiAgentName.toLowerCase().includes(searchTerm.toLowerCase()) ||
           conversation.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()));
@@ -139,17 +139,17 @@ const ConversationsList = memo<ConversationsListProps>(({
       <div className="flex-1 overflow-y-auto">
         {filteredConversations.map((conversation) => (
         <div
-          key={conversation.id}
+          key={conversation.thread_id}
           onClick={() => setSelectedConversation(conversation)}
           className={`p-4 ${theme === 'dark' ? 'border-gray-700' : 'border-gray-200'} border-b cursor-pointer ${
             theme === 'dark'
-              ? (selectedConversation?.id === conversation.id ? 'bg-gray-700' : 'hover:bg-gray-700')
-              : (selectedConversation?.id === conversation.id ? 'bg-blue-50' : 'hover:bg-gray-50')
+              ? (selectedConversation?.thread_id === conversation.thread_id ? 'bg-gray-700' : 'hover:bg-gray-700')
+              : (selectedConversation?.thread_id === conversation.thread_id ? 'bg-blue-50' : 'hover:bg-gray-50')
           }`}
         >
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center space-x-2">
-              <span className={`font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>{conversation.id}</span>
+              <span className={`font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>{conversation.thread_id}</span>
               {conversation.conclusion === 'successful' ? (
                 <CheckCircle size={14} className="text-green-500" />
               ) : conversation.conclusion === 'unsuccessful' ? (
@@ -159,7 +159,7 @@ const ConversationsList = memo<ConversationsListProps>(({
               )}
             </div>
             <span className={`text-xs ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
-              {new Date(conversation.startTimestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+              {new Date(conversation.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
             </span>
           </div>
           <div className="text-sm space-y-1">
@@ -194,8 +194,8 @@ const ConversationsList = memo<ConversationsListProps>(({
 
   /*
   // 1. Check if selected conversation has changed (most common case)
-  const prevSelectedId = prevProps.selectedConversation?.id;
-  const nextSelectedId = nextProps.selectedConversation?.id;
+  const prevSelectedId = prevProps.selectedConversation?.thread_id;
+  const nextSelectedId = nextProps.selectedConversation?.thread_id;
   if (prevSelectedId !== nextSelectedId) {
     return false; // Selection changed, need to re-render
   }

@@ -364,16 +364,16 @@ const generateMessagesForConversation = (
 ): [Message[], string[]] => {
   const messages: Message[] = [];
   const messageIds: string[] = [];
-  
+
   // Set up the timeline
   const startDate = new Date(startTimestamp);
   const endDate = endTimestamp ? new Date(endTimestamp) : new Date();
   const timeSpan = endDate.getTime() - startDate.getTime();
-  
+
   // Generate user names
   const userName = faker.person.fullName();
   const aiName = aiAgentData[Math.floor(Math.random() * aiAgentData.length)].name;
-  
+
   // Determine first message
   let firstMessageContent = '';
   if (userQueryTemplates[topic]) {
@@ -382,7 +382,7 @@ const generateMessagesForConversation = (
   } else {
     firstMessageContent = `Hi, I need help with a ${topic} issue.`;
   }
-  
+
   // Create first message
   const firstMessageId = `${conversationId}_msg1`;
   const firstMessage = generateMessage(
@@ -394,24 +394,24 @@ const generateMessagesForConversation = (
     userName,
     [topic]
   );
-  
+
   messages.push(firstMessage);
   messageIds.push(firstMessageId);
-  
+
   // Generate conversation flow
   let currentSender: 'user' | 'ai' = 'user';
-  
+
   for (let i = 1; i < messageCount; i++) {
     // Toggle sender
     currentSender = currentSender === 'user' ? 'ai' : 'user';
-    
+
     // Calculate time offset proportionally
     const timeOffset = (timeSpan / messageCount) * i;
     const messageTime = new Date(startDate.getTime() + timeOffset).toISOString();
-    
+
     // Generate message content based on position in conversation
     let content = '';
-    
+
     if (currentSender === 'ai') {
       // AI response
       if (i === 1) {
@@ -426,11 +426,11 @@ const generateMessagesForConversation = (
         // Resolution in closed conversation
         const templates = aiResponseTemplates.resolution;
         let explanation = 'we found a solution';
-        
+
         if (resolutionExplanations[topic]) {
           explanation = resolutionExplanations[topic][Math.floor(Math.random() * resolutionExplanations[topic].length)];
         }
-        
+
         content = templates[Math.floor(Math.random() * templates.length)]
           .replace('{topic}', topic)
           .replace('{explanation}', explanation);
@@ -438,11 +438,11 @@ const generateMessagesForConversation = (
         // Occasional clarification questions
         const templates = aiResponseTemplates.clarification;
         let question = 'can you provide more details?';
-        
+
         if (clarificationQuestions[topic]) {
           question = clarificationQuestions[topic][Math.floor(Math.random() * clarificationQuestions[topic].length)];
         }
-        
+
         content = templates[Math.floor(Math.random() * templates.length)]
           .replace('{topic}', topic)
           .replace('{question}', question);
@@ -454,21 +454,21 @@ const generateMessagesForConversation = (
     } else {
       // User response
       let template = userFollowUpTemplates[Math.floor(Math.random() * userFollowUpTemplates.length)];
-      
+
       // Include additional info if the template has a placeholder
       if (template.includes('{additional_info}')) {
         let additionalInfo = 'Here is the information you asked for.';
-        
+
         if (additionalInfoTemplates[topic]) {
           additionalInfo = additionalInfoTemplates[topic][Math.floor(Math.random() * additionalInfoTemplates[topic].length)];
         }
-        
+
         content = template.replace('{additional_info}', additionalInfo);
       } else {
         content = template;
       }
     }
-    
+
     // Create message
     const messageId = `${conversationId}_msg${i + 1}`;
     const message = generateMessage(
@@ -480,11 +480,11 @@ const generateMessagesForConversation = (
       currentSender === 'user' ? userName : aiName,
       [topic]
     );
-    
+
     messages.push(message);
     messageIds.push(messageId);
   }
-  
+
   return [messages, messageIds];
 };
 
@@ -500,14 +500,14 @@ const generateConversation = (
   // Setup basic conversation parameters
   const aiAgent = aiAgentData.find(agent => agent.id === aiAgentId)!;
   const user = userData.find(user => user.id === userId)!;
-  
+
   // Random topic selection
   const topic = supportTopics[Math.floor(Math.random() * supportTopics.length)];
-  
+
   // Generate timestamps
   const startTimestamp = randomTimestamp(startDate);
   let endTimestamp;
-  
+
   if (!isActive) {
     // Generate end timestamp for closed conversations
     // Duration between 5 minutes and 3 hours
@@ -515,7 +515,7 @@ const generateConversation = (
     const endDate = new Date(new Date(startTimestamp).getTime() + durationMs);
     endTimestamp = endDate.toISOString();
   }
-  
+
   // Generate messages
   const [messages, messageIds] = generateMessagesForConversation(
     id,
@@ -524,20 +524,20 @@ const generateConversation = (
     endTimestamp,
     messageCount
   );
-  
+
   // Status and conclusion
   const status = isActive ? 'active' : 'closed';
   let conclusion: 'successful' | 'unsuccessful' | 'pending' = 'pending';
-  
+
   if (!isActive) {
     conclusion = Math.random() > 0.2 ? 'successful' : 'unsuccessful';
   }
-  
+
   // Priority - recent and active conversations have higher probability of being high priority
   const isRecent = new Date(startTimestamp).getTime() > Date.now() - 24 * 60 * 60 * 1000;
   const priorityRoll = Math.random();
   let priority: 'low' | 'medium' | 'high';
-  
+
   if (isRecent && isActive) {
     priority = priorityRoll < 0.4 ? 'high' : priorityRoll < 0.8 ? 'medium' : 'low';
   } else if (isRecent || isActive) {
@@ -545,27 +545,27 @@ const generateConversation = (
   } else {
     priority = priorityRoll < 0.1 ? 'high' : priorityRoll < 0.6 ? 'medium' : 'low';
   }
-  
+
   // Generate tags
   let tags = [topic];
-  
+
   if (conclusion !== 'pending') {
     // Add status tags for completed conversations
     const statusTagsList = statusTags[conclusion];
     tags.push(statusTagsList[Math.floor(Math.random() * statusTagsList.length)]);
   }
-  
+
   if (priority === 'high') {
     tags.push('priority');
   }
-  
+
   if (isRecent) {
     tags.push('recent');
   }
-  
+
   // Calculate duration
   const duration = calculateDuration(startTimestamp, endTimestamp);
-  
+
   // Resolution notes
   let resolutionNotes;
   if (conclusion === 'successful') {
@@ -573,10 +573,10 @@ const generateConversation = (
   } else if (conclusion === 'unsuccessful') {
     resolutionNotes = 'Customer issue could not be resolved.';
   }
-  
+
   // Create conversation object
   const conversation: Conversation = {
-    id,
+    thread_id: id,
     userId,
     userName: user.name,
     aiAgentId,
@@ -584,8 +584,8 @@ const generateConversation = (
     aiAgentType: aiAgent.model,
     status,
     conclusion,
-    startTimestamp,
-    endTimestamp,
+    created_at: startTimestamp,
+    updated_at: endTimestamp,
     messages: messageIds,
     tags,
     resolutionNotes,
@@ -595,7 +595,7 @@ const generateConversation = (
     confidence: `${Math.floor(Math.random() * 20 + 80)}%`,
     conversationTimestamp: startTimestamp
   };
-  
+
   return [conversation, messages];
 };
 
@@ -609,7 +609,7 @@ const generateCollection = (
 ): Collection => {
   // Generate filter criteria based on collection name
   let filterCriteria: any = {};
-  
+
   if (name.toLowerCase().includes('performance')) {
     // AI agent based filter
     filterCriteria = {
@@ -643,7 +643,7 @@ const generateCollection = (
     const now = new Date();
     const startDate = new Date();
     startDate.setMonth(now.getMonth() - 1);
-    
+
     filterCriteria = {
       timeBased: {
         startDate: startDate.toISOString(),
@@ -651,21 +651,21 @@ const generateCollection = (
       }
     };
   }
-  
+
   // Generate access permissions (always include creator)
   const accessPermissions = [creatorId];
-  
+
   // Add 1-3 random users
   const otherUsers = userData.filter(user => user.id !== creatorId);
   const permissionCount = Math.floor(Math.random() * 3) + 1;
-  
+
   for (let i = 0; i < permissionCount && i < otherUsers.length; i++) {
     const randomUser = otherUsers[Math.floor(Math.random() * otherUsers.length)];
     if (!accessPermissions.includes(randomUser.id)) {
       accessPermissions.push(randomUser.id);
     }
   }
-  
+
   // Create collection
   return {
     id,
@@ -699,24 +699,24 @@ const generateGroup = (
     .sort(() => 0.5 - Math.random())
     .slice(0, adminCount)
     .map(user => user.id);
-  
+
   // Generate permission levels
   const permissionLevels: Record<string, string> = {};
-  
+
   // Admins get admin or edit permissions
   adminUsers.forEach(userId => {
     const user = userData.find(u => u.id === userId)!;
     permissionLevels[userId] = user.role === 'admin' ? 'admin' : 'edit';
   });
-  
+
   // Add some view-only permissions for other users
   const otherUsers = userData.filter(user => !adminUsers.includes(user.id));
   const viewerCount = Math.floor(Math.random() * 3) + 1;
-  
+
   for (let i = 0; i < viewerCount && i < otherUsers.length; i++) {
     permissionLevels[otherUsers[i].id] = 'view';
   }
-  
+
   // Create the group
   return {
     id,
@@ -772,62 +772,62 @@ const groupTemplates = [
 // Generate the large-scale sample data
 const generateLargeScaleSampleData = () => {
   console.log('Generating large-scale sample data...');
-  
+
   // Set up data storage
   const conversations: Record<string, Conversation> = {};
   const messages: Record<string, Message> = {};
   const collections: Record<string, Collection> = {};
   const groups: Record<string, Group> = {};
-  
+
   // Convert array data to records
   const aiAgents: Record<string, AIAgent> = {};
   aiAgentData.forEach(agent => {
     aiAgents[agent.id] = agent;
   });
-  
+
   const users: Record<string, User> = {};
   userData.forEach(user => {
     users[user.id] = user;
   });
-  
+
   // Setup date ranges
   const now = new Date();
   const threeMonthsAgo = new Date();
   threeMonthsAgo.setMonth(now.getMonth() - 3);
-  
+
   const oneMonthAgo = new Date();
   oneMonthAgo.setMonth(now.getMonth() - 1);
-  
+
   const oneWeekAgo = new Date();
   oneWeekAgo.setDate(now.getDate() - 7);
-  
+
   const oneDayAgo = new Date();
   oneDayAgo.setDate(now.getDate() - 1);
-  
+
   // 1. Generate conversations and messages
   console.log('Generating 2000+ conversations with 20000+ messages...');
-  
+
   // Distribution of conversations by time period
   const recentConversations = 200; // Last 24 hours
   const weekConversations = 300;   // Last week (excluding last 24 hours)
   const monthConversations = 500;  // Last month (excluding last week)
   const olderConversations = 1000; // Older than a month
-  
+
   const totalConversations = recentConversations + weekConversations + monthConversations + olderConversations;
   let totalMessages = 0;
-  
+
   // Generate recent conversations (last 24 hours)
   for (let i = 0; i < recentConversations; i++) {
     const id = `c${i + 1}`;
     const userId = userData[Math.floor(Math.random() * userData.length)].id;
     const aiAgentId = aiAgentData[Math.floor(Math.random() * aiAgentData.length)].id;
-    
+
     // 70% of recent conversations are active
     const isActive = Math.random() < 0.7;
-    
+
     // Recent conversations have 3-8 messages
     const messageCount = Math.floor(Math.random() * 5) + 3;
-    
+
     const [conversation, conversationMessages] = generateConversation(
       id,
       userId,
@@ -836,27 +836,27 @@ const generateLargeScaleSampleData = () => {
       isActive,
       messageCount
     );
-    
+
     conversations[id] = conversation;
     conversationMessages.forEach(msg => {
       messages[msg.id] = msg;
     });
-    
+
     totalMessages += messageCount;
   }
-  
+
   // Generate week conversations (last week, excluding last 24 hours)
   for (let i = 0; i < weekConversations; i++) {
     const id = `c${recentConversations + i + 1}`;
     const userId = userData[Math.floor(Math.random() * userData.length)].id;
     const aiAgentId = aiAgentData[Math.floor(Math.random() * aiAgentData.length)].id;
-    
+
     // 40% of week-old conversations are active
     const isActive = Math.random() < 0.4;
-    
+
     // Week-old conversations have 4-12 messages
     const messageCount = Math.floor(Math.random() * 8) + 4;
-    
+
     const [conversation, conversationMessages] = generateConversation(
       id,
       userId,
@@ -865,27 +865,27 @@ const generateLargeScaleSampleData = () => {
       isActive,
       messageCount
     );
-    
+
     conversations[id] = conversation;
     conversationMessages.forEach(msg => {
       messages[msg.id] = msg;
     });
-    
+
     totalMessages += messageCount;
   }
-  
+
   // Generate month conversations (last month, excluding last week)
   for (let i = 0; i < monthConversations; i++) {
     const id = `c${recentConversations + weekConversations + i + 1}`;
     const userId = userData[Math.floor(Math.random() * userData.length)].id;
     const aiAgentId = aiAgentData[Math.floor(Math.random() * aiAgentData.length)].id;
-    
+
     // 10% of month-old conversations are active
     const isActive = Math.random() < 0.1;
-    
+
     // Month-old conversations have 5-15 messages
     const messageCount = Math.floor(Math.random() * 10) + 5;
-    
+
     const [conversation, conversationMessages] = generateConversation(
       id,
       userId,
@@ -894,27 +894,27 @@ const generateLargeScaleSampleData = () => {
       isActive,
       messageCount
     );
-    
+
     conversations[id] = conversation;
     conversationMessages.forEach(msg => {
       messages[msg.id] = msg;
     });
-    
+
     totalMessages += messageCount;
   }
-  
+
   // Generate older conversations
   for (let i = 0; i < olderConversations; i++) {
     const id = `c${recentConversations + weekConversations + monthConversations + i + 1}`;
     const userId = userData[Math.floor(Math.random() * userData.length)].id;
     const aiAgentId = aiAgentData[Math.floor(Math.random() * aiAgentData.length)].id;
-    
+
     // 5% of older conversations are still active
     const isActive = Math.random() < 0.05;
-    
+
     // Older conversations have 6-20 messages
     const messageCount = Math.floor(Math.random() * 14) + 6;
-    
+
     const [conversation, conversationMessages] = generateConversation(
       id,
       userId,
@@ -923,34 +923,34 @@ const generateLargeScaleSampleData = () => {
       isActive,
       messageCount
     );
-    
+
     conversations[id] = conversation;
     conversationMessages.forEach(msg => {
       messages[msg.id] = msg;
     });
-    
+
     totalMessages += messageCount;
   }
-  
+
   console.log(`Generated ${Object.keys(conversations).length} conversations with ${Object.keys(messages).length} messages`);
-  
+
   // 2. Generate collections
   console.log('Generating 15+ collections...');
-  
+
   const conversationIds = Object.keys(conversations);
-  
+
   for (let i = 0; i < collectionTemplates.length; i++) {
     const id = `col${i + 1}`;
     const template = collectionTemplates[i];
     const creatorId = userData[Math.floor(Math.random() * userData.length)].id;
-    
+
     // Assign a subset of conversations to this collection
     // Each collection gets between 50 and 200 conversations
     const collectionSize = Math.floor(Math.random() * 150) + 50;
     const collectionConversations = conversationIds
       .sort(() => 0.5 - Math.random())
       .slice(0, Math.min(collectionSize, conversationIds.length));
-    
+
     collections[id] = generateCollection(
       id,
       template.name,
@@ -959,25 +959,25 @@ const generateLargeScaleSampleData = () => {
       creatorId
     );
   }
-  
+
   console.log(`Generated ${Object.keys(collections).length} collections`);
-  
+
   // 3. Generate groups
   console.log('Generating 8 groups...');
-  
+
   const collectionIds = Object.keys(collections);
-  
+
   for (let i = 0; i < groupTemplates.length; i++) {
     const id = `g${i + 1}`;
     const template = groupTemplates[i];
-    
+
     // Assign a subset of collections to this group
     // Each group gets between 2 and 5 collections
     const groupSize = Math.floor(Math.random() * 3) + 2;
     const groupCollections = collectionIds
       .sort(() => 0.5 - Math.random())
       .slice(0, Math.min(groupSize, collectionIds.length));
-    
+
     groups[id] = generateGroup(
       id,
       template.name,
@@ -986,9 +986,9 @@ const generateLargeScaleSampleData = () => {
       groupCollections
     );
   }
-  
+
   console.log(`Generated ${Object.keys(groups).length} groups`);
-  
+
   // Return the complete dataset
   return {
     messages,

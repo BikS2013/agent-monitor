@@ -139,7 +139,7 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       }
 
       const conversationsRecord = conversationsResult.data.reduce((record, conversation) => {
-        record[conversation.id] = conversation;
+        record[conversation.thread_id] = conversation;
         return record;
       }, {} as Record<string, Conversation>);
 
@@ -403,7 +403,7 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       // Update conversations state with new conversations
       const newConversations = { ...conversations };
       conversationsResult.data.forEach(conversation => {
-        newConversations[conversation.id] = conversation;
+        newConversations[conversation.thread_id] = conversation;
       });
       setConversations(newConversations);
 

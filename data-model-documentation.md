@@ -39,7 +39,7 @@ Conversations aggregate messages exchanged between a user and an AI agent.
 
 ```typescript
 interface Conversation {
-  id: string;                           // Unique identifier
+  thread_id: string;                    // Unique identifier
   userId: string;                       // ID of user participating
   userName: string;                     // Name of user
   aiAgentId: string;                    // ID of AI agent handling conversation
@@ -47,8 +47,8 @@ interface Conversation {
   aiAgentType: string;                  // Type/model of AI agent
   status: 'active' | 'closed';          // Current status
   conclusion: 'successful' | 'unsuccessful' | 'pending'; // Outcome status
-  startTimestamp: string;               // When conversation began
-  endTimestamp?: string;                // When conversation ended (if closed)
+  created_at: string;                   // When conversation began
+  updated_at?: string;                  // When conversation ended (if closed)
   messages: string[];                   // Array of message IDs
   tags: string[];                       // Categorization tags
   resolutionNotes?: string;             // Notes on conversation resolution
@@ -56,10 +56,10 @@ interface Conversation {
   duration: string;                     // Conversation duration (e.g., "15m")
   messageCount: number;                 // Number of messages
   confidence: string;                   // Overall AI confidence
-  
+
   // Virtual/calculated properties (not stored directly)
   conversationTimestamp?: string;       // Timestamp of first message in conversation
-  
+
   // Methods
   getOrderedMessages?: () => Message[]; // Returns all messages in chronological order
 }
@@ -91,9 +91,9 @@ interface Collection {
   accessPermissions: string[];          // Users with access
   metadata: Record<string, any>;        // Additional data (total conversations, avg duration)
   conversations: string[];              // Array of conversation IDs
-  
+
   // Methods
-  getConversations?: () => Conversation[]; // Returns conversations based on filter criteria 
+  getConversations?: () => Conversation[]; // Returns conversations based on filter criteria
   refreshConversations?: () => void;     // Re-evaluates all conversations against filter criteria
 }
 ```
@@ -230,9 +230,9 @@ The system provides helper functions for common access patterns:
 4. **Get conversation timestamp** (virtual property implementation):
    ```typescript
    // Implementation of the conversationTimestamp virtual property
-   conversation.conversationTimestamp = msgs.length > 0 
-     ? msgs[0].timestamp 
-     : conversation.startTimestamp;
+   conversation.conversationTimestamp = msgs.length > 0
+     ? msgs[0].timestamp
+     : conversation.created_at;
    ```
 
 5. **Get ordered messages** (method implementation):
@@ -260,7 +260,7 @@ The system provides helper functions for common access patterns:
        conversations, // This is the global conversations object with ALL conversations
        collection.filterCriteria
      );
-     
+
      // Update metadata
      collection.metadata = {
        ...collection.metadata,

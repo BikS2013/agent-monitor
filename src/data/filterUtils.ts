@@ -70,7 +70,7 @@ export const filterConversationsByCollectionCriteria = (
       console.log('Time filter - End date:', endDate.toISOString());
 
       filteredConversations = conversationArray.filter(conversation => {
-        const conversationDate = new Date(conversation.startTimestamp);
+        const conversationDate = new Date(conversation.created_at);
         return conversationDate >= startDate! && conversationDate <= endDate;
       });
 
@@ -161,7 +161,7 @@ export const filterConversationsByCollectionCriteria = (
 
           const beforeCount = filteredConversations.length;
           filteredConversations = filteredConversations.filter(conversation => {
-            const conversationDate = new Date(conversation.startTimestamp);
+            const conversationDate = new Date(conversation.created_at);
             return conversationDate >= startDate! && conversationDate <= endDate;
           });
 
@@ -211,8 +211,8 @@ export const filterConversationsByCollectionCriteria = (
     filteredConversations = conversationArray;
   }
 
-  // Return conversation IDs
-  const result = filteredConversations.map(conversation => conversation.id);
+  // Return conversation thread_ids
+  const result = filteredConversations.map(conversation => conversation.thread_id);
   console.log(`Filter result: ${result.length} matching conversations`);
   return result;
 };

@@ -165,13 +165,13 @@ export class AIAgentRepository extends BaseRepository<AIAgent> implements IAIAge
     // Last active
     const lastActiveConversation = conversations
       .sort((a, b) => {
-        const aTime = a.endTimestamp || a.startTimestamp;
-        const bTime = b.endTimestamp || b.startTimestamp;
+        const aTime = a.updated_at || a.created_at;
+        const bTime = b.updated_at || b.created_at;
         return new Date(bTime).getTime() - new Date(aTime).getTime();
       })[0];
-    
-    const lastActive = lastActiveConversation 
-      ? (lastActiveConversation.endTimestamp || lastActiveConversation.startTimestamp)
+
+    const lastActive = lastActiveConversation
+      ? (lastActiveConversation.updated_at || lastActiveConversation.created_at)
       : aiAgent.lastActive;
     
     // Update the AI agent with new statistics

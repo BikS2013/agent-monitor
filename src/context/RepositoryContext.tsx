@@ -24,7 +24,7 @@ interface RepositoryContextType {
   groupRepository: IGroupRepository | null;
   aiAgentRepository: IAIAgentRepository | null;
   userRepository: IUserRepository | null;
-  initialize: (dataSource?: IDataSource, dataSize?: DataSize) => Promise<void>;
+  initialize: (dataSource?: IDataSource, dataSize?: DataSize | 'dynamic') => Promise<void>;
   isUsingApi: boolean;
 }
 

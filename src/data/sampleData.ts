@@ -203,16 +203,8 @@ const generateMessages = (
   messages[firstMsgId] = {
     id: firstMsgId,
     content: firstMessage,
-    timestamp: timestamps[0],
     sender: 'user',
-    senderName: userName,
-    messageType: 'text',
-    readStatus: true,
-    metadata: {
-      tags: [topic],
-      priority: ['low', 'medium', 'high'][Math.floor(Math.random() * 3)] as 'low' | 'medium' | 'high',
-      confidence: Math.floor(Math.random() * 30 + 70) + '%'
-    }
+    senderName: userName
   };
   messageIds.push(firstMsgId);
 
@@ -289,16 +281,8 @@ const generateMessages = (
     messages[id] = {
       id,
       content,
-      timestamp: timestamps[i],
       sender: currentSender,
-      senderName: currentSender === 'user' ? userName : aiName,
-      messageType: 'text',
-      readStatus: true,
-      metadata: {
-        tags: [topic],
-        priority: priority as 'low' | 'medium' | 'high',
-        confidence: currentSender === 'ai' ? Math.floor(Math.random() * 30 + 70) + '%' : undefined
-      }
+      senderName: currentSender === 'user' ? userName : aiName
     };
     messageIds.push(id);
   }
@@ -393,7 +377,7 @@ const generateConversations = (
     const confidence = Math.floor(Math.random() * 30 + 70) + '%';
 
     conversations[id] = {
-      id,
+      thread_id: id,
       userId,
       userName: userRecords[userId].name,
       aiAgentId,
@@ -401,8 +385,8 @@ const generateConversations = (
       aiAgentType: aiAgents[aiAgentId].model,
       status,
       conclusion,
-      startTimestamp,
-      endTimestamp,
+      created_at: startTimestamp,
+      updated_at: endTimestamp,
       messages: messageIds,
       tags,
       resolutionNotes: conclusion === 'successful' ?
@@ -418,12 +402,12 @@ const generateConversations = (
   // Sort conversations by timestamp to ensure IDs are ordered correctly
   const sortedConversations: Record<string, Conversation> = {};
   Object.values(conversations)
-    .sort((a, b) => new Date(b.startTimestamp).getTime() - new Date(a.startTimestamp).getTime())
+    .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
     .forEach((conversation, index) => {
       const newId = `c${index + 1}`;
       sortedConversations[newId] = {
         ...conversation,
-        id: newId
+        thread_id: newId
       };
     });
 
@@ -559,7 +543,7 @@ const generateCollections = (
         };
 
         filteredConversations = conversationIds.filter(cId => {
-          const convDate = new Date(conversations[cId].startTimestamp);
+          const convDate = new Date(conversations[cId].created_at);
           return convDate >= startDate && convDate <= now;
         });
       }

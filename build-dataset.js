@@ -282,16 +282,8 @@ const generateMessage = (
   return {
     id,
     content,
-    timestamp,
     sender,
-    senderName,
-    messageType: 'text',
-    readStatus: true,
-    metadata: {
-      tags,
-      priority: ['low', 'medium', 'high'][Math.floor(Math.random() * 3)],
-      confidence: sender === 'ai' ? Math.floor(Math.random() * 30 + 70) + '%' : undefined
-    }
+    senderName
   };
 };
 
@@ -490,7 +482,7 @@ const generateConversation = (
   
   // Create conversation object
   const conversation = {
-    id,
+    thread_id: id,
     userId,
     userName: user.name,
     aiAgentId,
@@ -498,8 +490,8 @@ const generateConversation = (
     aiAgentType: aiAgent.model,
     status,
     conclusion,
-    startTimestamp,
-    endTimestamp,
+    created_at: startTimestamp,
+    updated_at: endTimestamp,
     messages: messageIds,
     tags,
     resolutionNotes,
@@ -608,7 +600,8 @@ const generateSampleData = () => {
       messageCount
     );
     
-    conversations[id] = conversation;
+    // Use the conversation's thread_id as the key in the object
+    conversations[conversation.thread_id] = conversation;
     conversationMessages.forEach(msg => {
       messages[msg.id] = msg;
     });
@@ -637,7 +630,8 @@ const generateSampleData = () => {
       messageCount
     );
     
-    conversations[id] = conversation;
+    // Use the conversation's thread_id as the key in the object
+    conversations[conversation.thread_id] = conversation;
     conversationMessages.forEach(msg => {
       messages[msg.id] = msg;
     });
@@ -666,7 +660,8 @@ const generateSampleData = () => {
       messageCount
     );
     
-    conversations[id] = conversation;
+    // Use the conversation's thread_id as the key in the object
+    conversations[conversation.thread_id] = conversation;
     conversationMessages.forEach(msg => {
       messages[msg.id] = msg;
     });
@@ -695,7 +690,8 @@ const generateSampleData = () => {
       messageCount
     );
     
-    conversations[id] = conversation;
+    // Use the conversation's thread_id as the key in the object
+    conversations[conversation.thread_id] = conversation;
     conversationMessages.forEach(msg => {
       messages[msg.id] = msg;
     });
