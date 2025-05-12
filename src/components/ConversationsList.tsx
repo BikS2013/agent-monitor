@@ -3,6 +3,7 @@ import { Filter, Search, Users, Bot, Brain, CheckCircle, XCircle } from 'lucide-
 import { Conversation, AIAgent } from '../data/types';
 import { useTheme } from '../context/ThemeContext';
 import { useData } from '../context/DataContext';
+import { formatThreadId } from '../utils/formatters';
 
 interface ConversationsListProps {
   conversations: Record<string, Conversation>;
@@ -149,7 +150,12 @@ const ConversationsList = memo<ConversationsListProps>(({
         >
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center space-x-2">
-              <span className={`font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>{conversation.thread_id}</span>
+              <span
+                className={`font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}
+                title={conversation.thread_id} // Show full ID on hover
+              >
+                {formatThreadId(conversation.thread_id)}
+              </span>
               {conversation.conclusion === 'successful' ? (
                 <CheckCircle size={14} className="text-green-500" />
               ) : conversation.conclusion === 'unsuccessful' ? (

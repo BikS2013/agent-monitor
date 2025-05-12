@@ -2,6 +2,7 @@ import React, { memo } from 'react';
 import { Bot } from 'lucide-react';
 import { Conversation, Message } from '../data/types';
 import { useTheme } from '../context/ThemeContext';
+import { formatThreadId } from '../utils/formatters';
 
 interface ConversationDetailProps {
   conversation: Conversation;
@@ -24,7 +25,9 @@ const ConversationDetail = memo<ConversationDetailProps>(({
       <div className={`${theme === 'dark' ? 'bg-blue-800' : 'bg-blue-500'} text-white p-4 border-b`}>
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-lg font-semibold">{conversation.thread_id}</h2>
+            <h2 className="text-lg font-semibold" title={conversation.thread_id}>
+              {formatThreadId(conversation.thread_id)}
+            </h2>
             <p className="text-sm opacity-90">{conversation.userName} with {conversation.aiAgentName}</p>
           </div>
           <div className="flex items-center space-x-4">

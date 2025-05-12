@@ -2,6 +2,7 @@ import React from 'react';
 import { MessageCircle, Users, Bot, CheckCircle, XCircle, Clock, Activity, BarChart3 } from 'lucide-react';
 import { AIAgent, Conversation } from '../data/types';
 import { useTheme } from '../context/ThemeContext';
+import { formatThreadId } from '../utils/formatters';
 
 interface DashboardProps {
   conversations: Record<string, Conversation>;
@@ -156,8 +157,11 @@ console.log('Recent conversations on dashboard:',
                 onClick={() => onSelectConversation(conversation)}
               >
                 <div className="flex items-center justify-between mb-1">
-                  <span className={`font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
-                    {conversation.tags.includes('recent') ? '🔴 ' : ''}{conversation.thread_id}
+                  <span
+                    className={`font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}
+                    title={conversation.thread_id} // Show full ID on hover
+                  >
+                    {conversation.tags.includes('recent') ? '🔴 ' : ''}{formatThreadId(conversation.thread_id)}
                   </span>
                   <div className={`w-2 h-2 rounded-full ${
                     conversation.status === 'active' ? 'bg-green-500' : 'bg-gray-400'
