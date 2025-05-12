@@ -139,6 +139,11 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       }
 
       const conversationsRecord = conversationsResult.data.reduce((record, conversation) => {
+        // Ensure conclusion is one of the valid options
+        if (conversation.conclusion !== 'successful' && conversation.conclusion !== 'unsuccessful') {
+          conversation.conclusion = 'uncertain';
+        }
+
         record[conversation.thread_id] = conversation;
         return record;
       }, {} as Record<string, Conversation>);
@@ -403,6 +408,11 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       // Update conversations state with new conversations
       const newConversations = { ...conversations };
       conversationsResult.data.forEach(conversation => {
+        // Ensure conclusion is one of the valid options
+        if (conversation.conclusion !== 'successful' && conversation.conclusion !== 'unsuccessful') {
+          conversation.conclusion = 'uncertain';
+        }
+
         newConversations[conversation.thread_id] = conversation;
       });
       setConversations(newConversations);

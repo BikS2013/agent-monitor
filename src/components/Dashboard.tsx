@@ -21,9 +21,12 @@ const Dashboard: React.FC<DashboardProps> = ({
   const activeConversations = Object.values(conversations).filter(c => c.status === 'active').length;
   const successfulConversations = Object.values(conversations).filter(c => c.conclusion === 'successful').length;
   const unsuccessfulConversations = Object.values(conversations).filter(c => c.conclusion === 'unsuccessful').length;
+  const uncertainConversations = Object.values(conversations).filter(c => c.conclusion === 'uncertain').length;
 
-  const successRate = totalConversations > 0
-    ? Math.round((successfulConversations / totalConversations) * 100)
+  // Calculate success rate based on conversations with definitive outcomes (excluding uncertain)
+  const conversationsWithOutcome = successfulConversations + unsuccessfulConversations;
+  const successRate = conversationsWithOutcome > 0
+    ? Math.round((successfulConversations / conversationsWithOutcome) * 100)
     : 0;
 
   // Sort conversations by timestamp, ensuring most recent are first
@@ -228,7 +231,7 @@ console.log('Recent conversations on dashboard:',
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4 mt-4">
+          <div className="grid grid-cols-3 gap-4 mt-4">
             <div className="flex items-center">
               <div className="w-4 h-4 bg-green-500 rounded-full mr-2"></div>
               <div>
@@ -241,6 +244,13 @@ console.log('Recent conversations on dashboard:',
               <div>
                 <p className={`text-sm ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>Unsuccessful</p>
                 <p className={`font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>{unsuccessfulConversations}</p>
+              </div>
+            </div>
+            <div className="flex items-center">
+              <div className="w-4 h-4 bg-yellow-500 rounded-full mr-2"></div>
+              <div>
+                <p className={`text-sm ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>Uncertain</p>
+                <p className={`font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>{uncertainConversations}</p>
               </div>
             </div>
           </div>

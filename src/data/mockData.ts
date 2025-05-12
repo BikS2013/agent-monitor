@@ -66,7 +66,7 @@ export const conversations: Record<string, Conversation> = {
     created_at: '2023-11-15T16:24:00',
     messages: ['m1', 'm2', 'm3', 'm4'],
     tags: ['money-box', 'quick-resolution'],
-    priority: 'high',
+
     duration: '15m',
     messageCount: 4,
     confidence: '98%'
@@ -83,7 +83,7 @@ export const conversations: Record<string, Conversation> = {
     created_at: '2023-11-15T16:10:00',
     messages: ['m5', 'm6', 'm7', 'm8'],
     tags: ['technical-issue', 'escalation'],
-    priority: 'medium',
+
     duration: '45m',
     messageCount: 4,
     confidence: '62%'
@@ -101,7 +101,7 @@ export const conversations: Record<string, Conversation> = {
     updated_at: '2023-11-15T15:45:00',
     messages: [],
     tags: ['account-inquiry', 'resolved'],
-    priority: 'low',
+
     duration: '15m',
     messageCount: 6,
     confidence: '95%'
@@ -119,7 +119,7 @@ export const conversations: Record<string, Conversation> = {
     updated_at: '2023-11-15T14:40:00',
     messages: [],
     tags: ['password-reset', 'resolved'],
-    priority: 'medium',
+
     duration: '20m',
     messageCount: 8,
     confidence: '88%'
@@ -165,11 +165,11 @@ export const collections: Record<string, Collection> = {
   },
   'c3': {
     id: 'c3',
-    name: 'High Priority Cases',
-    description: 'All high priority conversations',
+    name: 'Recent Cases',
+    description: 'All recent conversations',
     filterCriteria: {
       multiFactorFilters: [
-        { priority: 'high' }
+        { tags: ['recent'] }
       ]
     },
     creationTimestamp: '2023-11-13T10:00:00',

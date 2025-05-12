@@ -340,29 +340,28 @@ const generateConversations = (
     // Add messages to the overall message collection
     allMessages = { ...allMessages, ...messages };
 
-    // 70% of closed conversations are successful
+    // 70% of closed conversations are successful, 20% unsuccessful, 10% uncertain
     const conclusion = !isActive ?
-      (Math.random() > 0.3 ? 'successful' : 'unsuccessful') :
-      'pending';
+      (Math.random() > 0.3 ? 'successful' : (Math.random() > 0.33 ? 'unsuccessful' : 'uncertain')) :
+      'uncertain';
 
-    // Random priority with higher likelihood of medium
-    // Make recent conversations have higher priority
-    const priority = i < recentCount ?
-      (Math.random() < 0.7 ? 'high' : 'medium') :
-      (Math.random() < 0.7 ? 'medium' : (Math.random() < 0.5 ? 'low' : 'high'));
+    // Generate tags based on conversation topic
+    const tags: string[] = [];
 
-    // Tags based on message content
+    // Add a tag based on the first message content
     const firstMessage = messages[messageIds[0]];
-    const tags = firstMessage.metadata.tags.slice();
+    const messageContent = firstMessage.content.toLowerCase();
+
+    if (messageContent.includes('account')) tags.push('account-issue');
+    else if (messageContent.includes('billing')) tags.push('billing-issue');
+    else if (messageContent.includes('technical')) tags.push('technical-problem');
+    else if (messageContent.includes('password')) tags.push('password-reset');
+    else tags.push('general-inquiry');
 
     if (conclusion === 'successful') {
       tags.push('resolved');
     } else if (conclusion === 'unsuccessful') {
       tags.push('unresolved');
-    }
-
-    if (priority === 'high') {
-      tags.push('priority');
     }
 
     // Add a 'recent' tag for recent conversations
@@ -392,7 +391,6 @@ const generateConversations = (
       resolutionNotes: conclusion === 'successful' ?
         'Issue resolved to customer satisfaction.' :
         (conclusion === 'unsuccessful' ? 'Customer issue could not be resolved.' : undefined),
-      priority: priority as 'low' | 'medium' | 'high',
       duration,
       messageCount,
       confidence
@@ -464,15 +462,15 @@ const generateCollections = (
       );
     }
     else if (template.name.includes("Priority")) {
-      // High priority filter
+      // Recent conversations filter (as a replacement for priority)
       filterCriteria = {
         multiFactorFilters: [
-          { priority: 'high' }
+          { tags: ['recent'] }
         ]
       };
 
       filteredConversations = conversationIds.filter(cId =>
-        conversations[cId].priority === 'high'
+        conversations[cId].tags.includes('recent')
       );
     }
     else if (template.name.includes("Successful")) {
@@ -604,7 +602,6 @@ const generateGroups = (
 ): Record<string, Group> => {
   const groups: Record<string, Group> = {};
   const collectionIds = Object.keys(collections);
-  const groupPurposes: ('evaluation' | 'security' | 'efficiency')[] = ['evaluation', 'security', 'efficiency'];
 
   // Group templates
   const groupTemplates = [

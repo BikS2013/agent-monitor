@@ -19,13 +19,12 @@ interface Conversation {
   aiAgentName: string;              // Display name of the AI agent
   aiAgentType: string;              // Type/model of the AI agent
   status: 'active' | 'closed';      // Current status
-  conclusion: 'successful' | 'unsuccessful' | 'pending'; // Outcome status
+  conclusion: 'successful' | 'unsuccessful' | 'uncertain'; // Outcome status (default: 'uncertain')
   created_at: string;               // When conversation was created (ISO format)
   updated_at?: string;              // When conversation was last updated (ISO format)
   messages: string[];               // Array of message IDs
   tags: string[];                   // Tags/labels for categorization
   resolutionNotes?: string;         // Notes about resolution
-  priority: 'low' | 'medium' | 'high'; // Priority level
   duration: string;                 // Duration of conversation
   messageCount: number;             // Number of messages
   confidence: string;               // AI confidence level (0-100%)
@@ -72,11 +71,11 @@ interface Message {
       "aiAgentName": "Support Bot",
       "aiAgentType": "customer-support",
       "status": "active",
-      "conclusion": "pending",
+      "conclusion": "uncertain",
       "created_at": "2023-01-01T12:00:00Z",
+      "updated_at": "2023-01-01T12:15:23Z",
       "tags": ["billing", "subscription"],
-      "priority": "medium",
-      "duration": "00:15:23",
+      "duration": "15m",
       "messageCount": 8,
       "confidence": "85"
     }
@@ -109,13 +108,12 @@ interface Message {
   "aiAgentName": "Support Bot",
   "aiAgentType": "customer-support",
   "status": "active",
-  "conclusion": "pending",
+  "conclusion": "uncertain",
   "created_at": "2023-01-01T12:00:00Z",
-  "updated_at": null,
+  "updated_at": "2023-01-01T12:15:23Z",
   "tags": ["billing", "subscription"],
   "resolutionNotes": "",
-  "priority": "medium",
-  "duration": "00:15:23",
+  "duration": "15m",
   "messageCount": 8,
   "confidence": "85",
   "decodedMessages": [
@@ -214,7 +212,6 @@ interface Message {
   },
   "status": "active",
   "conclusion": "successful",
-  "priority": "high",
   "search": "subscription"
 }
 ```
@@ -259,7 +256,8 @@ For the Conversations tab to function properly, these fields are critical:
    - `aiAgentName`: For displaying which AI handled the conversation
    - `aiAgentType`: For displaying the model/type
    - `created_at`: For sorting and display
-   - `conclusion`: For status indicators (successful/unsuccessful/pending)
+   - `updated_at`: For calculating status (active/closed)
+   - `conclusion`: For status indicators (successful/unsuccessful/uncertain)
    - `confidence`: For displaying AI confidence level
    - `tags`: For filtering and display
 
@@ -277,17 +275,16 @@ For the Conversations tab to function properly, these fields are critical:
 The API should support filtering conversations by:
 
 1. **Status**: Active vs. closed conversations
-2. **Conclusion**: Successful, unsuccessful, or pending outcomes
+2. **Conclusion**: Successful, unsuccessful, or uncertain outcomes
 3. **AI Agent**: Specific AI agents that handled conversations
 4. **Time Range**: Conversations within a specific date/time range
-5. **Priority**: Low, medium, or high priority
-6. **Text Search**: Search in conversation content or tags
+5. **Text Search**: Search in conversation content or tags
 
 ## Example API Usage Flow
 
 1. **Load Conversations List**:
    ```
-   GET /conversation?limit=20&skip=0&sort_by=startTimestamp&sort_order=desc&include_pagination=true
+   GET /conversation?limit=20&skip=0&sort_by=created_at&sort_order=desc&include_pagination=true
    ```
 
 2. **Apply Filters**:
@@ -296,7 +293,7 @@ The API should support filtering conversations by:
    {
      "aiAgentIds": ["agent-123"],
      "status": "active",
-     "conclusion": "pending"
+     "conclusion": "uncertain"
    }
    ```
 
@@ -328,14 +325,16 @@ The API should support multiple authentication methods:
 2. **API Key**: Via `X-API-KEY` header with optional `X-Client-ID`
 3. **No Authentication**: For development and testing environments
 
+
+
 ## Appendix: Optional Fields
 
 These fields enhance the user experience but are not critical for basic functionality:
 
 1. **In Conversation List**:
-   - `duration`: How long the conversation lasted
    - `messageCount`: Number of messages exchanged
-   - `priority`: Visual indicator of importance
+   - `duration`: How long the conversation lasted
+   - `status`: Whether the conversation is active or closed
 
 2. **In Conversation Details**:
    - `resolutionNotes`: Additional context about the outcome

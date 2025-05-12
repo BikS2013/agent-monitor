@@ -527,24 +527,21 @@ const generateConversation = (
 
   // Status and conclusion
   const status = isActive ? 'active' : 'closed';
-  let conclusion: 'successful' | 'unsuccessful' | 'pending' = 'pending';
+  let conclusion: 'successful' | 'unsuccessful' | 'uncertain' = 'uncertain';
 
   if (!isActive) {
-    conclusion = Math.random() > 0.2 ? 'successful' : 'unsuccessful';
+    const rand = Math.random();
+    if (rand < 0.7) {
+      conclusion = 'successful';
+    } else if (rand < 0.9) {
+      conclusion = 'unsuccessful';
+    } else {
+      conclusion = 'uncertain';
+    }
   }
 
-  // Priority - recent and active conversations have higher probability of being high priority
+  // Check if conversation is recent
   const isRecent = new Date(startTimestamp).getTime() > Date.now() - 24 * 60 * 60 * 1000;
-  const priorityRoll = Math.random();
-  let priority: 'low' | 'medium' | 'high';
-
-  if (isRecent && isActive) {
-    priority = priorityRoll < 0.4 ? 'high' : priorityRoll < 0.8 ? 'medium' : 'low';
-  } else if (isRecent || isActive) {
-    priority = priorityRoll < 0.2 ? 'high' : priorityRoll < 0.7 ? 'medium' : 'low';
-  } else {
-    priority = priorityRoll < 0.1 ? 'high' : priorityRoll < 0.6 ? 'medium' : 'low';
-  }
 
   // Generate tags
   let tags = [topic];
@@ -555,9 +552,7 @@ const generateConversation = (
     tags.push(statusTagsList[Math.floor(Math.random() * statusTagsList.length)]);
   }
 
-  if (priority === 'high') {
-    tags.push('priority');
-  }
+
 
   if (isRecent) {
     tags.push('recent');
@@ -589,7 +584,6 @@ const generateConversation = (
     messages: messageIds,
     tags,
     resolutionNotes,
-    priority,
     duration,
     messageCount,
     confidence: `${Math.floor(Math.random() * 20 + 80)}%`,
@@ -617,10 +611,10 @@ const generateCollection = (
     };
   }
   else if (name.toLowerCase().includes('priority')) {
-    // High priority filter
+    // Recent conversations filter (as a replacement for priority)
     filterCriteria = {
       multiFactorFilters: [
-        { priority: 'high' }
+        { tags: ['recent'] }
       ]
     };
   }
@@ -740,7 +734,7 @@ const collectionTemplates = [
   { name: "AI Performance Evaluation", description: "Monitoring AI agent performance metrics" },
   { name: "Customer Support Issues", description: "Tracking customer support interactions" },
   { name: "Technical Problems", description: "Analyzing technical support conversations" },
-  { name: "High Priority Cases", description: "Monitoring high priority customer interactions" },
+  { name: "Recent Cases", description: "Monitoring recent customer interactions" },
   { name: "Billing Inquiries", description: "Conversations related to billing and payments" },
   { name: "Account Management", description: "User account related conversations" },
   { name: "Product Feature Questions", description: "Queries about product features and usage" },

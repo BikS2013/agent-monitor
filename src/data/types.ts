@@ -15,13 +15,12 @@ export interface Conversation {
   aiAgentName: string;
   aiAgentType: string;
   status: 'active' | 'closed';
-  conclusion: 'successful' | 'unsuccessful' | 'pending';
+  conclusion: 'successful' | 'unsuccessful' | 'uncertain'; // Default is 'uncertain'
   created_at: string;
   updated_at?: string;
   messages: string[]; // Message IDs
   tags: string[];
   resolutionNotes?: string;
-  priority: 'low' | 'medium' | 'high';
   duration: string;
   messageCount: number;
   confidence: string;
@@ -44,7 +43,7 @@ export interface Collection {
       endDate?: string;
       period?: string;
     };
-    outcomeBased?: 'successful' | 'unsuccessful' | 'all';
+    outcomeBased?: 'successful' | 'unsuccessful' | 'uncertain' | 'all';
     multiFactorFilters?: any[];
   };
   creationTimestamp: string;
@@ -52,7 +51,7 @@ export interface Collection {
   accessPermissions: string[];
   metadata: Record<string, any>;
   conversations: string[]; // Conversation IDs
-  
+
   // Methods
   getConversations?: () => Conversation[]; // Returns conversations based on filter criteria
   refreshConversations?: () => void; // Re-evaluates all conversations against filter criteria

@@ -16,18 +16,10 @@ Messages represent the atomic unit of communication between users and AI agents.
 
 ```typescript
 interface Message {
-  id: string;                           // Unique identifier
-  content: string;                      // Message text content
-  timestamp: string;                    // ISO format time when message was sent
-  sender: 'user' | 'ai';                // Who sent the message
-  senderName: string;                   // Display name of sender
-  messageType: 'text' | 'attachment' | 'system'; // Type of message
-  readStatus: boolean;                  // Whether message has been read
-  metadata: {
-    tags: string[];                     // Categorization tags
-    priority: 'low' | 'medium' | 'high'; // Message priority
-    confidence?: string;                // Optional AI confidence score
-  };
+  id: string;                       // Unique identifier
+  content: string;                  // Message content
+  sender: 'user' | 'ai';            // Who sent the message
+  senderName: string;               // Display name of the sender
 }
 ```
 
@@ -39,23 +31,22 @@ Conversations aggregate messages exchanged between a user and an AI agent.
 
 ```typescript
 interface Conversation {
-  thread_id: string;                    // Unique identifier
-  userId: string;                       // ID of user participating
-  userName: string;                     // Name of user
-  aiAgentId: string;                    // ID of AI agent handling conversation
-  aiAgentName: string;                  // Name of AI agent
-  aiAgentType: string;                  // Type/model of AI agent
-  status: 'active' | 'closed';          // Current status
-  conclusion: 'successful' | 'unsuccessful' | 'pending'; // Outcome status
-  created_at: string;                   // When conversation began
-  updated_at?: string;                  // When conversation ended (if closed)
-  messages: string[];                   // Array of message IDs
-  tags: string[];                       // Categorization tags
-  resolutionNotes?: string;             // Notes on conversation resolution
-  priority: 'low' | 'medium' | 'high';  // Conversation priority
-  duration: string;                     // Conversation duration (e.g., "15m")
-  messageCount: number;                 // Number of messages
-  confidence: string;                   // Overall AI confidence
+  thread_id: string;                 // Unique identifier
+  userId: string;                   // ID of the user who initiated the conversation
+  userName: string;                 // Display name of the user
+  aiAgentId: string;                // ID of the AI agent
+  aiAgentName: string;              // Display name of the AI agent
+  aiAgentType: string;              // Type/model of the AI agent
+  status: 'active' | 'closed';      // Current status
+  conclusion: 'successful' | 'unsuccessful' | 'uncertain'; // Outcome status (default: 'uncertain')
+  created_at: string;               // When conversation was created (ISO format)
+  updated_at?: string;              // When conversation was last updated (ISO format)
+  messages: string[];               // Array of message IDs
+  tags: string[];                   // Tags/labels for categorization
+  resolutionNotes?: string;         // Notes about resolution
+  duration: string;                 // Duration of conversation
+  messageCount: number;             // Number of messages
+  confidence: string;               // AI confidence level (0-100%)
 
   // Virtual/calculated properties (not stored directly)
   conversationTimestamp?: string;       // Timestamp of first message in conversation
@@ -83,7 +74,7 @@ interface Collection {
       endDate?: string;
       period?: string;                  // 'today', 'week', 'month', 'quarter', 'year'
     };
-    outcomeBased?: 'successful' | 'unsuccessful' | 'all'; // Filter by outcome
+    outcomeBased?: 'successful' | 'unsuccessful' | 'uncertain' | 'all'; // Filter by outcome
     multiFactorFilters?: any[];         // Combined criteria filters
   };
   creationTimestamp: string;            // When collection was created
