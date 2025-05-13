@@ -1,0 +1,709 @@
+openapi: 3.1.0
+info:
+  title: Conversations API
+  description: API for managing conversations between users and AI agents
+  version: v1
+paths:
+  /conversations/:
+    get:
+      tags:
+      - conversations
+      summary: Get Conversations
+      description: 'Get a list of conversations with optional filtering
+
+
+        By default, messages are not included in the response to optimize performance.
+
+        Set include_messages=true to include messages in the response.'
+      operationId: get_conversations_conversations__get
+      parameters:
+      - name: user_id
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: Filter by user ID
+          title: User Id
+        description: Filter by user ID
+      - name: ai_agent_id
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: Filter by AI agent ID
+          title: Ai Agent Id
+        description: Filter by AI agent ID
+      - name: status
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: Filter by status (active or closed)
+          title: Status
+        description: Filter by status (active or closed)
+      - name: conclusion
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: Filter by conclusion (successful, unsuccessful, or uncertain)
+          title: Conclusion
+        description: Filter by conclusion (successful, unsuccessful, or uncertain)
+      - name: search
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: Search in user name, AI agent name, or message content
+          title: Search
+        description: Search in user name, AI agent name, or message content
+      - name: tags
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: array
+            items:
+              type: string
+          - type: 'null'
+          description: Filter by tags
+          title: Tags
+        description: Filter by tags
+      - name: limit
+        in: query
+        required: false
+        schema:
+          type: integer
+          description: Limit the number of results
+          default: 20
+          title: Limit
+        description: Limit the number of results
+      - name: skip
+        in: query
+        required: false
+        schema:
+          type: integer
+          description: Skip the first N results
+          default: 0
+          title: Skip
+        description: Skip the first N results
+      - name: include_messages
+        in: query
+        required: false
+        schema:
+          type: boolean
+          description: Include messages in the response
+          default: false
+          title: Include Messages
+        description: Include messages in the response
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Conversation'
+                title: Response Get Conversations Conversations  Get
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+    post:
+      tags:
+      - conversations
+      summary: Create Conversation
+      description: Create a new conversation
+      operationId: create_conversation_conversations__post
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ConversationCreate'
+      responses:
+        '201':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Conversation'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /conversations/{conversation_id}:
+    get:
+      tags:
+      - conversations
+      summary: Get Conversation
+      description: Get a specific conversation by ID
+      operationId: get_conversation_conversations__conversation_id__get
+      parameters:
+      - name: conversation_id
+        in: path
+        required: true
+        schema:
+          type: string
+          description: The ID of the conversation to get
+          title: Conversation Id
+        description: The ID of the conversation to get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Conversation'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+    put:
+      tags:
+      - conversations
+      summary: Update Conversation
+      description: Update a conversation
+      operationId: update_conversation_conversations__conversation_id__put
+      parameters:
+      - name: conversation_id
+        in: path
+        required: true
+        schema:
+          type: string
+          description: The ID of the conversation to update
+          title: Conversation Id
+        description: The ID of the conversation to update
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ConversationUpdate'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Conversation'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+    delete:
+      tags:
+      - conversations
+      summary: Delete Conversation
+      description: Delete a conversation
+      operationId: delete_conversation_conversations__conversation_id__delete
+      parameters:
+      - name: conversation_id
+        in: path
+        required: true
+        schema:
+          type: string
+          description: The ID of the conversation to delete
+          title: Conversation Id
+        description: The ID of the conversation to delete
+      responses:
+        '204':
+          description: Successful Response
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /conversations/{conversation_id}/messages:
+    get:
+      tags:
+      - conversations
+      summary: Get Messages
+      description: Get all messages for a conversation
+      operationId: get_messages_conversations__conversation_id__messages_get
+      parameters:
+      - name: conversation_id
+        in: path
+        required: true
+        schema:
+          type: string
+          description: The ID of the conversation
+          title: Conversation Id
+        description: The ID of the conversation
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Message'
+                title: Response Get Messages Conversations  Conversation Id  Messages
+                  Get
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+    post:
+      tags:
+      - conversations
+      summary: Add Message
+      description: Add a message to a conversation
+      operationId: add_message_conversations__conversation_id__messages_post
+      parameters:
+      - name: conversation_id
+        in: path
+        required: true
+        schema:
+          type: string
+          description: The ID of the conversation
+          title: Conversation Id
+        description: The ID of the conversation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MessageCreate'
+      responses:
+        '201':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Message'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /conversations/{conversation_id}/messages/{message_id}:
+    get:
+      tags:
+      - conversations
+      summary: Get Message
+      description: Get a specific message from a conversation
+      operationId: get_message_conversations__conversation_id__messages__message_id__get
+      parameters:
+      - name: conversation_id
+        in: path
+        required: true
+        schema:
+          type: string
+          description: The ID of the conversation
+          title: Conversation Id
+        description: The ID of the conversation
+      - name: message_id
+        in: path
+        required: true
+        schema:
+          type: string
+          description: The ID of the message
+          title: Message Id
+        description: The ID of the message
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Message'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+    put:
+      tags:
+      - conversations
+      summary: Update Message
+      description: Update a message in a conversation
+      operationId: update_message_conversations__conversation_id__messages__message_id__put
+      parameters:
+      - name: conversation_id
+        in: path
+        required: true
+        schema:
+          type: string
+          description: The ID of the conversation
+          title: Conversation Id
+        description: The ID of the conversation
+      - name: message_id
+        in: path
+        required: true
+        schema:
+          type: string
+          description: The ID of the message
+          title: Message Id
+        description: The ID of the message
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MessageUpdate'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Message'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+    delete:
+      tags:
+      - conversations
+      summary: Delete Message
+      description: Delete a message from a conversation
+      operationId: delete_message_conversations__conversation_id__messages__message_id__delete
+      parameters:
+      - name: conversation_id
+        in: path
+        required: true
+        schema:
+          type: string
+          description: The ID of the conversation
+          title: Conversation Id
+        description: The ID of the conversation
+      - name: message_id
+        in: path
+        required: true
+        schema:
+          type: string
+          description: The ID of the message
+          title: Message Id
+        description: The ID of the message
+      responses:
+        '204':
+          description: Successful Response
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /:
+    get:
+      summary: Root
+      operationId: root__get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+components:
+  schemas:
+    Conversation:
+      properties:
+        thread_id:
+          type: string
+          title: Thread Id
+        userId:
+          type: string
+          title: Userid
+        userName:
+          type: string
+          title: Username
+        aiAgentId:
+          type: string
+          title: Aiagentid
+        aiAgentName:
+          type: string
+          title: Aiagentname
+        aiAgentType:
+          type: string
+          title: Aiagenttype
+        status:
+          type: string
+          enum:
+          - active
+          - closed
+          title: Status
+          default: active
+        conclusion:
+          type: string
+          enum:
+          - successful
+          - unsuccessful
+          - uncertain
+          title: Conclusion
+          default: uncertain
+        created_at:
+          type: string
+          title: Created At
+        updated_at:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Updated At
+        tags:
+          items:
+            type: string
+          type: array
+          title: Tags
+        resolutionNotes:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Resolutionnotes
+        duration:
+          type: string
+          title: Duration
+          default: 00:00:00
+        messageCount:
+          type: integer
+          title: Messagecount
+          default: 0
+        confidence:
+          type: string
+          title: Confidence
+          default: '75'
+        messages:
+          items:
+            $ref: '#/components/schemas/Message'
+          type: array
+          title: Messages
+        message_ids:
+          items:
+            type: string
+          type: array
+          title: Message Ids
+      type: object
+      required:
+      - userId
+      - userName
+      - aiAgentId
+      - aiAgentName
+      - aiAgentType
+      title: Conversation
+      description: Schema for a conversation between a user and an AI agent
+    ConversationCreate:
+      properties:
+        user_id:
+          type: string
+          title: User Id
+        user_name:
+          type: string
+          title: User Name
+        ai_agent_id:
+          type: string
+          title: Ai Agent Id
+        ai_agent_name:
+          type: string
+          title: Ai Agent Name
+        ai_agent_type:
+          type: string
+          title: Ai Agent Type
+        tags:
+          items:
+            type: string
+          type: array
+          title: Tags
+        initial_message:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Initial Message
+        confidence:
+          type: string
+          title: Confidence
+          default: '75'
+      type: object
+      required:
+      - user_id
+      - user_name
+      - ai_agent_id
+      - ai_agent_name
+      - ai_agent_type
+      title: ConversationCreate
+      description: Schema for creating a new conversation
+    ConversationUpdate:
+      properties:
+        status:
+          anyOf:
+          - type: string
+            enum:
+            - active
+            - closed
+          - type: 'null'
+          title: Status
+        conclusion:
+          anyOf:
+          - type: string
+            enum:
+            - successful
+            - unsuccessful
+            - uncertain
+          - type: 'null'
+          title: Conclusion
+        updated_at:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Updated At
+        tags:
+          anyOf:
+          - items:
+              type: string
+            type: array
+          - type: 'null'
+          title: Tags
+        resolutionNotes:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Resolutionnotes
+        confidence:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Confidence
+      type: object
+      title: ConversationUpdate
+      description: Schema for updating a conversation
+    HTTPValidationError:
+      properties:
+        detail:
+          items:
+            $ref: '#/components/schemas/ValidationError'
+          type: array
+          title: Detail
+      type: object
+      title: HTTPValidationError
+    Message:
+      properties:
+        id:
+          type: string
+          title: Id
+        content:
+          type: string
+          title: Content
+        timestamp:
+          type: string
+          title: Timestamp
+        sender:
+          type: string
+          enum:
+          - user
+          - ai
+          title: Sender
+        senderName:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Sendername
+        tool_calls:
+          anyOf:
+          - items:
+              additionalProperties: true
+              type: object
+            type: array
+          - type: 'null'
+          title: Tool Calls
+        response_metadata:
+          anyOf:
+          - additionalProperties: true
+            type: object
+          - type: 'null'
+          title: Response Metadata
+      type: object
+      required:
+      - content
+      - sender
+      title: Message
+      description: Schema for a message in a conversation
+    MessageCreate:
+      properties:
+        content:
+          type: string
+          title: Content
+        sender:
+          type: string
+          enum:
+          - user
+          - ai
+          title: Sender
+        senderName:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Sendername
+      type: object
+      required:
+      - content
+      - sender
+      title: MessageCreate
+      description: Schema for creating a new message
+    MessageUpdate:
+      properties:
+        content:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Content
+        senderName:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Sendername
+        response_metadata:
+          anyOf:
+          - additionalProperties: true
+            type: object
+          - type: 'null'
+          title: Response Metadata
+      type: object
+      title: MessageUpdate
+      description: Schema for updating a message
+    ValidationError:
+      properties:
+        loc:
+          items:
+            anyOf:
+            - type: string
+            - type: integer
+          type: array
+          title: Location
+        msg:
+          type: string
+          title: Message
+        type:
+          type: string
+          title: Error Type
+      type: object
+      required:
+      - loc
+      - msg
+      - type
+      title: ValidationError

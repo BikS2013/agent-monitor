@@ -5,13 +5,16 @@ import './index.css';
 import { DataProvider } from './context/DataContext';
 import { RepositoryProvider } from './context/RepositoryContext';
 import { ThemeProvider } from './context/ThemeContext';
+import { ConversationsRepositoryProvider } from './context/ConversationsRepositoryContext';
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <RepositoryProvider>
       <DataProvider>
         <ThemeProvider>
-          <App />
+          <ConversationsRepositoryProvider>
+            <App />
+          </ConversationsRepositoryProvider>
         </ThemeProvider>
       </DataProvider>
     </RepositoryProvider>

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Settings, User, Bell, Shield, Database, Bot, Save, HardDrive, AlertCircle, Globe } from 'lucide-react';
+import { Settings, User, Bell, Shield, Database, Bot, Save, HardDrive, AlertCircle, Globe, MessageCircle } from 'lucide-react';
 import { useData } from '../context/DataContext';
 import { useTheme } from '../context/ThemeContext';
 import { useRepositories } from '../context/RepositoryContext';
@@ -7,22 +7,23 @@ import { DataSize } from '../data/jsonDataSource';
 import { User as UserType } from '../data/types';
 import config from '../config';
 import ApiSettings from '../components/settings/ApiSettings';
+import ConversationsApiSettings from '../components/settings/ConversationsApiSettings';
 
 const SettingsView: React.FC = () => {
   const { getCurrentUser } = useData();
   const [currentUser, setCurrentUser] = useState<UserType | null>(null);
   const { theme } = useTheme();
   const { initialize } = useRepositories();
-  const [dataSize, setDataSize] = useState<DataSize>('medium');
+  const [dataSize, setDataSize] = useState<DataSize | 'dynamic'>('medium');
   const [isLoading, setIsLoading] = useState<boolean>(false);
-  
+
   // Load saved data settings
   useEffect(() => {
     const savedSetting = localStorage.getItem('dataSize');
     if (savedSetting) {
       setDataSize(savedSetting as DataSize);
     }
-    
+
     const fetchUser = async () => {
       try {
         const user = await getCurrentUser();
@@ -31,23 +32,23 @@ const SettingsView: React.FC = () => {
         console.error('Error fetching current user:', error);
       }
     };
-    
+
     fetchUser();
   }, [getCurrentUser]);
-  
+
   // Handle data source change
-  const handleDataSizeChange = async (size: DataSize) => {
+  const handleDataSizeChange = async (size: DataSize | 'dynamic') => {
     try {
       setIsLoading(true);
       // Save setting to localStorage
       localStorage.setItem('dataSize', size);
-      
+
       // Reinitialize repositories with new data size
       await initialize(undefined, size);
-      
+
       setDataSize(size);
       setIsLoading(false);
-      
+
       // Force page reload to refresh all data
       window.location.reload();
     } catch (error) {
@@ -153,7 +154,7 @@ const SettingsView: React.FC = () => {
                         : 'bg-white border-gray-300 text-gray-900'
                     }`}
                     defaultValue="admin@example.com"
-                    onChange={(e) => {/* Handle email change */}}
+                    onChange={() => {/* Handle email change */}}
                   />
                 </div>
 
@@ -274,6 +275,18 @@ const SettingsView: React.FC = () => {
                   </h3>
 
                   <ApiSettings />
+                </div>
+
+                {/* Conversations API Settings Section */}
+                <div className={`p-4 rounded-md ${
+                  theme === 'dark' ? 'bg-gray-600' : 'bg-gray-50'
+                }`}>
+                  <h3 className={`font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'} mb-4 flex items-center`}>
+                    <MessageCircle size={16} className="text-blue-500 mr-2" />
+                    Conversations API Connection
+                  </h3>
+
+                  <ConversationsApiSettings />
                 </div>
 
                 {/* Local Dataset Settings */}

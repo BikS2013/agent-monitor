@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { MessageCircle } from 'lucide-react';
 import ConversationsList from '../components/ConversationsList';
 import ConversationDetail from '../components/ConversationDetail';
-import { useData } from '../context/DataContext';
+import { useConversationsData } from '../context/ConversationsDataContext';
 import { Conversation, Message } from '../data/types';
 
 interface ConversationsViewProps {
@@ -14,7 +14,7 @@ const ConversationsView: React.FC<ConversationsViewProps> = ({
   selectedConversation: propSelectedConversation,
   setSelectedConversation: propSetSelectedConversation
 }) => {
-  const { conversations, getMessagesByConversationId, loading } = useData();
+  const { conversations, getMessagesByConversationId, loading } = useConversationsData();
   const [conversationMessages, setConversationMessages] = useState<Message[]>([]);
   const [loadingMessages, setLoadingMessages] = useState<boolean>(false);
   const [messageError, setMessageError] = useState<string | null>(null);

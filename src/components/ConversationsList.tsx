@@ -2,7 +2,7 @@ import React, { useState, memo, useMemo } from 'react';
 import { Filter, Search, Users, Bot, Brain, CheckCircle, XCircle } from 'lucide-react';
 import { Conversation, AIAgent } from '../data/types';
 import { useTheme } from '../context/ThemeContext';
-import { useData } from '../context/DataContext';
+import { useConversationsData } from '../context/ConversationsDataContext';
 import { formatThreadId } from '../utils/formatters';
 
 interface ConversationsListProps {
@@ -18,7 +18,7 @@ const ConversationsList = memo<ConversationsListProps>(({
   setSelectedConversation
 }) => {
   const { theme } = useTheme();
-  const { aiAgents } = useData();
+  const { aiAgents = {} } = useConversationsData();
   const [isFiltersOpen, setIsFiltersOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
 

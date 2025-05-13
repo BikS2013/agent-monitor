@@ -11,6 +11,8 @@ import SettingsView from './views/SettingsView';
 import { Conversation, Collection, Group } from './data/types';
 import { useTheme } from './context/ThemeContext';
 import { useRepositories } from './context/RepositoryContext';
+import { ConversationsRepositoryProvider } from './context/ConversationsRepositoryContext';
+import { ConversationsDataProvider } from './context/ConversationsDataContext';
 
 const App: React.FC = () => {
   const [currentView, setCurrentView] = useState('dashboard');
@@ -113,10 +115,12 @@ const App: React.FC = () => {
         );
       case 'conversations':
         return (
-          <ConversationsView
-            selectedConversation={selectedConversation}
-            setSelectedConversation={setSelectedConversation}
-          />
+          <ConversationsDataProvider>
+            <ConversationsView
+              selectedConversation={selectedConversation}
+              setSelectedConversation={setSelectedConversation}
+            />
+          </ConversationsDataProvider>
         );
       case 'collections':
         return (

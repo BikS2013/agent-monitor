@@ -16,3 +16,13 @@ services:
       # - ENV_CUSTOM_DATASET_PATH=/path/to/custom/dataset.json
       - ENV_ALLOW_UI_DATASET_CHANGE=true
       - ENV_PREFER_LOCAL_STORAGE=true
+
+      # Standard API configuration
+      # - ENV_API_ENABLED=true
+      # - ENV_API_BASE_URL=http://localhost:8000
+      # - ENV_API_AUTH_METHOD=none
+
+      # Conversations API configuration
+      # - ENV_CONVERSATIONS_API_ENABLED=true
+      # - ENV_CONVERSATIONS_API_BASE_URL=http://localhost:8001
+      # - ENV_CONVERSATIONS_API_AUTH_METHOD=none

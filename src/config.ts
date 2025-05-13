@@ -49,6 +49,47 @@ export interface ApiConfig {
 }
 
 /**
+ * Dedicated Conversations API configuration
+ */
+export interface ConversationsApiConfig {
+  /**
+   * Whether to use a dedicated API for the Conversations page
+   * Default: false
+   */
+  enabled: boolean;
+
+  /**
+   * Base URL of the dedicated Conversations API
+   * Default: 'http://localhost:8001'
+   */
+  baseUrl: string;
+
+  /**
+   * Authentication method to use
+   * - 'none': No authentication
+   * - 'token': JWT token authentication
+   * - 'api-key': API key authentication
+   * Default: 'none'
+   */
+  authMethod: 'none' | 'token' | 'api-key';
+
+  /**
+   * JWT token for authentication (when authMethod is 'token')
+   */
+  token?: string;
+
+  /**
+   * Client secret for API key authentication (when authMethod is 'api-key')
+   */
+  clientSecret?: string;
+
+  /**
+   * Client ID for API key authentication (when authMethod is 'api-key')
+   */
+  clientId?: string;
+}
+
+/**
  * Data source configuration
  */
 export interface DataSourceConfig {
@@ -89,6 +130,11 @@ export interface Config {
   api: ApiConfig;
 
   /**
+   * Dedicated Conversations API configuration
+   */
+  conversationsApi: ConversationsApiConfig;
+
+  /**
    * Whether to prefer localStorage settings over config settings
    * If true, the application will use localStorage settings (if available) instead of
    * the config settings defined here. If false, config settings always override localStorage.
@@ -110,6 +156,11 @@ const defaultConfig: Config = {
     baseUrl: 'http://localhost:8000',
     authMethod: 'none',
   },
+  conversationsApi: {
+    enabled: false,
+    baseUrl: 'http://localhost:8001',
+    authMethod: 'none',
+  },
   preferLocalStorage: true,
 };
 
@@ -125,6 +176,11 @@ function loadEnvConfig(): Partial<Config> {
     api: {
       enabled: false,
       baseUrl: 'http://localhost:8000',
+      authMethod: 'none',
+    },
+    conversationsApi: {
+      enabled: false,
+      baseUrl: 'http://localhost:8001',
       authMethod: 'none',
     },
     preferLocalStorage: true,
@@ -175,6 +231,31 @@ function loadEnvConfig(): Partial<Config> {
     envConfig.api!.clientId = window.ENV_API_CLIENT_ID;
   }
 
+  // Parse Conversations API configuration
+  if (window.ENV_CONVERSATIONS_API_ENABLED !== undefined) {
+    envConfig.conversationsApi!.enabled = window.ENV_CONVERSATIONS_API_ENABLED === 'true';
+  }
+
+  if (window.ENV_CONVERSATIONS_API_BASE_URL) {
+    envConfig.conversationsApi!.baseUrl = window.ENV_CONVERSATIONS_API_BASE_URL;
+  }
+
+  if (window.ENV_CONVERSATIONS_API_AUTH_METHOD) {
+    envConfig.conversationsApi!.authMethod = window.ENV_CONVERSATIONS_API_AUTH_METHOD as 'none' | 'token' | 'api-key';
+  }
+
+  if (window.ENV_CONVERSATIONS_API_TOKEN) {
+    envConfig.conversationsApi!.token = window.ENV_CONVERSATIONS_API_TOKEN;
+  }
+
+  if (window.ENV_CONVERSATIONS_API_CLIENT_SECRET) {
+    envConfig.conversationsApi!.clientSecret = window.ENV_CONVERSATIONS_API_CLIENT_SECRET;
+  }
+
+  if (window.ENV_CONVERSATIONS_API_CLIENT_ID) {
+    envConfig.conversationsApi!.clientId = window.ENV_CONVERSATIONS_API_CLIENT_ID;
+  }
+
   return envConfig;
 }
 
@@ -193,6 +274,10 @@ const config: Config = {
     ...defaultConfig.api,
     ...envConfig.api,
   },
+  conversationsApi: {
+    ...defaultConfig.conversationsApi,
+    ...envConfig.conversationsApi,
+  },
 };
 
 export default config;
@@ -210,5 +295,11 @@ declare global {
     ENV_API_TOKEN?: string;
     ENV_API_CLIENT_SECRET?: string;
     ENV_API_CLIENT_ID?: string;
+    ENV_CONVERSATIONS_API_ENABLED?: string;
+    ENV_CONVERSATIONS_API_BASE_URL?: string;
+    ENV_CONVERSATIONS_API_AUTH_METHOD?: string;
+    ENV_CONVERSATIONS_API_TOKEN?: string;
+    ENV_CONVERSATIONS_API_CLIENT_SECRET?: string;
+    ENV_CONVERSATIONS_API_CLIENT_ID?: string;
   }
 }
