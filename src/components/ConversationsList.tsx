@@ -113,7 +113,7 @@ const ConversationsList = memo<ConversationsListProps>(({
                   <option value="all">All</option>
                   <option value="successful">Successful</option>
                   <option value="unsuccessful">Unsuccessful</option>
-                  <option value="pending">Pending</option>
+                  <option value="uncertain">Uncertain</option>
                 </select>
               </div>
               <div>

@@ -7,28 +7,28 @@ import { Message } from '../../types';
 export interface IMessageRepository extends IRepository<Message> {
   /**
    * Get messages by conversation ID
-   * @param conversationId Conversation ID
+   * @param thread_id Thread ID of the conversation
    * @param includeSender Whether to include sender details
    */
-  getByConversationId(conversationId: string, includeSender?: boolean): Promise<Message[]>;
+  getByConversationId(thread_id: string, includeSender?: boolean): Promise<Message[]>;
   
   /**
    * Get the first message in a conversation
-   * @param conversationId Conversation ID
+   * @param thread_id Thread ID of the conversation
    */
-  getFirstMessageInConversation(conversationId: string): Promise<Message | null>;
+  getFirstMessageInConversation(thread_id: string): Promise<Message | null>;
   
   /**
    * Get the last message in a conversation
-   * @param conversationId Conversation ID
+   * @param thread_id Thread ID of the conversation
    */
-  getLastMessageInConversation(conversationId: string): Promise<Message | null>;
+  getLastMessageInConversation(thread_id: string): Promise<Message | null>;
   
   /**
    * Count messages in a conversation
-   * @param conversationId Conversation ID
+   * @param thread_id Thread ID of the conversation
    */
-  countByConversationId(conversationId: string): Promise<number>;
+  countByConversationId(thread_id: string): Promise<number>;
   
   /**
    * Find messages by content search

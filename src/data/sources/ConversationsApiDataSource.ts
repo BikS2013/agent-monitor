@@ -605,12 +605,9 @@ export class ConversationsApiDataSource implements IDataSource {
   private transformApiMessage(apiMessage: any): Message {
     return {
       id: apiMessage.id || apiMessage.message_id || `msg_${Date.now()}`,
-      conversationId: apiMessage.conversation_id || apiMessage.conversationId || apiMessage.thread_id,
       content: apiMessage.content || apiMessage.text || '',
-      timestamp: apiMessage.timestamp || apiMessage.created_at || new Date().toISOString(),
       sender: apiMessage.sender || (apiMessage.role === 'assistant' ? 'ai' : 'user'),
-      senderName: apiMessage.sender_name || apiMessage.senderName || (apiMessage.role === 'assistant' ? 'AI Assistant' : 'User'),
-      metadata: apiMessage.metadata || {}
+      senderName: apiMessage.sender_name || apiMessage.senderName || (apiMessage.role === 'assistant' ? 'AI Assistant' : 'User')
     };
   }
 
@@ -619,7 +616,7 @@ export class ConversationsApiDataSource implements IDataSource {
    */
   private transformApiConversation(apiConversation: any): Conversation {
     return {
-      thread_id: apiConversation.thread_id || apiConversation.id || apiConversation.conversation_id || `conv_${Date.now()}`,
+      thread_id: apiConversation.thread_id || `thread_${Date.now()}`,
       userId: apiConversation.userId || apiConversation.user_id || '',
       userName: apiConversation.userName || apiConversation.user_name || 'Unknown User',
       aiAgentId: apiConversation.aiAgentId || apiConversation.ai_agent_id || '',

@@ -299,7 +299,7 @@ export class ApiClient {
   // #region Conversation Methods
   
   /**
-   * Get all conversations or specific conversations by ID
+   * Get all conversations or specific conversations by thread_id
    */
   async getConversations(options: {
     ids?: string[],
@@ -312,7 +312,7 @@ export class ApiClient {
   } = {}): Promise<any> {
     const params: any = {
       skip: options.skip || 0,
-      sort_by: options.sort_by || 'createdAt',
+      sort_by: options.sort_by || 'created_at',
       sort_order: options.sort_order || 'desc',
       include_pagination: options.include_pagination || false,
       include_messages: options.include_messages || false
@@ -326,22 +326,22 @@ export class ApiClient {
       params.limit = options.limit;
     }
     
-    return this.get('/conversation', params);
+    return this.get('/conversations/', params);
   }
   
   /**
-   * Get a specific conversation by ID
+   * Get a specific conversation by thread_id
    */
-  async getConversation(conversationId: string, includeMessages: boolean = false): Promise<any> {
-    console.log(`ApiClient: Getting conversation ${conversationId} with includeMessages=${includeMessages}`);
-    const result = await this.get(`/conversation/${conversationId}`, {
+  async getConversation(thread_id: string, includeMessages: boolean = false): Promise<any> {
+    console.log(`ApiClient: Getting conversation with thread_id ${thread_id} with includeMessages=${includeMessages}`);
+    const result = await this.get(`/conversations/${thread_id}`, {
       include_messages: includeMessages,
       expand: 'messages'  // Some API formats use expand instead
     });
 
     // Log if messages were included in the response
     const hasMessages = !!(result?.decodedMessages || result?.decoded_messages || result?.messages);
-    console.log(`ApiClient: Received conversation ${conversationId}`, {
+    console.log(`ApiClient: Received conversation with thread_id ${thread_id}`, {
       hasMessages,
       messageCount: (result?.decodedMessages || result?.decoded_messages || result?.messages || []).length
     });
@@ -353,28 +353,28 @@ export class ApiClient {
    * Create a new conversation
    */
   async createConversation(conversationData: any): Promise<any> {
-    return this.post('/conversation', conversationData);
+    return this.post('/conversations/', conversationData);
   }
   
   /**
    * Update an existing conversation
    */
-  async updateConversation(conversationId: string, conversationData: any): Promise<any> {
-    return this.put(`/conversation/${conversationId}`, conversationData);
+  async updateConversation(thread_id: string, conversationData: any): Promise<any> {
+    return this.put(`/conversations/${thread_id}`, conversationData);
   }
   
   /**
    * Delete a conversation
    */
-  async deleteConversation(conversationId: string): Promise<boolean> {
-    return this.delete(`/conversation/${conversationId}`);
+  async deleteConversation(thread_id: string): Promise<boolean> {
+    return this.delete(`/conversations/${thread_id}`);
   }
   
   /**
    * Filter conversations based on complex criteria
    */
   async filterConversations(filterCriteria: any): Promise<string[]> {
-    return this.post('/conversation/filter', filterCriteria);
+    return this.post('/conversations/filter', filterCriteria);
   }
   
   /**
@@ -392,7 +392,7 @@ export class ApiClient {
   ): Promise<any> {
     const params: any = {
       skip: options.skip || 0,
-      sort_by: options.sort_by || 'createdAt',
+      sort_by: options.sort_by || 'created_at',
       sort_order: options.sort_order || 'desc',
       include_pagination: options.include_pagination || false
     };
@@ -401,7 +401,7 @@ export class ApiClient {
       params.limit = options.limit;
     }
     
-    return this.get(`/collection/${collectionId}/conversation`, params);
+    return this.get(`/collection/${collectionId}/conversations`, params);
   }
   
   /**
@@ -418,8 +418,9 @@ export class ApiClient {
     } = {}
   ): Promise<any> {
     const params: any = {
+      ai_agent_id: aiAgentId,
       skip: options.skip || 0,
-      sort_by: options.sort_by || 'createdAt',
+      sort_by: options.sort_by || 'created_at',
       sort_order: options.sort_order || 'desc',
       include_pagination: options.include_pagination || false
     };
@@ -428,7 +429,7 @@ export class ApiClient {
       params.limit = options.limit;
     }
     
-    return this.get(`/aiagent/${aiAgentId}/conversation`, params);
+    return this.get(`/conversations/`, params);
   }
   
   /**
@@ -445,8 +446,9 @@ export class ApiClient {
     } = {}
   ): Promise<any> {
     const params: any = {
+      user_id: userId,
       skip: options.skip || 0,
-      sort_by: options.sort_by || 'createdAt',
+      sort_by: options.sort_by || 'created_at',
       sort_order: options.sort_order || 'desc',
       include_pagination: options.include_pagination || false
     };
@@ -455,7 +457,7 @@ export class ApiClient {
       params.limit = options.limit;
     }
     
-    return this.get(`/user/${userId}/conversation`, params);
+    return this.get(`/conversations/`, params);
   }
   
   // #endregion

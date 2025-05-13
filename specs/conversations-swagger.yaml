@@ -147,21 +147,21 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
-  /conversations/{conversation_id}:
+  /conversations/{thread_id}:
     get:
       tags:
       - conversations
       summary: Get Conversation
       description: Get a specific conversation by ID
-      operationId: get_conversation_conversations__conversation_id__get
+      operationId: get_conversation_conversations__thread_id__get
       parameters:
-      - name: conversation_id
+      - name: thread_id
         in: path
         required: true
         schema:
           type: string
           description: The ID of the conversation to get
-          title: Conversation Id
+          title: Thread Id
         description: The ID of the conversation to get
       responses:
         '200':
@@ -181,15 +181,15 @@ paths:
       - conversations
       summary: Update Conversation
       description: Update a conversation
-      operationId: update_conversation_conversations__conversation_id__put
+      operationId: update_conversation_conversations__thread_id__put
       parameters:
-      - name: conversation_id
+      - name: thread_id
         in: path
         required: true
         schema:
           type: string
           description: The ID of the conversation to update
-          title: Conversation Id
+          title: Thread Id
         description: The ID of the conversation to update
       requestBody:
         required: true
@@ -215,15 +215,15 @@ paths:
       - conversations
       summary: Delete Conversation
       description: Delete a conversation
-      operationId: delete_conversation_conversations__conversation_id__delete
+      operationId: delete_conversation_conversations__thread_id__delete
       parameters:
-      - name: conversation_id
+      - name: thread_id
         in: path
         required: true
         schema:
           type: string
           description: The ID of the conversation to delete
-          title: Conversation Id
+          title: Thread Id
         description: The ID of the conversation to delete
       responses:
         '204':
@@ -234,21 +234,21 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
-  /conversations/{conversation_id}/messages:
+  /conversations/{thread_id}/messages:
     get:
       tags:
       - conversations
       summary: Get Messages
       description: Get all messages for a conversation
-      operationId: get_messages_conversations__conversation_id__messages_get
+      operationId: get_messages_conversations__thread_id__messages_get
       parameters:
-      - name: conversation_id
+      - name: thread_id
         in: path
         required: true
         schema:
           type: string
           description: The ID of the conversation
-          title: Conversation Id
+          title: Thread Id
         description: The ID of the conversation
       responses:
         '200':
@@ -259,8 +259,7 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/Message'
-                title: Response Get Messages Conversations  Conversation Id  Messages
-                  Get
+                title: Response Get Messages Conversations  Thread Id  Messages Get
         '422':
           description: Validation Error
           content:
@@ -272,15 +271,15 @@ paths:
       - conversations
       summary: Add Message
       description: Add a message to a conversation
-      operationId: add_message_conversations__conversation_id__messages_post
+      operationId: add_message_conversations__thread_id__messages_post
       parameters:
-      - name: conversation_id
+      - name: thread_id
         in: path
         required: true
         schema:
           type: string
           description: The ID of the conversation
-          title: Conversation Id
+          title: Thread Id
         description: The ID of the conversation
       requestBody:
         required: true
@@ -301,21 +300,21 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
-  /conversations/{conversation_id}/messages/{message_id}:
+  /conversations/{thread_id}/messages/{message_id}:
     get:
       tags:
       - conversations
       summary: Get Message
       description: Get a specific message from a conversation
-      operationId: get_message_conversations__conversation_id__messages__message_id__get
+      operationId: get_message_conversations__thread_id__messages__message_id__get
       parameters:
-      - name: conversation_id
+      - name: thread_id
         in: path
         required: true
         schema:
           type: string
           description: The ID of the conversation
-          title: Conversation Id
+          title: Thread Id
         description: The ID of the conversation
       - name: message_id
         in: path
@@ -343,15 +342,15 @@ paths:
       - conversations
       summary: Update Message
       description: Update a message in a conversation
-      operationId: update_message_conversations__conversation_id__messages__message_id__put
+      operationId: update_message_conversations__thread_id__messages__message_id__put
       parameters:
-      - name: conversation_id
+      - name: thread_id
         in: path
         required: true
         schema:
           type: string
           description: The ID of the conversation
-          title: Conversation Id
+          title: Thread Id
         description: The ID of the conversation
       - name: message_id
         in: path
@@ -385,15 +384,15 @@ paths:
       - conversations
       summary: Delete Message
       description: Delete a message from a conversation
-      operationId: delete_message_conversations__conversation_id__messages__message_id__delete
+      operationId: delete_message_conversations__thread_id__messages__message_id__delete
       parameters:
-      - name: conversation_id
+      - name: thread_id
         in: path
         required: true
         schema:
           type: string
           description: The ID of the conversation
-          title: Conversation Id
+          title: Thread Id
         description: The ID of the conversation
       - name: message_id
         in: path
@@ -416,6 +415,39 @@ paths:
     get:
       summary: Root
       operationId: root__get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+  /system/health:
+    get:
+      summary: Health Check
+      description: 'Health check endpoint that validates API and database availability.
+
+        Returns 200 OK when the API is operational.'
+      operationId: health_check_system_health_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+  /system/initialize:
+    post:
+      summary: Initialize System
+      description: 'Initialize the system by setting up required resources such as:
+
+        - Creating data directories for JSON storage
+
+        - Generating sample data if needed
+
+        - Verifying database connections and schema for PostgreSQL
+
+
+        Returns details about the initialization process.'
+      operationId: initialize_system_system_initialize_post
       responses:
         '200':
           description: Successful Response

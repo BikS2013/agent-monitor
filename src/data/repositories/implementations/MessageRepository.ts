@@ -83,8 +83,8 @@ export class MessageRepository extends BaseRepository<Message> implements IMessa
   /**
    * Get messages by conversation ID
    */
-  async getByConversationId(conversationId: string, includeSender?: boolean): Promise<Message[]> {
-    const messages = await this.dataSource.getMessagesByConversationId(conversationId);
+  async getByConversationId(thread_id: string, includeSender?: boolean): Promise<Message[]> {
+    const messages = await this.dataSource.getMessagesByConversationId(thread_id);
     
     if (!includeSender) {
       return messages;
@@ -98,8 +98,8 @@ export class MessageRepository extends BaseRepository<Message> implements IMessa
   /**
    * Get the first message in a conversation
    */
-  async getFirstMessageInConversation(conversationId: string): Promise<Message | null> {
-    const messages = await this.dataSource.getMessagesByConversationId(conversationId);
+  async getFirstMessageInConversation(thread_id: string): Promise<Message | null> {
+    const messages = await this.dataSource.getMessagesByConversationId(thread_id);
     
     if (messages.length === 0) {
       return null;
@@ -112,8 +112,8 @@ export class MessageRepository extends BaseRepository<Message> implements IMessa
   /**
    * Get the last message in a conversation
    */
-  async getLastMessageInConversation(conversationId: string): Promise<Message | null> {
-    const messages = await this.dataSource.getMessagesByConversationId(conversationId);
+  async getLastMessageInConversation(thread_id: string): Promise<Message | null> {
+    const messages = await this.dataSource.getMessagesByConversationId(thread_id);
     
     if (messages.length === 0) {
       return null;
@@ -126,8 +126,8 @@ export class MessageRepository extends BaseRepository<Message> implements IMessa
   /**
    * Count messages in a conversation
    */
-  async countByConversationId(conversationId: string): Promise<number> {
-    const messages = await this.dataSource.getMessagesByConversationId(conversationId);
+  async countByConversationId(thread_id: string): Promise<number> {
+    const messages = await this.dataSource.getMessagesByConversationId(thread_id);
     return messages.length;
   }
   

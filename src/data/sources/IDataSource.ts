@@ -22,7 +22,7 @@ export interface IDataSource {
   // Messages
   getMessageById(id: string): Promise<Message | null>;
   getMessages(ids?: string[]): Promise<Record<string, Message>>;
-  getMessagesByConversationId(conversationId: string): Promise<Message[]>;
+  getMessagesByConversationId(thread_id: string): Promise<Message[]>;
   createMessage(data: Omit<Message, 'id'>): Promise<Message>;
   updateMessage(id: string, data: Partial<Message>): Promise<Message | null>;
   deleteMessage(id: string): Promise<boolean>;

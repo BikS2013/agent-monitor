@@ -24,7 +24,7 @@ interface ConversationsDataContextType {
   };
 
   // Data access methods
-  getMessagesByConversationId: (conversationId: string) => Promise<Message[]>;
+  getMessagesByConversationId: (thread_id: string) => Promise<Message[]>;
   
   // Refresh methods
   refreshData: () => Promise<void>;
@@ -92,6 +92,12 @@ export const ConversationsDataProvider: React.FC<{ children: ReactNode }> = ({ c
           conversation.conclusion = 'uncertain';
         }
 
+        // Always ensure thread_id is available
+        if (!conversation.thread_id) {
+          console.warn('ConversationsDataContext: Conversation missing thread_id, generating one');
+          conversation.thread_id = `thread_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+        }
+
         record[conversation.thread_id] = conversation;
         return record;
       }, {} as Record<string, Conversation>);
@@ -119,16 +125,16 @@ export const ConversationsDataProvider: React.FC<{ children: ReactNode }> = ({ c
    * Get messages for a conversation (lazy loading) with improved stability
    * Enhanced request cancellation, caching, and loading state management
    */
-  const getMessagesByConversationId = async (conversationId: string): Promise<Message[]> => {
+  const getMessagesByConversationId = async (thread_id: string): Promise<Message[]> => {
     if (!initialized || !messageRepository || !conversationRepository) {
-      console.warn(`ConversationsDataContext: Repositories not initialized, cannot load messages for ${conversationId}`);
+      console.warn(`ConversationsDataContext: Repositories not initialized, cannot load messages for ${thread_id}`);
       return [];
     }
 
     // Get the conversation object first
-    const conversation = conversations[conversationId];
+    const conversation = conversations[thread_id];
     if (!conversation) {
-      console.warn(`ConversationsDataContext: Conversation ${conversationId} not found in local state`);
+      console.warn(`ConversationsDataContext: Conversation with thread_id ${thread_id} not found in local state`);
       return [];
     }
 
@@ -144,16 +150,21 @@ export const ConversationsDataProvider: React.FC<{ children: ReactNode }> = ({ c
       cachedMessages.length > 0;
 
     if (hasAllCachedMessages) {
-      console.log(`ConversationsDataContext: Using ${cachedMessages.length} cached messages for conversation ${conversationId}`);
+      console.log(`ConversationsDataContext: Using ${cachedMessages.length} cached messages for conversation ${thread_id}`);
       return cachedMessages;
     }
 
+    // Create a request tracker for this specific thread ID if it doesn't exist
+    if (!(window as any)._conversationsMessageRequests) {
+      (window as any)._conversationsMessageRequests = {};
+    }
+    
     // Implement strict throttling for message loading (max once per second per conversation)
     // Return cached messages (even if incomplete) during throttling period
     if (lastConversationMessageLoad &&
-        lastConversationMessageLoad.id === conversationId &&
+        lastConversationMessageLoad.id === thread_id &&
         Date.now() - lastConversationMessageLoad.timestamp < 1000) {
-      console.log(`ConversationsDataContext: Throttling message load for ${conversationId}, last load was ${Date.now() - lastConversationMessageLoad.timestamp}ms ago`);
+      console.log(`ConversationsDataContext: Throttling message load for thread_id ${thread_id}, last load was ${Date.now() - lastConversationMessageLoad.timestamp}ms ago`);
 
       // If we have any cached messages, return them during throttling
       if (cachedMessages.length > 0) {
@@ -164,19 +175,19 @@ export const ConversationsDataProvider: React.FC<{ children: ReactNode }> = ({ c
     // Generate a unique ID for this request to track cancellations
     const requestId = Date.now();
 
-    // Use a ref to track the latest request (instead of window global)
-    const currentLatestRequestId = (window as any)._latestConversationsMessageRequest || 0;
+    // Use thread-specific request tracking to avoid race conditions between different conversations
+    const currentLatestRequestId = (window as any)._conversationsMessageRequests[thread_id] || 0;
     if (requestId <= currentLatestRequestId) {
-      console.log(`ConversationsDataContext: Request ${requestId} is not newer than current latest ${currentLatestRequestId}, using cached data`);
+      console.log(`ConversationsDataContext: Request ${requestId} for thread ${thread_id} is not newer than current latest ${currentLatestRequestId}, using cached data`);
       return cachedMessages.length > 0 ? cachedMessages : [];
     }
 
-    // Set this as the latest request
-    (window as any)._latestConversationsMessageRequest = requestId;
+    // Set this as the latest request for this specific thread ID
+    (window as any)._conversationsMessageRequests[thread_id] = requestId;
 
     // Update the last load timestamp atomically
     setLastConversationMessageLoad({
-      id: conversationId,
+      id: thread_id,
       timestamp: Date.now()
     });
 
@@ -184,26 +195,26 @@ export const ConversationsDataProvider: React.FC<{ children: ReactNode }> = ({ c
     let wasRequestCanceled = false;
 
     try {
-      console.log(`ConversationsDataContext: Loading messages for conversation ${conversationId} (request ${requestId})`);
+      console.log(`ConversationsDataContext: Loading messages for conversation thread_id ${thread_id} (request ${requestId})`);
 
       // Set loading state
       setLoading(prev => ({ ...prev, messages: true }));
 
       // Return any partial cached results if this request is canceled before repository call
-      if ((window as any)._latestConversationsMessageRequest !== requestId) {
+      if ((window as any)._conversationsMessageRequests[thread_id] !== requestId) {
         wasRequestCanceled = true;
-        console.log(`ConversationsDataContext: Request ${requestId} was superseded before repository call`);
+        console.log(`ConversationsDataContext: Request ${requestId} for thread ${thread_id} was superseded before repository call`);
         return cachedMessages.length > 0 ? cachedMessages : [];
       }
 
       // Get new messages from the repository
-      console.log(`ConversationsDataContext: Fetching messages for conversation ${conversationId} from repository`);
-      const messagesResult = await conversationRepository.getMessages(conversationId);
+      console.log(`ConversationsDataContext: Fetching messages for conversation thread_id ${thread_id} from repository`);
+      const messagesResult = await conversationRepository.getMessages(thread_id);
 
       // Verify if this request is still the latest after repository call
-      if ((window as any)._latestConversationsMessageRequest !== requestId) {
+      if ((window as any)._conversationsMessageRequests[thread_id] !== requestId) {
         wasRequestCanceled = true;
-        console.log(`ConversationsDataContext: Request ${requestId} was superseded during repository call`);
+        console.log(`ConversationsDataContext: Request ${requestId} for thread ${thread_id} was superseded during repository call`);
         return cachedMessages.length > 0 ? cachedMessages : messagesResult.data;
       }
 
@@ -219,16 +230,16 @@ export const ConversationsDataProvider: React.FC<{ children: ReactNode }> = ({ c
       });
 
       // Clean up loading state if this is still the latest request
-      if ((window as any)._latestConversationsMessageRequest === requestId) {
+      if ((window as any)._conversationsMessageRequests[thread_id] === requestId) {
         setLoading(prev => ({ ...prev, messages: false }));
       }
 
       return messagesResult.data;
     } catch (error) {
-      console.error(`Failed to get messages for conversation ${conversationId} (request ${requestId}):`, error);
+      console.error(`Failed to get messages for conversation thread_id ${thread_id} (request ${requestId}):`, error);
 
       // Only update loading state if this was the latest request
-      if ((window as any)._latestConversationsMessageRequest === requestId) {
+      if ((window as any)._conversationsMessageRequests[thread_id] === requestId) {
         setLoading(prev => ({ ...prev, messages: false }));
       }
 
@@ -237,7 +248,7 @@ export const ConversationsDataProvider: React.FC<{ children: ReactNode }> = ({ c
     } finally {
       // Always check if we need to update the loading state
       if (wasRequestCanceled) {
-        console.log(`ConversationsDataContext: Cleaning up canceled request ${requestId}`);
+        console.log(`ConversationsDataContext: Cleaning up canceled request ${requestId} for thread ${thread_id}`);
       }
     }
   };

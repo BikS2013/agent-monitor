@@ -47,16 +47,16 @@ export const calculateDuration = (conversation: Conversation): string => {
  * Format a thread ID to show first 4 and last 4 characters with ellipsis in between
  * Example: "1234567890abcdef" becomes "1234...cdef"
  * 
- * @param threadId The thread ID to format
+ * @param thread_id The thread ID to format
  * @returns Formatted thread ID
  */
-export const formatThreadId = (threadId: string): string => {
-  if (!threadId || threadId.length <= 8) {
-    return threadId;
+export const formatThreadId = (thread_id: string): string => {
+  if (!thread_id || thread_id.length <= 8) {
+    return thread_id;
   }
   
-  const first4 = threadId.substring(0, 4);
-  const last4 = threadId.substring(threadId.length - 4);
+  const first4 = thread_id.substring(0, 4);
+  const last4 = thread_id.substring(thread_id.length - 4);
   
   return `${first4}...${last4}`;
 };
