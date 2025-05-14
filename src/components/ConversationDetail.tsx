@@ -1,8 +1,10 @@
 import React, { memo } from 'react';
-import { Bot } from 'lucide-react';
+import { Bot, Cloud, Database } from 'lucide-react';
 import { Conversation, Message } from '../data/types';
 import { useTheme } from '../context/ThemeContext';
 import { formatThreadId } from '../utils/formatters';
+import { createMarkdownHtml } from '../utils/markdownUtils';
+import { useConversationsRepositories } from '../context/ConversationsRepositoryContext';
 
 interface ConversationDetailProps {
   conversation: Conversation;
@@ -19,6 +21,7 @@ const ConversationDetail = memo<ConversationDetailProps>(({
   error = null
 }) => {
   const { theme } = useTheme();
+  const { isUsingApi } = useConversationsRepositories();
   return (
     <div className="flex-1 flex flex-col h-full">
       {/* A3 area - Fixed header */}
@@ -31,14 +34,32 @@ const ConversationDetail = memo<ConversationDetailProps>(({
             <p className="text-sm opacity-90">{conversation.userName} with {conversation.aiAgentName}</p>
           </div>
           <div className="flex items-center space-x-4">
+            {/* Data Source Indicator */}
+            <span className={`px-3 py-1 rounded text-sm flex items-center ${isUsingApi ? 'bg-blue-600' : 'bg-green-600'}`}>
+              {isUsingApi ? (
+                <>
+                  <Cloud size={14} className="mr-1" />
+                  <span>API Data Source</span>
+                </>
+              ) : (
+                <>
+                  <Database size={14} className="mr-1" />
+                  <span>JSON Data Source</span>
+                </>
+              )}
+            </span>
+
+            {/* Conclusion Status */}
             <span className={`px-3 py-1 rounded text-sm ${
               conversation.conclusion === 'successful' ? 'bg-green-600' :
               conversation.conclusion === 'unsuccessful' ? 'bg-red-600' : 'bg-yellow-600'
             }`}>
               {conversation.conclusion}
             </span>
+
+            {/* Confidence */}
             <span className="px-3 py-1 bg-blue-600 rounded text-sm">
-              {conversation.confidence} confidence
+              {conversation.confidence}% confidence
             </span>
           </div>
         </div>
@@ -65,14 +86,23 @@ const ConversationDetail = memo<ConversationDetailProps>(({
                 <div className={`w-8 h-8 rounded-full flex items-center justify-center text-white font-bold ${
                   message.sender === 'ai' ? 'bg-blue-600' : 'bg-gray-600'
                 }`}>
-                  {message.sender === 'ai' ? <Bot size={16} /> : message.senderName[0]}
+                  {message.sender === 'ai' ? <Bot size={16} /> : 'U'}
                 </div>
                 <div className="flex-1">
                   <div className="flex items-center space-x-2">
-                    <span className={`font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>{message.senderName}</span>
+                    <span className={`font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+                      {message.sender === 'ai' ? conversation.aiAgentName : 'User'}
+                    </span>
                   </div>
-                  <div className={`mt-1 ${theme === 'dark' ? 'bg-gray-700 border-gray-600' : 'bg-white border-gray-200'} p-4 rounded-lg shadow-sm border`}>
-                    <p className={`${theme === 'dark' ? 'text-gray-200' : 'text-gray-800'}`}>{message.content}</p>
+                  <div className={`mt-1 ${
+                    message.sender === 'ai'
+                      ? theme === 'dark' ? 'bg-gray-700 border-gray-600' : 'bg-white border-gray-200'
+                      : theme === 'dark' ? 'bg-gray-600 border-gray-500' : 'bg-gray-100 border-gray-300'
+                    } p-4 rounded-lg shadow-sm border`}>
+                    <div
+                      className={`markdown-content ${theme === 'dark' ? 'text-gray-200' : 'text-gray-800'}`}
+                      dangerouslySetInnerHTML={createMarkdownHtml(message.content)}
+                    />
                   </div>
                 </div>
               </div>

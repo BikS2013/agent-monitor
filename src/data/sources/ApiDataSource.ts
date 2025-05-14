@@ -1058,10 +1058,10 @@ export class ApiDataSource implements IDataSource {
     // Create a copy to avoid modifying the original
     const apiData: any = { ...conversation };
 
-    // Handle thread_id field - convert to id for API backward compatibility
+    // Handle thread_id field - keep thread_id but also provide id for API backward compatibility
     if (apiData.thread_id !== undefined) {
       apiData.id = apiData.thread_id;
-      delete apiData.thread_id;
+      // Keep thread_id for consistency with our data model
     }
 
     // Convert snake_case to camelCase if needed

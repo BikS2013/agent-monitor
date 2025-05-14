@@ -798,7 +798,7 @@ const NewCollectionModal: React.FC<NewCollectionModalProps> = ({ isOpen, onClose
                       }`}>
                         <div className="flex justify-between">
                           <span className={`font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
-                            {conversation.id}
+                            {conversation.thread_id}
                           </span>
                           <span className={`text-xs px-1.5 py-0.5 rounded-full ${
                             theme === 'dark' ? (

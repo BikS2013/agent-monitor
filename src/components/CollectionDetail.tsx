@@ -38,11 +38,11 @@ const CollectionDetail = memo<CollectionDetailProps>(({
           <tbody className={`${theme === 'dark' ? 'bg-gray-700 divide-y divide-gray-600' : 'bg-white divide-y divide-gray-200'}`}>
             {conversations.map((conversation) => (
               <tr
-                key={conversation.id}
+                key={conversation.thread_id}
                 className={`${theme === 'dark' ? 'hover:bg-gray-600' : 'hover:bg-gray-50'} cursor-pointer`}
                 onClick={() => onSelectConversation(conversation)}
               >
-                <td className={`px-6 py-4 whitespace-nowrap text-sm font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>{conversation.id}</td>
+                <td className={`px-6 py-4 whitespace-nowrap text-sm font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>{conversation.thread_id}</td>
                 <td className={`px-6 py-4 whitespace-nowrap text-sm ${theme === 'dark' ? 'text-gray-300' : 'text-gray-500'}`}>{conversation.userName}</td>
                 <td className={`px-6 py-4 whitespace-nowrap text-sm ${theme === 'dark' ? 'text-gray-300' : 'text-gray-500'}`}>{conversation.aiAgentName}</td>
                 <td className="px-6 py-4 whitespace-nowrap">
@@ -96,8 +96,8 @@ const CollectionDetail = memo<CollectionDetailProps>(({
   }
 
   // Check if conversations array has changed
-  const prevConvIds = prevProps.conversations.map(c => c.id).sort().join(',');
-  const nextConvIds = nextProps.conversations.map(c => c.id).sort().join(',');
+  const prevConvIds = prevProps.conversations.map(c => c.thread_id).sort().join(',');
+  const nextConvIds = nextProps.conversations.map(c => c.thread_id).sort().join(',');
   if (prevConvIds !== nextConvIds) {
     return false; // Conversation IDs changed, need to re-render
   }

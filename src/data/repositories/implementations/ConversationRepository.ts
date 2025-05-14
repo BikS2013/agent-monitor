@@ -98,7 +98,7 @@ export class ConversationRepository extends BaseRepository<Conversation> impleme
   /**
    * Create a new conversation
    */
-  async create(data: Omit<Conversation, 'thread_id' | 'id'>): Promise<Conversation> {
+  async create(data: Omit<Conversation, 'thread_id'>): Promise<Conversation> {
     return this.dataSource.createConversation(data);
   }
 
@@ -134,8 +134,8 @@ export class ConversationRepository extends BaseRepository<Conversation> impleme
   /**
    * Get messages for a conversation (lazy loading)
    */
-  async getMessages(conversationId: string, options?: QueryOptions): Promise<QueryResult<Message>> {
-    const messages = await this.dataSource.getMessagesByConversationId(conversationId);
+  async getMessages(thread_id: string, options?: QueryOptions): Promise<QueryResult<Message>> {
+    const messages = await this.dataSource.getMessagesByConversationId(thread_id);
 
     // Apply filtering if provided
     const filteredMessages = this.filterItems(messages, options?.filter);
@@ -285,9 +285,9 @@ export class ConversationRepository extends BaseRepository<Conversation> impleme
   /**
    * Get first message timestamp for a conversation
    */
-  async getFirstMessageTimestamp(conversationId: string): Promise<string | null> {
+  async getFirstMessageTimestamp(thread_id: string): Promise<string | null> {
     const firstMessage = await this.dataSource
-      .getMessagesByConversationId(conversationId)
+      .getMessagesByConversationId(thread_id)
       .then(messages => messages.length > 0 ? messages[0] : null);
 
     return firstMessage ? firstMessage.timestamp : null;
@@ -296,8 +296,8 @@ export class ConversationRepository extends BaseRepository<Conversation> impleme
   /**
    * Get last message timestamp for a conversation
    */
-  async getLastMessageTimestamp(conversationId: string): Promise<string | null> {
-    const messages = await this.dataSource.getMessagesByConversationId(conversationId);
+  async getLastMessageTimestamp(thread_id: string): Promise<string | null> {
+    const messages = await this.dataSource.getMessagesByConversationId(thread_id);
 
     if (messages.length === 0) {
       return null;

@@ -17,11 +17,16 @@ interface Group {
   description: string;                   // Group description
   purpose: 'evaluation' | 'security' | 'efficiency';  // Primary purpose of the group
   collectionIds: string[];               // IDs of collections in this group
-  adminUsers: string[];                  // IDs of users with admin rights
-  permissionLevels: Record<string, string>; // User permissions by user ID
-  analyticsData?: any;                   // Optional analytics data
+  adminIds: string[];                    // IDs of users with admin rights
+  userIds: string[];                     // IDs of users who can access this group
+  createdAt: string;                     // When group was created (ISO format)
+  updatedAt?: string;                    // When group was last updated (ISO format)
+  metadata: Record<string, any>;         // Additional metadata
+  isPrivate: boolean;                    // Whether the group is private
 }
 ```
+
+the fields collectionIds, adminIds, userIds, permissionLevels are not used to transfer data. They are used at the client side to keep track of collections, admins, and users through the various API calls. 
 
 ### Collection (Referenced Model)
 
@@ -30,9 +35,13 @@ interface Collection {
   id: string;                     // Unique identifier
   name: string;                   // Collection name
   description: string;            // Collection description
-  creationTimestamp: string;      // When collection was created (ISO format)
+  createdAt: string;              // When collection was created (ISO format)
+  updatedAt?: string;             // When collection was last updated (ISO format)
+  ownerId: string;                // ID of the user who owns the collection
   creator: string;                // ID or name of the user who created the collection
-  conversations: string[];        // Array of conversation IDs in this collection
+  conversations: string[];        // Array of conversation thread_ids in this collection
+  isPublic: boolean;              // Whether the collection is publicly accessible
+  tags: string[];                 // Tags associated with this collection
 }
 ```
 
@@ -42,10 +51,19 @@ interface Collection {
 interface User {
   id: string;                     // Unique identifier
   name: string;                   // User's name
+  username: string;               // User's username for login
+  email: string;                  // User's email
+  fullName: string;               // User's full name
   role: 'admin' | 'supervisor' | 'executive'; // User's role
   permissions: string[];          // Array of permission strings
+  createdAt: string;              // When user was created
+  lastActive: string;             // When user was last active
+  isActive: boolean;              // Whether the user is active
 }
 ```
+
+`  permissionLevels: Record<string, string>; // User permissions by user ID` 
+
 
 ## Required API Endpoints
 
@@ -67,16 +85,13 @@ interface User {
       "name": "Security Review Group",
       "description": "Group for reviewing security-related conversations",
       "purpose": "security",
-      "collectionIds": ["coll-1", "coll-2", "coll-3"],
-      "adminUsers": ["user-123"],
-      "permissionLevels": {
-        "user-123": "full",
-        "user-456": "read"
-      },
-      "analyticsData": {
+      "createdAt": "2023-01-01T12:00:00Z",
+      "updatedAt": "2023-01-15T09:30:00Z",
+      "metadata": {
         "totalCollections": 3,
         "totalConversations": 42
-      }
+      },
+      "isPrivate": true
     }
     // More groups...
   ]
@@ -96,18 +111,15 @@ interface User {
   "name": "Security Review Group",
   "description": "Group for reviewing security-related conversations",
   "purpose": "security",
-  "collectionIds": ["coll-1", "coll-2", "coll-3"],
-  "adminUsers": ["user-123"],
-  "permissionLevels": {
-    "user-123": "full",
-    "user-456": "read"
-  },
-  "analyticsData": {
+  "createdAt": "2023-01-01T12:00:00Z",
+  "updatedAt": "2023-01-15T09:30:00Z",
+  "metadata": {
     "totalCollections": 3,
     "totalConversations": 42,
     "activeUsers": 5,
     "lastActivity": "2023-01-15T14:30:00Z"
-  }
+  },
+  "isPrivate": true
 }
 ```
 
@@ -124,7 +136,9 @@ interface User {
   "description": "Group for analyzing agent efficiency",
   "purpose": "efficiency",
   "collectionIds": ["coll-4", "coll-5"],
-  "adminUsers": ["user-123"]
+  "adminIds": ["user-123"],
+  "userIds": ["user-123", "user-789"],
+  "isPrivate": true
 }
 ```
 
@@ -136,14 +150,19 @@ interface User {
   "description": "Group for analyzing agent efficiency",
   "purpose": "efficiency",
   "collectionIds": ["coll-4", "coll-5"],
-  "adminUsers": ["user-123"],
+  "adminIds": ["user-123"],
+  "userIds": ["user-123", "user-789"],
   "permissionLevels": {
-    "user-123": "full"
+    "user-123": "full",
+    "user-789": "read"
   },
-  "analyticsData": {
+  "createdAt": "2023-01-20T10:00:00Z",
+  "updatedAt": "2023-01-20T10:00:00Z",
+  "metadata": {
     "totalCollections": 2,
     "totalConversations": 18
-  }
+  },
+  "isPrivate": true
 }
 ```
 
@@ -171,14 +190,19 @@ interface User {
   "description": "Updated description",
   "purpose": "efficiency",
   "collectionIds": ["coll-4", "coll-5", "coll-6"],
-  "adminUsers": ["user-123"],
+  "adminIds": ["user-123"],
+  "userIds": ["user-123", "user-789"],
   "permissionLevels": {
-    "user-123": "full"
+    "user-123": "full",
+    "user-789": "read"
   },
-  "analyticsData": {
+  "createdAt": "2023-01-20T10:00:00Z",
+  "updatedAt": "2023-01-20T11:30:00Z",
+  "metadata": {
     "totalCollections": 3,
     "totalConversations": 28
-  }
+  },
+  "isPrivate": true
 }
 ```
 
@@ -204,7 +228,7 @@ interface User {
 **Query Parameters**:
 - `skip` (optional): Number of records to skip (for pagination)
 - `limit` (optional): Maximum number of records to return (for pagination)
-- `sort_by` (optional): Field to sort by (e.g., name, creationTimestamp)
+- `sort_by` (optional): Field to sort by (e.g., name, createdAt)
 - `sort_order` (optional): Sort direction ('asc' or 'desc')
 - `include_pagination` (optional): Whether to include pagination metadata
 
@@ -216,9 +240,12 @@ interface User {
       "id": "coll-4",
       "name": "High Efficiency Conversations",
       "description": "Collection of conversations with high efficiency scores",
-      "creationTimestamp": "2023-01-10T09:00:00Z",
+      "createdAt": "2023-01-10T09:00:00Z",
+      "updatedAt": "2023-01-15T09:30:00Z",
+      "ownerId": "user-123",
       "creator": "John Doe",
-      "conversations": ["conv-1", "conv-2", "conv-3"]
+      "isPublic": false,
+      "tags": ["efficiency", "high-score"]
     },
     // More collections...
   ],
@@ -289,45 +316,22 @@ interface User {
       "description": "Group for reviewing security-related conversations",
       "purpose": "security",
       "collectionIds": ["coll-1", "coll-2", "coll-3"],
-      "adminUsers": ["user-123"],
+      "adminIds": ["user-123"],
+      "userIds": ["user-123", "user-456"],
       "permissionLevels": {
         "user-123": "full",
         "user-456": "read"
-      }
+      },
+      "createdAt": "2023-01-01T12:00:00Z",
+      "updatedAt": "2023-01-15T09:30:00Z",
+      "isPrivate": true
     }
     // More groups...
   ]
 }
 ```
 
-### 10. Get Groups by Purpose
-
-**Endpoint**: `GET /group/purpose/{purpose}`
-
-**Purpose**: Retrieve groups with a specific purpose.
-
-**Response Format**:
-```json
-{
-  "items": [
-    {
-      "id": "group-123",
-      "name": "Security Review Group",
-      "description": "Group for reviewing security-related conversations",
-      "purpose": "security",
-      "collectionIds": ["coll-1", "coll-2", "coll-3"],
-      "adminUsers": ["user-123"],
-      "permissionLevels": {
-        "user-123": "full",
-        "user-456": "read"
-      }
-    }
-    // More groups with the same purpose...
-  ]
-}
-```
-
-### 11. Check User Permission
+### 10. Check User Permission
 
 **Endpoint**: `GET /group/{id}/user/{userId}/permission`
 
@@ -344,87 +348,6 @@ interface User {
 }
 ```
 
-### 12. Add User to Group
-
-**Endpoint**: `POST /group/{id}/users`
-
-**Purpose**: Add a user to a group with a specific permission level.
-
-**Request Body**:
-```json
-{
-  "userId": "user-789",
-  "permissionLevel": "read"
-}
-```
-
-**Response Format**:
-```json
-{
-  "success": true,
-  "group": {
-    "id": "group-123",
-    "name": "Security Review Group",
-    "permissionLevels": {
-      "user-123": "full",
-      "user-456": "read",
-      "user-789": "read"
-    }
-  }
-}
-```
-
-### 13. Remove User from Group
-
-**Endpoint**: `DELETE /group/{id}/users/{userId}`
-
-**Purpose**: Remove a user from a group.
-
-**Response Format**:
-```json
-{
-  "success": true,
-  "group": {
-    "id": "group-123",
-    "name": "Security Review Group",
-    "permissionLevels": {
-      "user-123": "full",
-      "user-456": "read"
-    }
-  }
-}
-```
-
-### 14. Add Admin to Group
-
-**Endpoint**: `POST /group/{id}/admins`
-
-**Purpose**: Add a user as an admin to a group.
-
-**Request Body**:
-```json
-{
-  "userId": "user-789"
-}
-```
-
-**Response Format**:
-```json
-{
-  "success": true,
-  "group": {
-    "id": "group-123",
-    "name": "Security Review Group",
-    "adminUsers": ["user-123", "user-789"],
-    "permissionLevels": {
-      "user-123": "full",
-      "user-456": "read",
-      "user-789": "full"
-    }
-  }
-}
-```
-
 ## API Implementation Details
 
 ### Group Purpose
@@ -437,7 +360,7 @@ Groups are categorized by their purpose, which affects how they're displayed in 
 
 ### Permission Levels
 
-The API should support at least the following permission levels:
+The API supports the following permission levels:
 
 1. **full**: Full access to group, including adding/removing collections and users
 2. **write**: Can modify collections but not group membership
@@ -445,7 +368,7 @@ The API should support at least the following permission levels:
 
 ### Response Format
 
-The API should support both single-object and collection responses:
+The API supports both single-object and collection responses:
 
 1. **Single Object Responses**:
    - Return the object directly: `{ id: "group-123", name: "Group 1", ... }`
@@ -485,7 +408,9 @@ Access-Control-Allow-Headers: Content-Type, Authorization, X-API-KEY, X-Client-I
      "description": "Group for the evaluation team",
      "purpose": "evaluation",
      "collectionIds": ["coll-1", "coll-2"],
-     "adminUsers": ["user-123"]
+     "adminIds": ["user-123"],
+     "userIds": ["user-123", "user-456"],
+     "isPrivate": true
    }
    ```
 
@@ -512,7 +437,8 @@ For the Groups tab to function properly, these fields are critical:
    - `description`: For displaying group description
    - `purpose`: To control the display style/icon
    - `collectionIds`: Count of collections for display
-   - `adminUsers`: Count of admins for display
+   - `adminIds`: Count of admins for display
+   - `isPrivate`: Whether the group is private
 
 2. **Group Detail View**:
    - All fields from the list view plus:
@@ -523,18 +449,20 @@ For the Groups tab to function properly, these fields are critical:
    - Support for all group fields
    - Ability to select collections to include
    - Ability to set group purpose
+   - Setting privacy via `isPrivate`
 
 4. **User Permissions**:
-   - `adminUsers`: List of users with admin rights
+   - `adminIds`: List of users with admin rights
+   - `userIds`: List of users who can access the group
    - `permissionLevels`: Permissions for each user
 
 ## Authentication Options
 
-The API should support multiple authentication methods:
+The API supports multiple authentication methods:
 
 1. **JWT Token**: Via `Authorization: Bearer <token>` header
 2. **API Key**: Via `X-API-KEY` header with optional `X-Client-ID`
-3. **No Authentication**: For development and testing environments
+3. **No Authentication**: For development and testing environments as described in NOAUTH_IMPLEMENTATION.md
 
 ## Common API Patterns
 

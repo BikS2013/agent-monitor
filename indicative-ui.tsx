@@ -41,7 +41,7 @@ const AIContactCenterSystem = () => {
   
   const conversations = [
     {
-      id: 't92178',
+      thread_id: 't92178',
       user: 'Customer #4521',
       agent: 'Customer Service Bot',
       agentType: 'GPT-4-Turbo',
@@ -54,7 +54,7 @@ const AIContactCenterSystem = () => {
       confidence: '98%'
     },
     {
-      id: 't92179',
+      thread_id: 't92179',
       user: 'Customer #4522',
       agent: 'Technical Support AI',
       agentType: 'Claude-3-Opus',
@@ -112,15 +112,15 @@ const AIContactCenterSystem = () => {
         
         {conversations.map((conversation) => (
           <div
-            key={conversation.id}
+            key={conversation.thread_id}
             onClick={() => setSelectedConversation(conversation)}
             className={`p-4 border-b cursor-pointer hover:bg-gray-50 ${
-              selectedConversation?.id === conversation.id ? 'bg-blue-50' : ''
+              selectedConversation?.thread_id === conversation.thread_id ? 'bg-blue-50' : ''
             }`}
           >
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center space-x-2">
-                <span className="font-medium">{conversation.id}</span>
+                <span className="font-medium">{conversation.thread_id}</span>
                 {conversation.conclusion === 'successful' ? (
                   <CheckCircle size={14} className="text-green-500" />
                 ) : (
@@ -152,7 +152,7 @@ const AIContactCenterSystem = () => {
           <div className="bg-blue-500 text-white p-4 border-b">
             <div className="flex items-center justify-between">
               <div>
-                <h2 className="text-lg font-semibold">{selectedConversation.id}</h2>
+                <h2 className="text-lg font-semibold">{selectedConversation.thread_id}</h2>
                 <p className="text-sm opacity-90">{selectedConversation.user} with {selectedConversation.agent}</p>
               </div>
               <div className="flex items-center space-x-4">

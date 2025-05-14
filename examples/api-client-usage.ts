@@ -51,7 +51,7 @@ async function main() {
         
         // Process conversation details
         Object.values(highPriorityConversations).forEach(conversation => {
-          console.log(`- Conversation: ${conversation.id}`);
+          console.log(`- Conversation: ${conversation.thread_id}`);
           console.log(`  User: ${conversation.userName}`);
           console.log(`  AI Agent: ${conversation.aiAgentName}`);
           console.log(`  Status: ${conversation.status}`);
@@ -99,7 +99,7 @@ async function main() {
     };
     
     const createdConversation = await dataSource.createConversation(newConversation);
-    console.log(`Created new conversation with ID: ${createdConversation.id}`);
+    console.log(`Created new conversation with ID: ${createdConversation.thread_id}`);
     
     // Example: System operations
     console.log('Saving data...');

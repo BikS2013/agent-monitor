@@ -28,14 +28,14 @@ export interface IDataSource {
   deleteMessage(id: string): Promise<boolean>;
   
   // Conversations
-  getConversationById(id: string): Promise<Conversation | null>;
+  getConversationById(thread_id: string): Promise<Conversation | null>;
   getConversations(ids?: string[]): Promise<Record<string, Conversation>>;
   getConversationsByCollectionId(collectionId: string): Promise<Conversation[]>;
   getConversationsByAIAgentId(aiAgentId: string): Promise<Conversation[]>;
   getConversationsByUserId(userId: string): Promise<Conversation[]>;
-  createConversation(data: Omit<Conversation, 'id'>): Promise<Conversation>;
-  updateConversation(id: string, data: Partial<Conversation>): Promise<Conversation | null>;
-  deleteConversation(id: string): Promise<boolean>;
+  createConversation(data: Omit<Conversation, 'thread_id'>): Promise<Conversation>;
+  updateConversation(thread_id: string, data: Partial<Conversation>): Promise<Conversation | null>;
+  deleteConversation(thread_id: string): Promise<boolean>;
   
   // Collections
   getCollectionById(id: string): Promise<Collection | null>;

@@ -46,8 +46,8 @@ const ConversationsView: React.FC<ConversationsViewProps> = ({
     }
   }, [conversations, selectedConversation, setSelectedConversation, loading.conversations]);
 
-  // Store the last loaded conversation ID to prevent reload loops
-  const [lastLoadedConversationId, setLastLoadedConversationId] = useState<string | null>(null);
+  // Store the last loaded conversation thread_id to prevent reload loops
+  const [lastLoadedThreadId, setLastLoadedThreadId] = useState<string | null>(null);
   // Track the timestamp of the last message load to implement throttling
   const [lastLoadTimestamp, setLastLoadTimestamp] = useState<number>(0);
   // Use a ref to track the latest effect ID to prevent race conditions
@@ -55,8 +55,8 @@ const ConversationsView: React.FC<ConversationsViewProps> = ({
 
   // Load messages when selected conversation changes - Fixed with useRef to prevent loops
   const effectRunningRef = React.useRef<boolean>(false);
-  const prevConversationIdRef = React.useRef<string | null>(null);
-  
+  const prevThreadIdRef = React.useRef<string | null>(null);
+
   useEffect(() => {
     // Skip if either:
     // 1. No conversation is selected
@@ -66,65 +66,65 @@ const ConversationsView: React.FC<ConversationsViewProps> = ({
       setConversationMessages([]);
       return;
     }
-    
-    const conversationId = selectedConversation.thread_id;
-    
+
+    const thread_id = selectedConversation.thread_id;
+
     // Avoid infinite loops with these checks
     if (effectRunningRef.current) {
       console.log(`ConversationsView: Skipping duplicate effect as one is already running`);
       return;
     }
-    
-    if (lastLoadedConversationId === conversationId && 
+
+    if (lastLoadedThreadId === thread_id &&
         conversationMessages.length > 0 &&
-        prevConversationIdRef.current === conversationId) {
-      console.log(`ConversationsView: Skipping load for conversation ${conversationId} - already loaded`);
+        prevThreadIdRef.current === thread_id) {
+      console.log(`ConversationsView: Skipping load for conversation ${thread_id} - already loaded`);
       return;
     }
-    
+
     // Mark as running to prevent concurrent execution
     effectRunningRef.current = true;
-    
-    // Store current conversation ID
-    prevConversationIdRef.current = conversationId;
-    
+
+    // Store current conversation thread_id
+    prevThreadIdRef.current = thread_id;
+
     // Generate a unique ID for this effect instance
     const effectId = Date.now();
     latestEffectIdRef.current = effectId;
-    
+
     // Create a flag to track if this effect is still active
     let isActive = true;
-    
-    console.log(`ConversationsView: Starting load (effectId=${effectId}) for conversation ${conversationId}`);
-    
+
+    console.log(`ConversationsView: Starting load (effectId=${effectId}) for conversation ${thread_id}`);
+
     const loadMessages = async () => {
       try {
         if (!isActive) return;
-        
+
         // Set loading state
         setLoadingMessages(true);
         setMessageError(null);
         setLastLoadTimestamp(Date.now());
-        
-        console.log(`ConversationsView: Loading messages for conversation ${conversationId}, effect #${effectId}`);
-        
+
+        console.log(`ConversationsView: Loading messages for conversation ${thread_id}, effect #${effectId}`);
+
         // Get messages
-        const messages = await getMessagesByConversationId(conversationId);
-        
+        const messages = await getMessagesByConversationId(thread_id);
+
         // Only update state if this effect is still active and conversation hasn't changed
         if (isActive) {
-          if (prevConversationIdRef.current === conversationId) {
+          if (prevThreadIdRef.current === thread_id) {
             setConversationMessages(messages);
             setLoadingMessages(false);
-            setLastLoadedConversationId(conversationId);
-            console.log(`ConversationsView: Loaded ${messages.length} messages for conversation ${conversationId}`);
+            setLastLoadedThreadId(thread_id);
+            console.log(`ConversationsView: Loaded ${messages.length} messages for conversation ${thread_id}`);
           } else {
             console.log(`ConversationsView: Conversation changed during load, discarding results`);
           }
         }
       } catch (error) {
-        console.error(`Error loading messages for effect #${effectId}:`, error);
-        
+        console.error(`Error loading messages for conversation ${thread_id} (effect #${effectId}):`, error);
+
         if (isActive) {
           setMessageError('Failed to load messages');
           setConversationMessages([]);
@@ -138,10 +138,10 @@ const ConversationsView: React.FC<ConversationsViewProps> = ({
         }
       }
     };
-    
+
     // Execute the load operation directly
     loadMessages();
-    
+
     // Cleanup function
     return () => {
       console.log(`ConversationsView: Cleaning up message loading effect #${effectId}`);
@@ -150,31 +150,12 @@ const ConversationsView: React.FC<ConversationsViewProps> = ({
     };
   }, [selectedConversation?.thread_id]); // Only depend on the conversation ID
 
-  // Create a data source indicator component
-  const DataSourceIndicator = () => {
-    return (
-      <div className="absolute top-2 right-2 flex items-center gap-1 bg-gray-100 rounded-md px-2 py-1 text-xs font-medium z-10">
-        {isUsingApi ? (
-          <>
-            <Cloud size={14} className="text-blue-500" />
-            <span className="text-blue-700">API Data Source</span>
-          </>
-        ) : (
-          <>
-            <Database size={14} className="text-green-500" />
-            <span className="text-green-700">JSON Data Source</span>
-          </>
-        )}
-      </div>
-    );
-  };
+  // Data source indicator has been moved to ConversationDetail component
 
   // Memoize the entire UI to prevent unnecessary re-renders
   const uiContent = useMemo(() => {
     return (
       <div className="flex flex-1 relative" style={{ height: 'calc(100vh - 64px)' }}>
-        <DataSourceIndicator />
-        
         {/* Left sidebar with fixed header (A2) and scrollable content (B1) */}
         <div className="w-96 border-r flex flex-col" style={{ height: 'calc(100vh - 64px)' }}>
           {/* A2 area is handled inside ConversationsList component */}

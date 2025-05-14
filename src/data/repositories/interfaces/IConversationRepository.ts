@@ -7,10 +7,10 @@ import { Conversation, Message } from '../../types';
 export interface IConversationRepository extends IRepository<Conversation> {
   /**
    * Get messages for a conversation (lazy loading)
-   * @param conversationId Conversation ID
+   * @param thread_id Conversation thread ID
    * @param options Query options
    */
-  getMessages(conversationId: string, options?: QueryOptions): Promise<QueryResult<Message>>;
+  getMessages(thread_id: string, options?: QueryOptions): Promise<QueryResult<Message>>;
   
   /**
    * Get conversations by collection ID
@@ -49,13 +49,13 @@ export interface IConversationRepository extends IRepository<Conversation> {
   
   /**
    * Get first message timestamp for a conversation
-   * @param conversationId Conversation ID
+   * @param thread_id Conversation thread ID
    */
-  getFirstMessageTimestamp(conversationId: string): Promise<string | null>;
+  getFirstMessageTimestamp(thread_id: string): Promise<string | null>;
   
   /**
    * Get last message timestamp for a conversation
-   * @param conversationId Conversation ID
+   * @param thread_id Conversation thread ID
    */
-  getLastMessageTimestamp(conversationId: string): Promise<string | null>;
+  getLastMessageTimestamp(thread_id: string): Promise<string | null>;
 }

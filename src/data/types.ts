@@ -46,11 +46,15 @@ export interface Collection {
     outcomeBased?: 'successful' | 'unsuccessful' | 'uncertain' | 'all';
     multiFactorFilters?: any[];
   };
-  creationTimestamp: string;
+  createdAt: string;
+  updatedAt?: string;
   creator: string;
+  ownerId: string;
   accessPermissions: string[];
   metadata: Record<string, any>;
-  conversations: string[]; // Conversation IDs
+  conversations: string[]; // Conversation thread_ids
+  isPublic: boolean;
+  tags: string[];
 
   // Methods
   getConversations?: () => Conversation[]; // Returns conversations based on filter criteria
@@ -63,9 +67,13 @@ export interface Group {
   description: string;
   purpose: 'evaluation' | 'security' | 'efficiency';
   collectionIds: string[];
-  adminUsers: string[];
+  adminIds: string[];
+  userIds: string[];
   permissionLevels: Record<string, string>;
-  analyticsData?: any;
+  createdAt: string;
+  updatedAt?: string;
+  metadata: Record<string, any>;
+  isPrivate: boolean;
 }
 
 export interface AIAgent {
@@ -84,6 +92,12 @@ export interface AIAgent {
 export interface User {
   id: string;
   name: string;
+  username: string;
+  email: string;
+  fullName: string;
   role: 'admin' | 'supervisor' | 'executive';
   permissions: string[];
+  createdAt: string;
+  lastActive: string;
+  isActive: boolean;
 }
