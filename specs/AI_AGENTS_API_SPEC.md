@@ -23,10 +23,10 @@ interface AIAgent {
   capabilities?: string[];                   // List of agent capabilities
   specializations?: string[];                // List of agent specializations
   metadata?: Record<string, any>;            // Additional metadata
-  created_at: string;                        // When agent was created (ISO format)
-  updated_at?: string;                       // When agent was last updated (ISO format)
-  creator_id?: string;                       // ID of the user who created the agent
-  owner_id?: string;                         // ID of the user who owns the agent
+  createdAt: string;                        // When agent was created (ISO format)
+  updatedAt?: string;                       // When agent was last updated (ISO format)
+  creatorId?: string;                       // ID of the user who created the agent
+  ownerId?: string;                         // ID of the user who owns the agent
 }
 ```
 
@@ -57,7 +57,7 @@ interface Conversation {
 
 ### 1. List AI Agents
 
-**Endpoint**: `GET /ai-agent`
+**Endpoint**: `GET /aiagent`
 
 **Purpose**: Retrieve a list of all AI agents with optional filtering.
 
@@ -89,10 +89,10 @@ interface Conversation {
         "totalMessagesProcessed": 5892,
         "avgConfidenceScore": "92%"
       },
-      "created_at": "2023-01-15T10:00:00Z",
-      "updated_at": "2023-05-15T14:30:00Z",
-      "creator_id": "user-123",
-      "owner_id": "user-123"
+      "createdAt": "2023-01-15T10:00:00Z",
+      "updatedAt": "2023-05-15T14:30:00Z",
+      "creatorId": "user-123",
+      "ownerId": "user-123"
     }
     // More agents...
   ]
@@ -101,7 +101,7 @@ interface Conversation {
 
 ### 2. Get AI Agent Details
 
-**Endpoint**: `GET /ai-agent/{id}`
+**Endpoint**: `GET /aiagent/{id}`
 
 **Purpose**: Retrieve detailed information about a specific AI agent.
 
@@ -133,16 +133,16 @@ interface Conversation {
       "product-information"
     ]
   },
-  "created_at": "2023-01-15T10:00:00Z",
-  "updated_at": "2023-05-15T14:30:00Z",
-  "creator_id": "user-123",
-  "owner_id": "user-123"
+  "createdAt": "2023-01-15T10:00:00Z",
+  "updatedAt": "2023-05-15T14:30:00Z",
+  "creatorId": "user-123",
+  "ownerId": "user-123"
 }
 ```
 
 ### 3. Create AI Agent
 
-**Endpoint**: `POST /ai-agent`
+**Endpoint**: `POST /aiagent`
 
 **Purpose**: Create a new AI agent.
 
@@ -171,16 +171,16 @@ interface Conversation {
   "capabilities": ["product-inquiries", "pricing-information"],
   "specializations": ["product-catalog", "pricing"],
   "metadata": {},
-  "created_at": "2023-05-15T15:00:00Z",
-  "updated_at": "2023-05-15T15:00:00Z",
-  "creator_id": "user-123",
-  "owner_id": "user-123"
+  "createdAt": "2023-01-15T10:00:00Z",
+  "updatedAt": "2023-05-15T14:30:00Z",
+  "creatorId": "user-123",
+  "ownerId": "user-123"
 }
 ```
 
 ### 4. Update AI Agent
 
-**Endpoint**: `PUT /ai-agent/{id}`
+**Endpoint**: `PUT /aiagent/{id}`
 
 **Purpose**: Update an existing AI agent.
 
@@ -209,16 +209,16 @@ interface Conversation {
   "capabilities": ["product-inquiries", "pricing-information", "inventory-checks"],
   "specializations": ["product-catalog", "pricing", "inventory"],
   "metadata": {},
-  "created_at": "2023-05-15T15:00:00Z",
-  "updated_at": "2023-05-15T15:30:00Z",
-  "creator_id": "user-123",
-  "owner_id": "user-123"
+  "createdAt": "2023-01-15T10:00:00Z",
+  "updatedAt": "2023-05-15T14:30:00Z",
+  "creatorId": "user-123",
+  "ownerId": "user-123"
 }
 ```
 
 ### 5. Delete AI Agent
 
-**Endpoint**: `DELETE /ai-agent/{id}`
+**Endpoint**: `DELETE /aiagent/{id}`
 
 **Purpose**: Delete an AI agent.
 
@@ -231,7 +231,7 @@ interface Conversation {
 
 ### 6. Update AI Agent Status
 
-**Endpoint**: `PATCH /ai-agent/{id}/status`
+**Endpoint**: `PATCH /aiagent/{id}/status`
 
 **Purpose**: Update the status of an AI agent (activate, deactivate, set to training).
 
@@ -248,13 +248,13 @@ interface Conversation {
   "id": "agent-456",
   "name": "Product Expert Bot",
   "status": "inactive",
-  "updated_at": "2023-05-15T16:00:00Z"
+  "updatedAt": "2023-05-15T16:00:00Z"
 }
 ```
 
 ### 7. Get AI Agent Conversations
 
-**Endpoint**: `GET /ai-agent/{id}/conversation`
+**Endpoint**: `GET /aiagent/{id}/conversation`
 
 **Purpose**: Retrieve conversations handled by a specific AI agent.
 
@@ -299,7 +299,7 @@ interface Conversation {
 
 ### 8. Get AI Agent Performance Metrics
 
-**Endpoint**: `GET /ai-agent/{id}/metrics`
+**Endpoint**: `GET /aiagent/{id}/metrics`
 
 **Purpose**: Retrieve detailed performance metrics for a specific AI agent.
 
@@ -347,7 +347,7 @@ interface Conversation {
 
 ### 9. Get AI Models
 
-**Endpoint**: `GET /ai-model`
+**Endpoint**: `GET /aimodel`
 
 **Purpose**: Retrieve a list of available AI models for creating or updating agents.
 
@@ -393,8 +393,8 @@ interface Conversation {
       "successRate": "85%",
       "avgResponseTime": "1.2s",
       "lastActive": "2023-05-15T14:30:00Z",
-      "created_at": "2023-01-15T10:00:00Z",
-      "updated_at": "2023-05-15T14:30:00Z"
+      "createdAt": "2023-01-15T10:00:00Z",
+      "updatedAt": "2023-05-15T14:30:00Z"
     }
     // More agents...
   ]
