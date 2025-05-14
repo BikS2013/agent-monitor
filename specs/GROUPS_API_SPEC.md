@@ -515,3 +515,122 @@ Groups define permissions for users. The API should:
   }
 }
 ```
+
+## Database Support Requirements
+
+### Schema Requirements
+
+To implement the Groups API, the following database schema considerations are required:
+
+1. **Groups Table**:
+   - Primary key: `id` (string, UUID preferred)
+   - Required fields: `name`, `description`, `purpose`, `createdAt`, `isPrivate`
+   - JSON field: `metadata` should be stored as a JSON object to support additional properties
+   - Indexed fields: `purpose`, `createdAt`, `isPrivate` (for efficient querying)
+   - Text search fields: `name`, `description` (for search functionality)
+
+2. **Group-Collection Relationships Table**:
+   - Many-to-many relationship between groups and collections
+   - Fields: `group_id`, `collection_id`, `added_at`
+   - Enforces referential integrity between groups and collections
+
+3. **Group User Permissions Table**:
+   - Maintains fine-grained access control for users
+   - Fields: `group_id`, `user_id`, `permission_level`, `granted_at`
+   - Supports the three permission levels (full, write, read)
+   - Allows efficient querying of groups by user access
+
+### Database Operations
+
+The Groups API requires the following database operation capabilities:
+
+1. **Relationship Management**:
+   - Efficient adding/removing of collections to/from groups
+   - Managing user permissions for groups
+   - Querying groups by user access levels
+
+2. **Transaction Support**:
+   - For maintaining consistency when updating group memberships
+   - For ensuring user permission changes are atomic
+
+3. **Performance Considerations**:
+   - Efficient querying for groups with large numbers of collections
+   - Support for pagination when retrieving collections in a group
+   - Fast retrieval of groups by purpose, creation date, or ownership
+
+### Recommended Database Types
+
+Based on the requirements, the following database types are recommended:
+
+1. **Relational Databases** (PostgreSQL, MySQL):
+   - Strong support for complex relationships
+   - JSONB support (especially PostgreSQL) for the `metadata` field
+   - Efficient indexing and query optimization
+   - Transaction support for data consistency
+
+2. **Document Databases** (MongoDB):
+   - Native JSON storage for `metadata`
+   - Flexible schema for evolving data models
+   - Good performance for read-heavy operations
+
+### PostgreSQL Implementation Scripts
+
+The following SQL scripts create the necessary database schema for implementing the Groups API in PostgreSQL:
+
+```sql
+-- Create extension for UUID generation
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+
+-- Groups Table
+CREATE TABLE groups (
+    id UUID PRIMARY KEY NOT NULL,
+    name VARCHAR(255) NOT NULL,
+    description TEXT,
+    purpose VARCHAR(50),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    metadata JSONB DEFAULT '{}',
+    is_private BOOLEAN DEFAULT TRUE
+);
+
+-- Create indexes for groups table
+CREATE INDEX idx_groups_created_at ON groups(created_at);
+CREATE INDEX idx_groups_is_private ON groups(is_private);
+CREATE INDEX idx_groups_name_description ON groups USING GIN (to_tsvector('english', name || ' ' || description));
+
+-- Group-Collection relationship table
+CREATE TABLE group_collections (
+    group_id UUID NOT NULL,
+    collection_id UUID NOT NULL,
+    added_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (group_id, collection_id)
+);
+
+-- Group User Permissions table
+CREATE TABLE group_user_permissions (
+    group_id UUID NOT NULL,
+    user_id VARCHAR(100) NOT NULL,
+    permission_level VARCHAR(20) NOT NULL,
+    is_admin BOOLEAN DEFAULT FALSE,
+    granted_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (group_id, user_id)
+);
+
+-- Create indexes for permissions table
+CREATE INDEX idx_group_permissions_user_id ON group_user_permissions(user_id);
+CREATE INDEX idx_group_permissions_is_admin ON group_user_permissions(is_admin);
+```
+
+### Implementation Considerations
+
+1. **Caching Strategy**:
+   - Cache group metadata and permission information to reduce database load
+   - Consider invalidation strategies when group memberships change
+
+2. **Search Optimization**:
+   - Implement full-text search capabilities for finding groups by name, description
+   - Use specialized indexes for frequently used queries (e.g., groups by purpose)
+
+3. **Migration Strategy**:
+   - Plan for schema evolution as the Groups API matures
+   - Consider using database migration tools for version control of schema changes
