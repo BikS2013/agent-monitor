@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import Modal from '../common/Modal';
 import { useData } from '../../context/DataContext';
+import { useConversationsData } from '../../context/ConversationsDataContext';
 import { Collection, User } from '../../data/types';
 import { Calendar, Bot, CheckCircle, Filter, Plus, Trash2, MessageCircle, AlertCircle } from 'lucide-react';
 import { filterConversationsByCollectionCriteria } from '../../data/filterUtils';
@@ -13,10 +14,12 @@ interface NewCollectionModalProps {
 }
 
 const NewCollectionModal: React.FC<NewCollectionModalProps> = ({ isOpen, onClose, collectionToEdit }) => {
-  const { addCollection, getCurrentUser, aiAgents, conversations } = useData();
+  const { getCurrentUser, aiAgents, conversations } = useData();
+  const { addCollection, updateCollection } = useConversationsData();
   const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const { theme } = useTheme();
-  
+
   useEffect(() => {
     const fetchUser = async () => {
       try {
@@ -26,7 +29,7 @@ const NewCollectionModal: React.FC<NewCollectionModalProps> = ({ isOpen, onClose
         console.error('Error fetching current user:', error);
       }
     };
-    
+
     fetchUser();
   }, [getCurrentUser]);
 
@@ -72,76 +75,99 @@ const NewCollectionModal: React.FC<NewCollectionModalProps> = ({ isOpen, onClose
       setDescription(collectionToEdit.description);
 
       // Determine filter type and set appropriate values
-      if (collectionToEdit.filterCriteria.aiAgentBased) {
-        setFilterType('aiAgent');
-        setSelectedAgents([...collectionToEdit.filterCriteria.aiAgentBased]); // Create a new array to avoid reference issues
-      } else if (collectionToEdit.filterCriteria.timeBased) {
-        setFilterType('time');
-        const timeCriteria = collectionToEdit.filterCriteria.timeBased;
-        if (timeCriteria.period) {
-          setTimePeriod(timeCriteria.period as any);
-        } else if (timeCriteria.startDate && timeCriteria.endDate) {
-          setTimePeriod('custom');
-          setCustomStartDate(timeCriteria.startDate);
-          setCustomEndDate(timeCriteria.endDate);
-        }
-      } else if (collectionToEdit.filterCriteria.outcomeBased) {
-        setFilterType('outcome');
-        setOutcomeType(collectionToEdit.filterCriteria.outcomeBased);
-      } else if (collectionToEdit.filterCriteria.multiFactorFilters) {
-        setFilterType('multiFactor');
-        const filters = collectionToEdit.filterCriteria.multiFactorFilters;
+      // Check if filterCriteria exists (legacy format)
+      if (collectionToEdit.filterCriteria) {
+        if (collectionToEdit.filterCriteria.aiAgentBased) {
+          setFilterType('aiAgent');
+          setSelectedAgents([...collectionToEdit.filterCriteria.aiAgentBased]); // Create a new array to avoid reference issues
+        } else if (collectionToEdit.filterCriteria.timeBased) {
+          setFilterType('time');
+          const timeCriteria = collectionToEdit.filterCriteria.timeBased;
+          if (timeCriteria.period) {
+            setTimePeriod(timeCriteria.period as any);
+          } else if (timeCriteria.startDate && timeCriteria.endDate) {
+            setTimePeriod('custom');
+            setCustomStartDate(timeCriteria.startDate);
+            setCustomEndDate(timeCriteria.endDate);
+          }
+        } else if (collectionToEdit.filterCriteria.outcomeBased) {
+          setFilterType('outcome');
+          setOutcomeType(collectionToEdit.filterCriteria.outcomeBased);
+        } else if (collectionToEdit.filterCriteria.multiFactorFilters) {
+          setFilterType('multiFactor');
+          const filters = collectionToEdit.filterCriteria.multiFactorFilters;
 
-        // Check which filters are included
-        const hasAgentFilter = filters.some(f => f.agentId || f.agentIds);
-        const hasTimeFilter = filters.some(f => f.timeRange);
-        const hasOutcomeFilter = filters.some(f => f.outcome);
-        const hasPriorityFilter = filters.some(f => f.priority);
+          // Check which filters are included
+          const hasAgentFilter = filters.some(f => f.agentId || f.agentIds);
+          const hasTimeFilter = filters.some(f => f.timeRange);
+          const hasOutcomeFilter = filters.some(f => f.outcome);
+          const hasPriorityFilter = filters.some(f => f.priority);
 
-        setIncludeAgentFilter(hasAgentFilter);
-        setIncludeTimeFilter(hasTimeFilter);
-        setIncludeOutcomeFilter(hasOutcomeFilter);
-        setIncludePriorityFilter(hasPriorityFilter);
+          setIncludeAgentFilter(hasAgentFilter);
+          setIncludeTimeFilter(hasTimeFilter);
+          setIncludeOutcomeFilter(hasOutcomeFilter);
+          setIncludePriorityFilter(hasPriorityFilter);
 
-        // Set specific values if available
-        if (hasAgentFilter) {
-          const agentFilter = filters.find(f => f.agentId || f.agentIds);
-          if (agentFilter) {
-            if (agentFilter.agentId) {
-              // For backward compatibility
-              setSelectedAgents([agentFilter.agentId]);
-            } else if (agentFilter.agentIds && agentFilter.agentIds.length > 0) {
-              // New format with multiple agent IDs
-              setSelectedAgents([...agentFilter.agentIds]);
+          // Set specific values if available
+          if (hasAgentFilter) {
+            const agentFilter = filters.find(f => f.agentId || f.agentIds);
+            if (agentFilter) {
+              if (agentFilter.agentId) {
+                // For backward compatibility
+                setSelectedAgents([agentFilter.agentId]);
+              } else if (agentFilter.agentIds && agentFilter.agentIds.length > 0) {
+                // New format with multiple agent IDs
+                setSelectedAgents([...agentFilter.agentIds]);
+              }
+            }
+          }
+
+          if (hasTimeFilter) {
+            const timeFilter = filters.find(f => f.timeRange);
+            if (timeFilter && timeFilter.timeRange) {
+              if (timeFilter.timeRange.period) {
+                setMultiFactorTimePeriod(timeFilter.timeRange.period as any);
+              } else if (timeFilter.timeRange.startDate && timeFilter.timeRange.endDate) {
+                setMultiFactorTimePeriod('custom');
+                setMultiFactorStartDate(timeFilter.timeRange.startDate);
+                setMultiFactorEndDate(timeFilter.timeRange.endDate);
+              }
+            }
+          }
+
+          if (hasOutcomeFilter) {
+            const outcomeFilter = filters.find(f => f.outcome);
+            if (outcomeFilter) {
+              setOutcomeType(outcomeFilter.outcome as any);
+            }
+          }
+
+          if (hasPriorityFilter) {
+            const priorityFilter = filters.find(f => f.priority);
+            if (priorityFilter) {
+              setPriorityLevel(priorityFilter.priority);
             }
           }
         }
+      } else if (collectionToEdit.filter && Array.isArray(collectionToEdit.filter) && collectionToEdit.filter.length > 0) {
+        // Handle new filter format (array of FilterElement)
+        const firstFilter = collectionToEdit.filter[0];
 
-        if (hasTimeFilter) {
-          const timeFilter = filters.find(f => f.timeRange);
-          if (timeFilter && timeFilter.timeRange) {
-            if (timeFilter.timeRange.period) {
-              setMultiFactorTimePeriod(timeFilter.timeRange.period as any);
-            } else if (timeFilter.timeRange.startDate && timeFilter.timeRange.endDate) {
-              setMultiFactorTimePeriod('custom');
-              setMultiFactorStartDate(timeFilter.timeRange.startDate);
-              setMultiFactorEndDate(timeFilter.timeRange.endDate);
-            }
+        if (firstFilter.aiAgentIds && firstFilter.aiAgentIds.length > 0) {
+          setFilterType('aiAgent');
+          setSelectedAgents([...firstFilter.aiAgentIds]);
+        } else if (firstFilter.timeRange) {
+          setFilterType('time');
+          if (firstFilter.timeRange.period) {
+            setTimePeriod(firstFilter.timeRange.period as any);
+          } else if (firstFilter.timeRange.startDate && firstFilter.timeRange.endDate) {
+            setTimePeriod('custom');
+            setCustomStartDate(firstFilter.timeRange.startDate);
+            setCustomEndDate(firstFilter.timeRange.endDate);
           }
-        }
-
-        if (hasOutcomeFilter) {
-          const outcomeFilter = filters.find(f => f.outcome);
-          if (outcomeFilter) {
-            setOutcomeType(outcomeFilter.outcome as any);
-          }
-        }
-
-        if (hasPriorityFilter) {
-          const priorityFilter = filters.find(f => f.priority);
-          if (priorityFilter) {
-            setPriorityLevel(priorityFilter.priority);
-          }
+        } else if (firstFilter.outcome && firstFilter.outcome !== 'all') {
+          setFilterType('outcome');
+          setOutcomeType(firstFilter.outcome);
         }
       }
 
@@ -168,8 +194,12 @@ const NewCollectionModal: React.FC<NewCollectionModalProps> = ({ isOpen, onClose
     }
   }, [collectionToEdit, isOpen, aiAgents]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (isSubmitting) return; // Prevent double submission
+
+    setIsSubmitting(true);
 
     // Set form as touched to ensure filtering happens
     setFormTouched(true);
@@ -177,35 +207,48 @@ const NewCollectionModal: React.FC<NewCollectionModalProps> = ({ isOpen, onClose
     // Get the current filter criteria
     const filterCriteria = getCurrentFilterCriteria();
 
-    // Create new collection or update existing one
-    const collectionData: any = {
-      name,
-      description,
-      filterCriteria,
-      creationTimestamp: collectionToEdit?.creationTimestamp || new Date().toISOString(),
-      creator: collectionToEdit?.creator || (currentUser ? currentUser.id : ''),
-      accessPermissions: collectionToEdit?.accessPermissions || (currentUser ? [currentUser.id] : []),
-      metadata: collectionToEdit?.metadata || {
-        totalConversations: 0,
-        avgDuration: '0m'
-      },
-      conversations: collectionToEdit?.conversations || []
-    };
-
-    // Include the ID if we're editing an existing collection
-    if (collectionToEdit?.id) {
-      collectionData.id = collectionToEdit.id;
-      console.log('Updating existing collection with ID:', collectionToEdit.id);
-    } else {
-      console.log('Creating new collection');
-    }
-
-    console.log('Collection data to save:', collectionData);
-
-    // Add the collection
+    // Add or update the collection
     try {
-      const result = addCollection(collectionData);
-      console.log('Collection saved successfully:', result);
+      let result;
+      if (collectionToEdit?.id) {
+        // Update existing collection - only update fields that can be changed
+        const updateData: Partial<Collection> = {
+          name,
+          description,
+          filterCriteria,
+          updatedAt: new Date().toISOString(),
+          metadata: {
+            ...collectionToEdit.metadata,
+            lastModified: new Date().toISOString()
+          }
+        };
+        console.log('Updating existing collection with ID:', collectionToEdit.id);
+        console.log('Update data:', updateData);
+        result = await updateCollection(collectionToEdit.id, updateData);
+        console.log('Collection updated successfully:', result);
+      } else {
+        // Create new collection
+        const collectionData: any = {
+          name,
+          description,
+          filterCriteria,
+          createdAt: new Date().toISOString(),
+          creator: currentUser ? currentUser.id : '',
+          ownerId: currentUser ? currentUser.id : '',
+          accessPermissions: currentUser ? [currentUser.id] : [],
+          metadata: {
+            totalConversations: 0,
+            avgDuration: '0m'
+          },
+          conversations: [],
+          isPublic: false,
+          tags: []
+        };
+        console.log('Creating new collection');
+        console.log('Collection data to save:', collectionData);
+        result = await addCollection(collectionData);
+        console.log('Collection created successfully:', result);
+      }
 
       // Reset form and close modal
       setName('');
@@ -227,6 +270,10 @@ const NewCollectionModal: React.FC<NewCollectionModalProps> = ({ isOpen, onClose
       onClose();
     } catch (error) {
       console.error('Error saving collection:', error);
+      // You might want to show an error message to the user here
+      alert('Failed to save collection. Please try again.');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -850,13 +897,16 @@ const NewCollectionModal: React.FC<NewCollectionModalProps> = ({ isOpen, onClose
             </button>
             <button
               type="submit"
+              disabled={isSubmitting}
               className={`px-4 py-2 text-white rounded-md ${
-                theme === 'dark'
+                isSubmitting
+                  ? 'bg-gray-400 cursor-not-allowed'
+                  : theme === 'dark'
                   ? 'bg-blue-600 hover:bg-blue-700'
                   : 'bg-blue-500 hover:bg-blue-600'
               }`}
             >
-              {submitButtonText}
+              {isSubmitting ? 'Saving...' : submitButtonText}
             </button>
           </div>
         </div>

@@ -63,7 +63,7 @@ export const RepositoryProvider: React.FC<{ children: ReactNode }> = ({ children
         });
 
         if (useApi) {
-          console.log('RepositoryContext: Using API data source');
+          console.log('RepositoryContext: Using API data source for collections and other data');
 
           // Get authentication method from localStorage if available and preferLocalStorage is true
           const savedAuthMethod = localStorage.getItem('apiAuthMethod');
@@ -73,10 +73,13 @@ export const RepositoryProvider: React.FC<{ children: ReactNode }> = ({ children
 
           // Debug: Log out all relevant settings
           console.log('RepositoryContext API Settings:', {
+            savedApiEnabled,
+            configApiEnabled: config.api.enabled,
             savedAuthMethod,
             configAuthMethod: config.api.authMethod,
             preferLocalStorage: config.preferLocalStorage,
-            usingAuthMethod: authMethod
+            usingAuthMethod: authMethod,
+            baseUrl: config.api.baseUrl
           });
 
           // Determine if we're using no authentication

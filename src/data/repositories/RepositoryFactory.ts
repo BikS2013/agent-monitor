@@ -49,12 +49,13 @@ export class RepositoryFactory {
       }
     } else {
       this.dataSource = dataSource;
+      console.log('RepositoryFactory: Using provided data source:', dataSource.constructor.name);
     }
 
     try {
       // Determine if we're using an API data source
       const isApiDataSource = this.dataSource.constructor.name === 'ApiDataSource';
-      console.log(`RepositoryFactory: Using ${isApiDataSource ? 'API' : 'Local'} data source`);
+      console.log(`RepositoryFactory: Using ${isApiDataSource ? 'API' : 'Local'} data source (${this.dataSource.constructor.name})`);
 
       // Initialize the data source
       console.log('RepositoryFactory: Initializing data source...');

@@ -32,11 +32,35 @@ export interface Conversation {
   getOrderedMessages?: () => Message[]; // Returns all messages in chronological order
 }
 
+// Filter element for collections
+export interface FilterElement {
+  aiAgentIds?: string[] | null;
+  timeRange?: {
+    startDate?: string | null;
+    endDate?: string | null;
+    period?: string | null;
+  } | null;
+  outcome?: 'successful' | 'unsuccessful' | 'uncertain' | 'all' | null;
+}
+
 export interface Collection {
   id: string;
   name: string;
   description: string;
-  filterCriteria: {
+  filter: FilterElement[]; // Collection will include conversations that meet any of the filter elements
+  createdAt: string;
+  updatedAt?: string;
+  creator: string;
+  ownerId: string;
+  accessPermissions: string[];
+  metadata: Record<string, any>;
+  conversations?: string[]; // Array of conversation threadIds (optional, used client-side)
+  conversationIds?: string[]; // Alternative field name for conversation IDs
+  isPublic: boolean;
+  tags: string[];
+  
+  // Legacy field support
+  filterCriteria?: {
     aiAgentBased?: string[];
     timeBased?: {
       startDate?: string;
@@ -46,15 +70,6 @@ export interface Collection {
     outcomeBased?: 'successful' | 'unsuccessful' | 'uncertain' | 'all';
     multiFactorFilters?: any[];
   };
-  createdAt: string;
-  updatedAt?: string;
-  creator: string;
-  ownerId: string;
-  accessPermissions: string[];
-  metadata: Record<string, any>;
-  conversations: string[]; // Conversation thread_ids
-  isPublic: boolean;
-  tags: string[];
 
   // Methods
   getConversations?: () => Conversation[]; // Returns conversations based on filter criteria

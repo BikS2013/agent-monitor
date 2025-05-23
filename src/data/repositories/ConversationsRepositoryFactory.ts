@@ -6,11 +6,13 @@ import { DataSize } from '../jsonDataSource';
 import {
   IMessageRepository,
   IConversationRepository,
+  ICollectionRepository,
 } from './interfaces';
 
 import {
   MessageRepository,
   ConversationRepository,
+  CollectionRepository,
 } from './implementations';
 
 /**
@@ -113,5 +115,16 @@ export class ConversationsRepositoryFactory {
     }
 
     return new ConversationRepository(this.dataSource);
+  }
+
+  /**
+   * Get the collection repository
+   */
+  static getCollectionRepository(): ICollectionRepository {
+    if (!this.dataSource) {
+      throw new Error('ConversationsRepositoryFactory not initialized');
+    }
+
+    return new CollectionRepository(this.dataSource);
   }
 }

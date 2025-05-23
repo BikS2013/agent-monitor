@@ -412,29 +412,42 @@ export class ApiDataSource implements IDataSource {
    * @param ids Optional array of collection IDs. If not provided, returns all collections
    */
   async getCollections(ids?: string[]): Promise<Record<string, Collection>> {
+    console.log('ApiDataSource.getCollections called with ids:', ids);
     try {
-      const result = await this.apiClient.getCollections(ids);
+      const result = await this.apiClient.getCollections({ ids });
+      console.log('ApiDataSource.getCollections API response:', result);
 
       // Handle different response formats
-      if (typeof result === 'object' && !Array.isArray(result)) {
-        // Object format with IDs as keys
+      let collections: any[] = [];
+      
+      if (result.items && Array.isArray(result.items)) {
+        // Standard API response format with items wrapper
+        collections = result.items;
+        console.log('ApiDataSource.getCollections: Using items wrapper format, found', collections.length, 'collections');
+      } else if (Array.isArray(result)) {
+        // Direct array format (legacy)
+        collections = result;
+        console.log('ApiDataSource.getCollections: Using direct array format, found', collections.length, 'collections');
+      } else if (typeof result === 'object' && !Array.isArray(result) && !result.items) {
+        // Object format with IDs as keys (legacy)
+        console.log('ApiDataSource.getCollections: Using object format');
         return Object.entries(result).reduce((acc, [id, coll]) => {
           acc[id] = this.transformApiCollection(coll);
           return acc;
         }, {} as Record<string, Collection>);
-      } else if (Array.isArray(result)) {
-        // Array format
-        return result.reduce((acc, coll) => {
-          const transformed = this.transformApiCollection(coll);
-          acc[transformed.id] = transformed;
-          return acc;
-        }, {} as Record<string, Collection>);
       }
 
-      // Fallback for unknown format
-      return {};
+      // Transform array to record with IDs as keys
+      const collectionsRecord = collections.reduce((acc, coll) => {
+        const transformed = this.transformApiCollection(coll);
+        acc[transformed.id] = transformed;
+        return acc;
+      }, {} as Record<string, Collection>);
+      
+      console.log('ApiDataSource.getCollections: Returning', Object.keys(collectionsRecord).length, 'collections');
+      return collectionsRecord;
     } catch (error) {
-      console.error('Failed to get collections:', error);
+      console.error('ApiDataSource.getCollections: Failed to get collections:', error);
       return {};
     }
   }
@@ -445,10 +458,20 @@ export class ApiDataSource implements IDataSource {
    */
   async getCollectionsByGroupId(groupId: string): Promise<Collection[]> {
     try {
-      const collections = await this.apiClient.getCollectionsByGroup(groupId);
-      return Array.isArray(collections)
-        ? collections.map(coll => this.transformApiCollection(coll))
-        : [];
+      const result = await this.apiClient.getCollectionsByGroup(groupId);
+      
+      // Handle different response formats
+      let collections: any[] = [];
+      
+      if (result.items && Array.isArray(result.items)) {
+        // Standard API response format with items wrapper
+        collections = result.items;
+      } else if (Array.isArray(result)) {
+        // Direct array format (legacy)
+        collections = result;
+      }
+      
+      return collections.map(coll => this.transformApiCollection(coll));
     } catch (error) {
       console.error(`Failed to get collections for group ${groupId}:`, error);
       return [];
@@ -461,10 +484,20 @@ export class ApiDataSource implements IDataSource {
    */
   async getCollectionsByCreatorId(creatorId: string): Promise<Collection[]> {
     try {
-      const collections = await this.apiClient.getCollectionsByCreator(creatorId);
-      return Array.isArray(collections)
-        ? collections.map(coll => this.transformApiCollection(coll))
-        : [];
+      const result = await this.apiClient.getCollectionsByCreator(creatorId);
+      
+      // Handle different response formats
+      let collections: any[] = [];
+      
+      if (result.items && Array.isArray(result.items)) {
+        // Standard API response format with items wrapper
+        collections = result.items;
+      } else if (Array.isArray(result)) {
+        // Direct array format (legacy)
+        collections = result;
+      }
+      
+      return collections.map(coll => this.transformApiCollection(coll));
     } catch (error) {
       console.error(`Failed to get collections for creator ${creatorId}:`, error);
       return [];
@@ -965,12 +998,20 @@ export class ApiDataSource implements IDataSource {
       createdAt: apiCollection.createdAt || apiCollection.created_at || new Date().toISOString(),
       updatedAt: apiCollection.updatedAt || apiCollection.updated_at || new Date().toISOString(),
       ownerId: apiCollection.ownerId || apiCollection.owner_id || '',
-      conversationIds: Array.isArray(apiCollection.conversationIds)
-                        ? apiCollection.conversationIds
-                        : (apiCollection.conversation_ids || []),
+      conversationIds: Array.isArray(apiCollection.conversations)
+                        ? apiCollection.conversations
+                        : (Array.isArray(apiCollection.conversationIds)
+                          ? apiCollection.conversationIds
+                          : (apiCollection.conversation_ids || [])),
       metadata: apiCollection.metadata || {},
       isPublic: apiCollection.isPublic || apiCollection.is_public || false,
-      tags: Array.isArray(apiCollection.tags) ? apiCollection.tags : []
+      tags: Array.isArray(apiCollection.tags) ? apiCollection.tags : [],
+      // Additional fields from the API specification
+      filter: apiCollection.filter || [],
+      creator: apiCollection.creator || '',
+      accessPermissions: Array.isArray(apiCollection.accessPermissions) 
+                          ? apiCollection.accessPermissions 
+                          : (apiCollection.access_permissions || [])
     };
   }
 
@@ -1113,22 +1154,39 @@ export class ApiDataSource implements IDataSource {
     // Create a copy to avoid modifying the original
     const apiData: any = { ...collection };
 
-    // Convert snake_case to camelCase if needed
-    if (apiData.owner_id === undefined && apiData.ownerId !== undefined) {
-      apiData.owner_id = apiData.ownerId;
-      delete apiData.ownerId;
+    // Handle filter field - keep as is since API expects 'filter'
+    if (apiData.filter) {
+      // Ensure filter is an array
+      if (!Array.isArray(apiData.filter)) {
+        apiData.filter = [apiData.filter];
+      }
+    } else if (apiData.filterCriteria) {
+      // Convert legacy filterCriteria to new filter format
+      const filter: FilterElement = {};
+      
+      if (apiData.filterCriteria.aiAgentBased) {
+        filter.aiAgentIds = apiData.filterCriteria.aiAgentBased;
+      }
+      
+      if (apiData.filterCriteria.timeBased) {
+        filter.timeRange = apiData.filterCriteria.timeBased;
+      }
+      
+      if (apiData.filterCriteria.outcomeBased) {
+        filter.outcome = apiData.filterCriteria.outcomeBased;
+      }
+      
+      apiData.filter = [filter];
+      delete apiData.filterCriteria;
     }
 
-    if (apiData.conversation_ids === undefined && apiData.conversationIds !== undefined) {
-      apiData.conversation_ids = apiData.conversationIds;
-      delete apiData.conversationIds;
-    }
+    // Remove conversations field if present (not sent to API)
+    delete apiData.conversations;
+    delete apiData.conversationIds;
 
-    if (apiData.is_public === undefined && apiData.isPublic !== undefined) {
-      apiData.is_public = apiData.isPublic;
-      delete apiData.isPublic;
-    }
-
+    // Keep most fields as-is since the API spec uses camelCase
+    // Only convert fields that are truly snake_case in the API
+    
     return apiData;
   }
 

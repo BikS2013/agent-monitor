@@ -22,6 +22,16 @@ const CollectionDetail = memo<CollectionDetailProps>(({
     <div className="p-4">
       <h3 className={`text-lg font-medium mb-4 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>Conversations in this Collection</h3>
 
+      {conversations.length === 0 ? (
+        <div className={`${theme === 'dark' ? 'bg-gray-700' : 'bg-white'} rounded-lg shadow p-8 text-center`}>
+          <p className={`${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
+            No conversations match the filter criteria for this collection.
+          </p>
+          <p className={`mt-2 text-sm ${theme === 'dark' ? 'text-gray-500' : 'text-gray-400'}`}>
+            Try adjusting the filter criteria or checking back later.
+          </p>
+        </div>
+      ) : (
       <div className={`${theme === 'dark' ? 'bg-gray-700' : 'bg-white'} rounded-lg shadow overflow-hidden`}>
         <table className={`min-w-full divide-y ${theme === 'dark' ? 'divide-gray-600' : 'divide-gray-200'}`}>
           <thead className={`${theme === 'dark' ? 'bg-gray-800' : 'bg-gray-50'}`}>
@@ -75,6 +85,7 @@ const CollectionDetail = memo<CollectionDetailProps>(({
           </tbody>
         </table>
       </div>
+      )}
 
       {/* Edit Collection Modal */}
       <NewCollectionModal

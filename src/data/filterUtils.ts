@@ -216,3 +216,97 @@ export const filterConversationsByCollectionCriteria = (
   console.log(`Filter result: ${result.length} matching conversations`);
   return result;
 };
+
+/**
+ * Filters conversations based on collection's new filter format (FilterElement array)
+ */
+export const filterConversationsByCollection = (
+  conversations: Record<string, Conversation>,
+  collection: Collection
+): Conversation[] => {
+  const conversationArray = Object.values(conversations);
+  
+  // Handle new filter format (array of FilterElement)
+  if (collection.filter && Array.isArray(collection.filter) && collection.filter.length > 0) {
+    // Collection includes conversations that meet ANY of the filter elements (OR logic)
+    const matchingConversations = new Set<Conversation>();
+    
+    for (const filterElement of collection.filter) {
+      let filtered = conversationArray;
+      
+      // Filter by AI agents
+      if (filterElement.aiAgentIds && filterElement.aiAgentIds.length > 0) {
+        filtered = filtered.filter(conv => 
+          filterElement.aiAgentIds!.includes(conv.aiAgentId)
+        );
+      }
+      
+      // Filter by time range
+      if (filterElement.timeRange) {
+        const now = new Date();
+        let startDate: Date | null = null;
+        let endDate: Date = new Date();
+        
+        if (filterElement.timeRange.period) {
+          switch (filterElement.timeRange.period) {
+            case 'today':
+              startDate = new Date(now.setHours(0, 0, 0, 0));
+              break;
+            case 'week':
+              startDate = new Date(now);
+              startDate.setDate(now.getDate() - 7);
+              break;
+            case 'month':
+              startDate = new Date(now);
+              startDate.setMonth(now.getMonth() - 1);
+              break;
+            case 'quarter':
+              startDate = new Date(now);
+              startDate.setMonth(now.getMonth() - 3);
+              break;
+            case 'year':
+              startDate = new Date(now);
+              startDate.setFullYear(now.getFullYear() - 1);
+              break;
+          }
+        } else if (filterElement.timeRange.startDate) {
+          startDate = new Date(filterElement.timeRange.startDate);
+          startDate.setHours(0, 0, 0, 0);
+        }
+        
+        if (filterElement.timeRange.endDate) {
+          endDate = new Date(filterElement.timeRange.endDate);
+          endDate.setHours(23, 59, 59, 999);
+        }
+        
+        if (startDate) {
+          filtered = filtered.filter(conv => {
+            const convDate = new Date(conv.created_at);
+            return convDate >= startDate! && convDate <= endDate;
+          });
+        }
+      }
+      
+      // Filter by outcome
+      if (filterElement.outcome && filterElement.outcome !== 'all') {
+        filtered = filtered.filter(conv => 
+          conv.conclusion === filterElement.outcome
+        );
+      }
+      
+      // Add all filtered conversations to the set
+      filtered.forEach(conv => matchingConversations.add(conv));
+    }
+    
+    return Array.from(matchingConversations);
+  }
+  
+  // Handle legacy filterCriteria format
+  if (collection.filterCriteria) {
+    const threadIds = filterConversationsByCollectionCriteria(conversations, collection.filterCriteria);
+    return threadIds.map(id => conversations[id]).filter(Boolean);
+  }
+  
+  // No filters, return all conversations
+  return conversationArray;
+};

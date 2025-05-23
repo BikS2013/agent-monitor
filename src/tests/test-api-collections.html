@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Test API Collections</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+      background-color: #f5f5f5;
+    }
+    .container {
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      max-width: 800px;
+      margin: 0 auto;
+    }
+    button {
+      background-color: #4CAF50;
+      color: white;
+      padding: 10px 15px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      margin: 5px;
+    }
+    button:hover {
+      background-color: #45a049;
+    }
+    button:disabled {
+      background-color: #cccccc;
+      cursor: not-allowed;
+    }
+    .error {
+      color: red;
+      margin: 10px 0;
+    }
+    .success {
+      color: green;
+      margin: 10px 0;
+    }
+    pre {
+      background-color: #f4f4f4;
+      padding: 10px;
+      border-radius: 4px;
+      overflow: auto;
+      max-height: 400px;
+    }
+    .status {
+      margin: 10px 0;
+      padding: 10px;
+      border-radius: 4px;
+    }
+    .status.connected {
+      background-color: #d4edda;
+      color: #155724;
+    }
+    .status.disconnected {
+      background-color: #f8d7da;
+      color: #721c24;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Test API Collections</h1>
+    
+    <div id="status" class="status disconnected">
+      API Status: Not Connected
+    </div>
+    
+    <div>
+      <h2>Current Settings</h2>
+      <pre id="settings"></pre>
+    </div>
+    
+    <div>
+      <h2>Actions</h2>
+      <button onclick="checkApiStatus()">Check API Status</button>
+      <button onclick="testCollectionsEndpoint()">Test Collections Endpoint</button>
+      <button onclick="enableApi()">Enable API</button>
+      <button onclick="disableApi()">Disable API</button>
+      <button onclick="clearSettings()">Clear All Settings</button>
+    </div>
+    
+    <div id="result"></div>
+    
+    <div>
+      <h2>API Response</h2>
+      <pre id="response"></pre>
+    </div>
+  </div>
+
+  <script>
+    function displaySettings() {
+      const settings = {
+        apiEnabled: localStorage.getItem('apiEnabled'),
+        apiAuthMethod: localStorage.getItem('apiAuthMethod'),
+        apiClientSecret: localStorage.getItem('apiClientSecret'),
+        apiClientId: localStorage.getItem('apiClientId'),
+        token: localStorage.getItem('agent_monitor_api_token'),
+        conversationsApiEnabled: localStorage.getItem('conversationsApiEnabled'),
+        dataSize: localStorage.getItem('dataSize')
+      };
+      
+      document.getElementById('settings').textContent = JSON.stringify(settings, null, 2);
+      
+      // Update status
+      const statusEl = document.getElementById('status');
+      if (settings.apiEnabled === 'true') {
+        statusEl.className = 'status connected';
+        statusEl.textContent = `API Status: Connected (Auth: ${settings.apiAuthMethod || 'none'})`;
+      } else {
+        statusEl.className = 'status disconnected';
+        statusEl.textContent = 'API Status: Not Connected';
+      }
+    }
+    
+    function showResult(message, isError = false) {
+      const resultEl = document.getElementById('result');
+      resultEl.innerHTML = `<div class="${isError ? 'error' : 'success'}">${message}</div>`;
+    }
+    
+    function showResponse(data) {
+      document.getElementById('response').textContent = JSON.stringify(data, null, 2);
+    }
+    
+    async function checkApiStatus() {
+      try {
+        const baseUrl = 'http://localhost:8000';
+        const response = await fetch(`${baseUrl}/health`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          showResult('API is accessible!');
+          showResponse(data);
+        } else {
+          showResult(`API returned status: ${response.status}`, true);
+        }
+      } catch (error) {
+        showResult(`Error: ${error.message}`, true);
+      }
+    }
+    
+    async function testCollectionsEndpoint() {
+      try {
+        const baseUrl = 'http://localhost:8000';
+        const authMethod = localStorage.getItem('apiAuthMethod');
+        
+        const headers = {
+          'Content-Type': 'application/json'
+        };
+        
+        // Add authentication headers if needed
+        if (authMethod === 'token') {
+          const token = localStorage.getItem('agent_monitor_api_token');
+          if (token) {
+            headers['Authorization'] = `Bearer ${token}`;
+          }
+        } else if (authMethod === 'api-key') {
+          const clientSecret = localStorage.getItem('apiClientSecret');
+          const clientId = localStorage.getItem('apiClientId');
+          if (clientSecret) {
+            headers['X-API-Key'] = clientSecret;
+          }
+          if (clientId) {
+            headers['X-Client-ID'] = clientId;
+          }
+        }
+        
+        const response = await fetch(`${baseUrl}/collection`, {
+          method: 'GET',
+          headers: headers
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          showResult(`Collections endpoint returned ${data.items?.length || data.length || 0} collections`);
+          showResponse(data);
+        } else {
+          const errorText = await response.text();
+          showResult(`Collections endpoint error: ${response.status} - ${errorText}`, true);
+        }
+      } catch (error) {
+        showResult(`Error fetching collections: ${error.message}`, true);
+      }
+    }
+    
+    function enableApi() {
+      localStorage.setItem('apiEnabled', 'true');
+      localStorage.setItem('apiAuthMethod', 'none');
+      displaySettings();
+      showResult('API enabled with no authentication');
+    }
+    
+    function disableApi() {
+      localStorage.setItem('apiEnabled', 'false');
+      displaySettings();
+      showResult('API disabled');
+    }
+    
+    function clearSettings() {
+      if (confirm('Clear all API settings?')) {
+        localStorage.removeItem('apiEnabled');
+        localStorage.removeItem('apiAuthMethod');
+        localStorage.removeItem('apiClientSecret');
+        localStorage.removeItem('apiClientId');
+        localStorage.removeItem('agent_monitor_api_token');
+        localStorage.removeItem('agent_monitor_token_expiry');
+        displaySettings();
+        showResult('All API settings cleared');
+      }
+    }
+    
+    // Initial display
+    displaySettings();
+  </script>
+</body>
+</html>

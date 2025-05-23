@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useEffect, ReactNode } from
 import {
   Message,
   Conversation,
+  Collection,
 } from '../data/types';
 
 import { useConversationsRepositories } from './ConversationsRepositoryContext';
@@ -16,21 +17,32 @@ interface ConversationsDataContextType {
   // State data
   messages: Record<string, Message>;
   conversations: Record<string, Conversation>;
+  collections: Record<string, Collection>;
 
   // Loading states
   loading: {
     messages: boolean;
     conversations: boolean;
+    collections: boolean;
   };
 
   // Data access methods
   getMessagesByConversationId: (thread_id: string) => Promise<Message[]>;
+  getConversationsByCollectionId: (collectionId: string, options?: QueryOptions) => Promise<Conversation[]>;
+  
+  // Data creation methods
+  addCollection: (collectionData: Omit<Collection, 'id'> & { id?: string }) => Promise<Collection>;
+  
+  // Data modification methods
+  updateCollection: (collectionId: string, collectionData: Partial<Collection>) => Promise<Collection>;
+  deleteCollection: (collectionId: string) => Promise<boolean>;
   
   // Refresh methods
   refreshData: () => Promise<void>;
+  refreshCollection: (collectionId: string) => Promise<void>;
 }
 
-const ConversationsDataContext = createContext<ConversationsDataContextType | undefined>(undefined);
+export const ConversationsDataContext = createContext<ConversationsDataContextType | undefined>(undefined);
 
 export const ConversationsDataProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   // Use repositories from ConversationsRepositoryContext
@@ -38,16 +50,19 @@ export const ConversationsDataProvider: React.FC<{ children: ReactNode }> = ({ c
     initialized,
     messageRepository,
     conversationRepository,
+    collectionRepository,
   } = useConversationsRepositories();
 
   // State for entity data
   const [messages, setMessages] = useState<Record<string, Message>>({});
   const [conversations, setConversations] = useState<Record<string, Conversation>>({});
+  const [collections, setCollections] = useState<Record<string, Collection>>({});
 
   // Loading states
   const [loading, setLoading] = useState({
     messages: false,
     conversations: false,
+    collections: false,
   });
 
   // Load essential data on initialization
@@ -67,6 +82,14 @@ export const ConversationsDataProvider: React.FC<{ children: ReactNode }> = ({ c
       ids: Object.keys(conversations)
     });
   }, [conversations]);
+
+  useEffect(() => {
+    console.log("ConversationsDataContext: Collections state updated", {
+      count: Object.keys(collections).length,
+      ids: Object.keys(collections),
+      collections: Object.values(collections).map(c => ({ id: c.id, name: c.name }))
+    });
+  }, [collections]);
 
   /**
    * Load initial data - only metadata, not full entities
@@ -105,12 +128,36 @@ export const ConversationsDataProvider: React.FC<{ children: ReactNode }> = ({ c
       console.log(`ConversationsDataContext: Processed ${Object.keys(conversationsRecord).length} conversations`);
       setConversations(conversationsRecord);
       setLoading(prev => ({ ...prev, conversations: false }));
+
+      // Load collections
+      if (collectionRepository) {
+        console.log("ConversationsDataContext: Loading collections from Conversations API...");
+        setLoading(prev => ({ ...prev, collections: true }));
+        const collectionsResult = await collectionRepository.getAll();
+        console.log(`ConversationsDataContext: Received ${collectionsResult.data.length} collections from Conversations API`);
+
+        if (collectionsResult.data.length === 0) {
+          console.warn("ConversationsDataContext: No collections found in Conversations API repository");
+        }
+
+        const collectionsRecord = collectionsResult.data.reduce((record, collection) => {
+          record[collection.id] = collection;
+          return record;
+        }, {} as Record<string, Collection>);
+
+        console.log(`ConversationsDataContext: Processed ${Object.keys(collectionsRecord).length} collections from Conversations API`);
+        setCollections(collectionsRecord);
+        setLoading(prev => ({ ...prev, collections: false }));
+      } else {
+        console.warn("ConversationsDataContext: No collection repository available");
+      }
     } catch (error) {
       console.error('Failed to load initial data:', error);
       // Reset loading states
       setLoading({
         messages: false,
         conversations: false,
+        collections: false,
       });
     }
   };
@@ -254,6 +301,170 @@ export const ConversationsDataProvider: React.FC<{ children: ReactNode }> = ({ c
   };
 
   /**
+   * Get conversations for a collection
+   */
+  const getConversationsByCollectionId = async (
+    collectionId: string,
+    options?: QueryOptions
+  ): Promise<Conversation[]> => {
+    if (!initialized || !collectionRepository) {
+      return [];
+    }
+
+    try {
+      setLoading(prev => ({ ...prev, conversations: true }));
+
+      // Check if collection exists
+      const collection = collections[collectionId];
+      if (!collection) {
+        const collectionResult = await collectionRepository.getById(collectionId);
+        if (!collectionResult) {
+          return [];
+        }
+        // Update collections state with the fetched collection
+        setCollections(prev => ({
+          ...prev,
+          [collectionResult.id]: collectionResult
+        }));
+      }
+
+      // Get conversations for the collection
+      const conversationsResult = await collectionRepository.getConversations(collectionId, options);
+
+      // Update conversations state with new conversations
+      const newConversations = { ...conversations };
+      conversationsResult.data.forEach(conversation => {
+        // Ensure conclusion is one of the valid options
+        if (conversation.conclusion !== 'successful' && conversation.conclusion !== 'unsuccessful') {
+          conversation.conclusion = 'uncertain';
+        }
+
+        newConversations[conversation.thread_id] = conversation;
+      });
+      setConversations(newConversations);
+
+      setLoading(prev => ({ ...prev, conversations: false }));
+      return conversationsResult.data;
+    } catch (error) {
+      console.error(`Failed to get conversations for collection ${collectionId}:`, error);
+      setLoading(prev => ({ ...prev, conversations: false }));
+      return [];
+    }
+  };
+
+  /**
+   * Add a new collection
+   */
+  const addCollection = async (
+    collectionData: Omit<Collection, 'id'> & { id?: string }
+  ): Promise<Collection> => {
+    if (!initialized || !collectionRepository) {
+      throw new Error('Collection repository not initialized');
+    }
+
+    try {
+      // Create the collection
+      const collection = await collectionRepository.create(collectionData);
+
+      // Update collections state
+      setCollections(prev => ({
+        ...prev,
+        [collection.id]: collection
+      }));
+
+      return collection;
+    } catch (error) {
+      console.error('Failed to create collection:', error);
+      throw error;
+    }
+  };
+
+  /**
+   * Delete a collection
+   */
+  const deleteCollection = async (collectionId: string): Promise<boolean> => {
+    if (!initialized || !collectionRepository) {
+      throw new Error('Collection repository not initialized');
+    }
+
+    try {
+      // Delete the collection
+      const success = await collectionRepository.delete(collectionId);
+
+      if (success) {
+        // Remove from collections state
+        setCollections(prev => {
+          const updated = { ...prev };
+          delete updated[collectionId];
+          return updated;
+        });
+      }
+
+      return success;
+    } catch (error) {
+      console.error('Failed to delete collection:', error);
+      throw error;
+    }
+  };
+
+  /**
+   * Update a collection
+   */
+  const updateCollection = async (
+    collectionId: string,
+    collectionData: Partial<Collection>
+  ): Promise<Collection> => {
+    if (!initialized || !collectionRepository) {
+      throw new Error('Collection repository not initialized');
+    }
+
+    try {
+      // Update the collection
+      const updatedCollection = await collectionRepository.update(collectionId, collectionData);
+      
+      if (!updatedCollection) {
+        throw new Error('Failed to update collection');
+      }
+
+      // Update collections state
+      setCollections(prev => ({
+        ...prev,
+        [updatedCollection.id]: updatedCollection
+      }));
+
+      return updatedCollection;
+    } catch (error) {
+      console.error('Failed to update collection:', error);
+      throw error;
+    }
+  };
+
+  /**
+   * Refresh a specific collection
+   */
+  const refreshCollection = async (collectionId: string): Promise<void> => {
+    if (!initialized || !collectionRepository) {
+      return;
+    }
+
+    try {
+      // Refresh the collection data
+      const collection = await collectionRepository.getById(collectionId);
+      if (collection) {
+        setCollections(prev => ({
+          ...prev,
+          [collection.id]: collection
+        }));
+      }
+
+      // Refresh conversations for this collection
+      await getConversationsByCollectionId(collectionId);
+    } catch (error) {
+      console.error(`Failed to refresh collection ${collectionId}:`, error);
+    }
+  };
+
+  /**
    * Refresh all data
    */
   const refreshData = async (): Promise<void> => {
@@ -268,15 +479,25 @@ export const ConversationsDataProvider: React.FC<{ children: ReactNode }> = ({ c
     // State data
     messages,
     conversations,
+    collections,
 
     // Loading states
     loading,
 
     // Data access methods
     getMessagesByConversationId,
+    getConversationsByCollectionId,
+
+    // Data creation methods
+    addCollection,
+
+    // Data modification methods
+    updateCollection,
+    deleteCollection,
 
     // Refresh methods
     refreshData,
+    refreshCollection,
   };
 
   return <ConversationsDataContext.Provider value={value}>{children}</ConversationsDataContext.Provider>;

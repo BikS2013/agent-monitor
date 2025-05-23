@@ -519,11 +519,48 @@ export class ApiClient {
   /**
    * Get all collections or specific collections by ID
    */
-  async getCollections(ids?: string[]): Promise<any> {
-    const params: any = {};
-    if (ids && ids.length > 0) {
-      params.ids = ids.join(',');
+  async getCollections(options: {
+    ids?: string[],
+    ownerId?: string,
+    creator?: string,
+    isPublic?: boolean,
+    tags?: string[],
+    search?: string,
+    limit?: number,
+    skip?: number
+  } = {}): Promise<any> {
+    const params: any = {
+      skip: options.skip || 0
+    };
+    
+    if (options.ids && options.ids.length > 0) {
+      params.ids = options.ids.join(',');
     }
+    
+    if (options.ownerId) {
+      params.ownerId = options.ownerId;
+    }
+    
+    if (options.creator) {
+      params.creator = options.creator;
+    }
+    
+    if (options.isPublic !== undefined) {
+      params.isPublic = options.isPublic;
+    }
+    
+    if (options.tags && options.tags.length > 0) {
+      params.tags = options.tags;
+    }
+    
+    if (options.search) {
+      params.search = options.search;
+    }
+    
+    if (options.limit) {
+      params.limit = options.limit;
+    }
+    
     return this.get('/collection', params);
   }
   
@@ -567,6 +604,21 @@ export class ApiClient {
    */
   async getCollectionsByCreator(creatorId: string): Promise<any> {
     return this.get(`/user/${creatorId}/collection`);
+  }
+  
+  /**
+   * Refresh collection conversations
+   * Re-evaluates the collection filter criteria against all conversations
+   */
+  async refreshCollection(collectionId: string): Promise<any> {
+    return this.post(`/collection/${collectionId}/refresh`);
+  }
+  
+  /**
+   * Get collection statistics
+   */
+  async getCollectionStatistics(collectionId: string): Promise<any> {
+    return this.get(`/collection/${collectionId}/statistics`);
   }
   
   // #endregion

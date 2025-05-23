@@ -3,6 +3,7 @@ import React, { createContext, useContext, ReactNode, useState, useEffect } from
 import {
   IMessageRepository,
   IConversationRepository,
+  ICollectionRepository,
 } from '../data/repositories/interfaces';
 
 import { ConversationsRepositoryFactory } from '../data/repositories/ConversationsRepositoryFactory';
@@ -13,16 +14,18 @@ interface ConversationsRepositoryContextType {
   initialized: boolean;
   messageRepository: IMessageRepository | null;
   conversationRepository: IConversationRepository | null;
+  collectionRepository: ICollectionRepository | null;
   initialize: (fallbackToLocal?: boolean, dataSize?: DataSize) => Promise<void>;
   isUsingApi: boolean;
 }
 
-const ConversationsRepositoryContext = createContext<ConversationsRepositoryContextType | undefined>(undefined);
+export const ConversationsRepositoryContext = createContext<ConversationsRepositoryContextType | undefined>(undefined);
 
 export const ConversationsRepositoryProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [initialized, setInitialized] = useState<boolean>(false);
   const [messageRepository, setMessageRepository] = useState<IMessageRepository | null>(null);
   const [conversationRepository, setConversationRepository] = useState<IConversationRepository | null>(null);
+  const [collectionRepository, setCollectionRepository] = useState<ICollectionRepository | null>(null);
   const [isUsingApi, setIsUsingApi] = useState<boolean>(false);
 
   /**
@@ -100,6 +103,7 @@ export const ConversationsRepositoryProvider: React.FC<{ children: ReactNode }> 
       // Create repositories
       setMessageRepository(ConversationsRepositoryFactory.getMessageRepository());
       setConversationRepository(ConversationsRepositoryFactory.getConversationRepository());
+      setCollectionRepository(ConversationsRepositoryFactory.getCollectionRepository());
 
       setInitialized(true);
     } catch (error) {
@@ -181,6 +185,7 @@ export const ConversationsRepositoryProvider: React.FC<{ children: ReactNode }> 
     initialized,
     messageRepository,
     conversationRepository,
+    collectionRepository,
     initialize,
     isUsingApi
   };

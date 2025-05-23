@@ -49,7 +49,7 @@ export class CollectionRepository extends BaseRepository<Collection> implements 
       console.log('CollectionRepository.getAll: First collection:', {
         id: paginatedCollections[0].id,
         name: paginatedCollections[0].name,
-        conversationCount: paginatedCollections[0].conversations.length
+        conversationCount: paginatedCollections[0].conversations?.length || paginatedCollections[0].conversationIds?.length || 0
       });
     }
     
@@ -156,7 +156,7 @@ export class CollectionRepository extends BaseRepository<Collection> implements 
       console.log('CollectionRepository.getByGroupId: First collection:', {
         id: paginatedCollections[0].id,
         name: paginatedCollections[0].name,
-        conversationCount: paginatedCollections[0].conversations.length
+        conversationCount: paginatedCollections[0].conversations?.length || paginatedCollections[0].conversationIds?.length || 0
       });
     }
     
@@ -179,7 +179,8 @@ export class CollectionRepository extends BaseRepository<Collection> implements 
     // For lazy loading, strip out conversation arrays
     const lightweightCollections = paginatedCollections.map(collection => ({
       ...collection,
-      conversations: []
+      conversations: [],
+      conversationIds: []
     }));
     
     return this.formatQueryResult(lightweightCollections, total, options);
@@ -197,11 +198,13 @@ export class CollectionRepository extends BaseRepository<Collection> implements 
     }
     
     // Re-apply filter criteria to get updated conversation list
-    const matchingConversationIds = await this.dataSource.filterConversations(collection.filterCriteria);
+    const filterCriteria = collection.filter || collection.filterCriteria || {};
+    const matchingConversationIds = await this.dataSource.filterConversations(filterCriteria);
     
     // Update the collection with new conversation IDs
     await this.dataSource.updateCollection(collectionId, {
       conversations: matchingConversationIds,
+      conversationIds: matchingConversationIds,
       metadata: {
         ...collection.metadata,
         totalConversations: matchingConversationIds.length,
@@ -263,9 +266,9 @@ export class CollectionRepository extends BaseRepository<Collection> implements 
       successRate,
       activeConversations: conversations.filter(c => c.status === 'active').length,
       closedConversations: conversations.filter(c => c.status === 'closed').length,
-      highPriorityCount: conversations.filter(c => c.priority === 'high').length,
-      mediumPriorityCount: conversations.filter(c => c.priority === 'medium').length,
-      lowPriorityCount: conversations.filter(c => c.priority === 'low').length,
+      highPriorityCount: 0, // Priority field doesn't exist on Conversation type
+      mediumPriorityCount: 0,
+      lowPriorityCount: 0,
       lastUpdated: new Date().toISOString()
     };
     

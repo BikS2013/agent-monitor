@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API Status Debugger</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .status {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 4px;
+        }
+        .enabled { background: #d4edda; color: #155724; }
+        .disabled { background: #f8d7da; color: #721c24; }
+        .warning { background: #fff3cd; color: #856404; }
+        button {
+            padding: 10px 20px;
+            margin: 5px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .test-btn { background: #007bff; color: white; }
+        .clear-btn { background: #dc3545; color: white; }
+        pre {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 4px;
+            overflow-x: auto;
+            white-space: pre-wrap;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>API Status Debugger</h1>
+        
+        <h2>Current localStorage Settings</h2>
+        <div id="localStorage-status"></div>
+        
+        <h2>API Connection Test</h2>
+        <button class="test-btn" onclick="testApiConnection()">Test localhost:8001 Connection</button>
+        <button class="test-btn" onclick="testApiEndpoints()">Test API Endpoints</button>
+        <button class="clear-btn" onclick="clearSettings()">Clear All API Settings</button>
+        
+        <h2>Test Results</h2>
+        <div id="test-results"></div>
+        
+        <h2>Console Logs</h2>
+        <pre id="console-logs"></pre>
+    </div>
+
+    <script>
+        let logs = [];
+        
+        // Capture console logs
+        const originalLog = console.log;
+        const originalError = console.error;
+        
+        console.log = function(...args) {
+            logs.push(`[LOG] ${args.join(' ')}`);
+            updateConsoleLogs();
+            originalLog.apply(console, args);
+        };
+        
+        console.error = function(...args) {
+            logs.push(`[ERROR] ${args.join(' ')}`);
+            updateConsoleLogs();
+            originalError.apply(console, args);
+        };
+        
+        function updateConsoleLogs() {
+            document.getElementById('console-logs').textContent = logs.slice(-20).join('\n');
+        }
+        
+        function updateLocalStorageStatus() {
+            const conversationsApiEnabled = localStorage.getItem('conversationsApiEnabled');
+            const conversationsApiBaseUrl = localStorage.getItem('conversationsApiBaseUrl');
+            const conversationsApiAuthMethod = localStorage.getItem('conversationsApiAuthMethod');
+            
+            const statusDiv = document.getElementById('localStorage-status');
+            
+            let html = '';
+            
+            if (conversationsApiEnabled === 'true') {
+                html += '<div class="status enabled">✓ Conversations API Enabled</div>';
+            } else {
+                html += '<div class="status disabled">✗ Conversations API Disabled</div>';
+            }
+            
+            html += `<div class="status">Base URL: ${conversationsApiBaseUrl || 'Not set'}</div>`;
+            html += `<div class="status">Auth Method: ${conversationsApiAuthMethod || 'Not set'}</div>`;
+            
+            statusDiv.innerHTML = html;
+        }
+        
+        async function testApiConnection() {
+            const baseUrl = localStorage.getItem('conversationsApiBaseUrl') || 'http://localhost:8001';
+            const resultsDiv = document.getElementById('test-results');
+            
+            resultsDiv.innerHTML = '<div class="status warning">Testing connection...</div>';
+            
+            try {
+                console.log(`Testing connection to ${baseUrl}`);
+                
+                const response = await fetch(`${baseUrl}/health`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                if (response.ok) {
+                    const data = await response.text();
+                    resultsDiv.innerHTML = `
+                        <div class="status enabled">✓ Connection successful!</div>
+                        <div class="status">Response: ${data}</div>
+                    `;
+                    console.log('API connection successful');
+                } else {
+                    resultsDiv.innerHTML = `
+                        <div class="status warning">⚠ Server responded with status: ${response.status}</div>
+                        <div class="status">This might indicate the server is running but not properly configured</div>
+                    `;
+                    console.log(`API responded with status: ${response.status}`);
+                }
+            } catch (error) {
+                resultsDiv.innerHTML = `
+                    <div class="status disabled">✗ Connection failed</div>
+                    <div class="status">Error: ${error.message}</div>
+                    <div class="status">Make sure your API server is running at ${baseUrl}</div>
+                `;
+                console.error('API connection failed:', error);
+            }
+        }
+        
+        async function testApiEndpoints() {
+            const baseUrl = localStorage.getItem('conversationsApiBaseUrl') || 'http://localhost:8001';
+            const resultsDiv = document.getElementById('test-results');
+            
+            resultsDiv.innerHTML = '<div class="status warning">Testing API endpoints...</div>';
+            
+            const endpoints = [
+                { path: '/conversation', method: 'GET', name: 'Get Conversations' },
+                { path: '/collection', method: 'GET', name: 'Get Collections' },
+                { path: '/ai-agent', method: 'GET', name: 'Get AI Agents' }
+            ];
+            
+            let results = '';
+            
+            for (const endpoint of endpoints) {
+                try {
+                    console.log(`Testing ${endpoint.method} ${baseUrl}${endpoint.path}`);
+                    
+                    const response = await fetch(`${baseUrl}${endpoint.path}`, {
+                        method: endpoint.method,
+                        headers: {
+                            'Content-Type': 'application/json'
+                        }
+                    });
+                    
+                    if (response.ok) {
+                        results += `<div class="status enabled">✓ ${endpoint.name}: OK (${response.status})</div>`;
+                        console.log(`${endpoint.name} endpoint working`);
+                    } else {
+                        results += `<div class="status warning">⚠ ${endpoint.name}: ${response.status}</div>`;
+                        console.log(`${endpoint.name} endpoint returned ${response.status}`);
+                    }
+                } catch (error) {
+                    results += `<div class="status disabled">✗ ${endpoint.name}: ${error.message}</div>`;
+                    console.error(`${endpoint.name} endpoint failed:`, error);
+                }
+            }
+            
+            resultsDiv.innerHTML = results;
+        }
+        
+        function clearSettings() {
+            localStorage.removeItem('conversationsApiEnabled');
+            localStorage.removeItem('conversationsApiBaseUrl');
+            localStorage.removeItem('conversationsApiAuthMethod');
+            localStorage.removeItem('conversationsApiClientSecret');
+            localStorage.removeItem('conversationsApiClientId');
+            localStorage.removeItem('conversationsApiToken');
+            
+            updateLocalStorageStatus();
+            document.getElementById('test-results').innerHTML = '<div class="status warning">Settings cleared. Reload your application to use local data.</div>';
+            console.log('API settings cleared');
+        }
+        
+        // Initialize
+        updateLocalStorageStatus();
+        updateConsoleLogs();
+    </script>
+</body>
+</html>

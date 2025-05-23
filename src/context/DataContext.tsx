@@ -50,13 +50,16 @@ interface DataContextType {
   updateGroup: (group: Group) => Promise<Group>;
   updateAIAgent: (agent: AIAgent) => Promise<AIAgent>;
 
+  // Data deletion methods
+  deleteCollection: (collectionId: string) => Promise<boolean>;
+
   // Refresh methods
   refreshData: () => Promise<void>;
   refreshCollection: (collectionId: string) => Promise<void>;
   refreshAIAgentStats: (aiAgentId: string) => Promise<void>;
 }
 
-const DataContext = createContext<DataContextType | undefined>(undefined);
+export const DataContext = createContext<DataContextType | undefined>(undefined);
 
 export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   // Use repositories from RepositoryContext
@@ -559,6 +562,34 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   };
 
   /**
+   * Delete a collection
+   */
+  const deleteCollection = async (collectionId: string): Promise<boolean> => {
+    if (!initialized || !collectionRepository) {
+      throw new Error('Collection repository not initialized');
+    }
+
+    try {
+      // Delete the collection
+      const success = await collectionRepository.delete(collectionId);
+
+      if (success) {
+        // Remove from collections state
+        setCollections(prev => {
+          const updated = { ...prev };
+          delete updated[collectionId];
+          return updated;
+        });
+      }
+
+      return success;
+    } catch (error) {
+      console.error('Failed to delete collection:', error);
+      throw error;
+    }
+  };
+
+  /**
    * Refresh all data
    */
   const refreshData = async (): Promise<void> => {
@@ -698,6 +729,9 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     // Data update methods
     updateGroup,
     updateAIAgent,
+
+    // Data deletion methods
+    deleteCollection,
 
     // Refresh methods
     refreshData,

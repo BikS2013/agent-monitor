@@ -124,12 +124,14 @@ const App: React.FC = () => {
         );
       case 'collections':
         return (
-          <CollectionsView
-            onSelectConversation={setSelectedConversation}
-            onChangeView={handleViewChange}
-            selectedCollection={selectedCollection}
-            setSelectedCollection={setSelectedCollection}
-          />
+          <ConversationsDataProvider>
+            <CollectionsView
+              onSelectConversation={setSelectedConversation}
+              onChangeView={handleViewChange}
+              selectedCollection={selectedCollection}
+              setSelectedCollection={setSelectedCollection}
+            />
+          </ConversationsDataProvider>
         );
       case 'groups':
         return (
