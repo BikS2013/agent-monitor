@@ -16,17 +16,17 @@ interface Group {
   name: string;                          // Group name
   description: string;                   // Group description
   purpose: 'evaluation' | 'security' | 'efficiency';  // Primary purpose of the group
-  collectionIds: string[];               // IDs of collections in this group
-  adminIds: string[];                    // IDs of users with admin rights
-  userIds: string[];                     // IDs of users who can access this group
-  createdAt: string;                     // When group was created (ISO format)
-  updatedAt?: string;                    // When group was last updated (ISO format)
+  collection_ids: string[];              // IDs of collections in this group
+  admin_ids: string[];                   // IDs of users with admin rights
+  user_ids: string[];                    // IDs of users who can access this group
+  created_at: string;                    // When group was created (ISO format)
+  updated_at?: string;                   // When group was last updated (ISO format)
   metadata: Record<string, any>;         // Additional metadata
-  isPrivate: boolean;                    // Whether the group is private
+  is_private: boolean;                   // Whether the group is private
 }
 ```
 
-the fields collectionIds, adminIds, userIds, permissionLevels are not used to transfer data. They are used at the client side to keep track of collections, admins, and users through the various API calls. 
+the fields collection_ids, admin_ids, user_ids, permission_levels are not used to transfer data. They are used at the client side to keep track of collections, admins, and users through the various API calls. 
 
 ### Collection (Referenced Model)
 
@@ -35,12 +35,12 @@ interface Collection {
   id: string;                     // Unique identifier
   name: string;                   // Collection name
   description: string;            // Collection description
-  createdAt: string;              // When collection was created (ISO format)
-  updatedAt?: string;             // When collection was last updated (ISO format)
-  ownerId: string;                // ID of the user who owns the collection
+  created_at: string;             // When collection was created (ISO format)
+  updated_at?: string;            // When collection was last updated (ISO format)
+  owner_id: string;               // ID of the user who owns the collection
   creator: string;                // ID or name of the user who created the collection
   conversations: string[];        // Array of conversation thread_ids in this collection
-  isPublic: boolean;              // Whether the collection is publicly accessible
+  is_public: boolean;             // Whether the collection is publicly accessible
   tags: string[];                 // Tags associated with this collection
 }
 ```
@@ -53,16 +53,16 @@ interface User {
   name: string;                   // User's name
   username: string;               // User's username for login
   email: string;                  // User's email
-  fullName: string;               // User's full name
+  full_name: string;              // User's full name
   role: 'admin' | 'supervisor' | 'executive'; // User's role
   permissions: string[];          // Array of permission strings
-  createdAt: string;              // When user was created
-  lastActive: string;             // When user was last active
-  isActive: boolean;              // Whether the user is active
+  created_at: string;             // When user was created
+  last_active: string;            // When user was last active
+  is_active: boolean;             // Whether the user is active
 }
 ```
 
-`  permissionLevels: Record<string, string>; // User permissions by user ID` 
+`  permission_levels: Record<string, string>; // User permissions by user ID` 
 
 
 ## Required API Endpoints
@@ -85,13 +85,13 @@ interface User {
       "name": "Security Review Group",
       "description": "Group for reviewing security-related conversations",
       "purpose": "security",
-      "createdAt": "2023-01-01T12:00:00Z",
-      "updatedAt": "2023-01-15T09:30:00Z",
+      "created_at": "2023-01-01T12:00:00Z",
+      "updated_at": "2023-01-15T09:30:00Z",
       "metadata": {
         "totalCollections": 3,
         "totalConversations": 42
       },
-      "isPrivate": true
+      "is_private": true
     }
     // More groups...
   ]
@@ -111,15 +111,15 @@ interface User {
   "name": "Security Review Group",
   "description": "Group for reviewing security-related conversations",
   "purpose": "security",
-  "createdAt": "2023-01-01T12:00:00Z",
-  "updatedAt": "2023-01-15T09:30:00Z",
+  "created_at": "2023-01-01T12:00:00Z",
+  "updated_at": "2023-01-15T09:30:00Z",
   "metadata": {
     "totalCollections": 3,
     "totalConversations": 42,
     "activeUsers": 5,
     "lastActivity": "2023-01-15T14:30:00Z"
   },
-  "isPrivate": true
+  "is_private": true
 }
 ```
 
@@ -135,10 +135,10 @@ interface User {
   "name": "Efficiency Analysis Group",
   "description": "Group for analyzing agent efficiency",
   "purpose": "efficiency",
-  "collectionIds": ["coll-4", "coll-5"],
-  "adminIds": ["user-123"],
-  "userIds": ["user-123", "user-789"],
-  "isPrivate": true
+  "collection_ids": ["coll-4", "coll-5"],
+  "admin_ids": ["user-123"],
+  "user_ids": ["user-123", "user-789"],
+  "is_private": true
 }
 ```
 
@@ -149,20 +149,20 @@ interface User {
   "name": "Efficiency Analysis Group",
   "description": "Group for analyzing agent efficiency",
   "purpose": "efficiency",
-  "collectionIds": ["coll-4", "coll-5"],
-  "adminIds": ["user-123"],
-  "userIds": ["user-123", "user-789"],
-  "permissionLevels": {
+  "collection_ids": ["coll-4", "coll-5"],
+  "admin_ids": ["user-123"],
+  "user_ids": ["user-123", "user-789"],
+  "permission_levels": {
     "user-123": "full",
     "user-789": "read"
   },
-  "createdAt": "2023-01-20T10:00:00Z",
-  "updatedAt": "2023-01-20T10:00:00Z",
+  "created_at": "2023-01-20T10:00:00Z",
+  "updated_at": "2023-01-20T10:00:00Z",
   "metadata": {
     "totalCollections": 2,
     "totalConversations": 18
   },
-  "isPrivate": true
+  "is_private": true
 }
 ```
 
@@ -192,17 +192,17 @@ interface User {
   "collectionIds": ["coll-4", "coll-5", "coll-6"],
   "adminIds": ["user-123"],
   "userIds": ["user-123", "user-789"],
-  "permissionLevels": {
+  "permission_levels": {
     "user-123": "full",
     "user-789": "read"
   },
-  "createdAt": "2023-01-20T10:00:00Z",
-  "updatedAt": "2023-01-20T11:30:00Z",
+  "created_at": "2023-01-20T10:00:00Z",
+  "updated_at": "2023-01-20T11:30:00Z",
   "metadata": {
     "totalCollections": 3,
     "totalConversations": 28
   },
-  "isPrivate": true
+  "is_private": true
 }
 ```
 
@@ -228,9 +228,9 @@ interface User {
 **Query Parameters**:
 - `skip` (optional): Number of records to skip (for pagination)
 - `limit` (optional): Maximum number of records to return (for pagination)
-- `sort_by` (optional): Field to sort by (e.g., name, createdAt)
-- `sort_order` (optional): Sort direction ('asc' or 'desc')
-- `include_pagination` (optional): Whether to include pagination metadata
+- `sortBy` (optional): Field to sort by (e.g., name, created_at)
+- `sortOrder` (optional): Sort direction ('asc' or 'desc')
+- `includePagination` (optional): Whether to include pagination metadata
 
 **Response Format**:
 ```json
@@ -240,17 +240,17 @@ interface User {
       "id": "coll-4",
       "name": "High Efficiency Conversations",
       "description": "Collection of conversations with high efficiency scores",
-      "createdAt": "2023-01-10T09:00:00Z",
-      "updatedAt": "2023-01-15T09:30:00Z",
-      "ownerId": "user-123",
+      "created_at": "2023-01-10T09:00:00Z",
+      "updated_at": "2023-01-15T09:30:00Z",
+      "owner_id": "user-123",
       "creator": "John Doe",
-      "isPublic": false,
+      "is_public": false,
       "tags": ["efficiency", "high-score"]
     },
     // More collections...
   ],
-  "page_info": {
-    "total_items": 3,
+  "pageInfo": {
+    "totalItems": 3,
     "limit": 20,
     "skip": 0
   }
@@ -318,13 +318,13 @@ interface User {
       "collectionIds": ["coll-1", "coll-2", "coll-3"],
       "adminIds": ["user-123"],
       "userIds": ["user-123", "user-456"],
-      "permissionLevels": {
+      "permission_levels": {
         "user-123": "full",
         "user-456": "read"
       },
-      "createdAt": "2023-01-01T12:00:00Z",
-      "updatedAt": "2023-01-15T09:30:00Z",
-      "isPrivate": true
+      "created_at": "2023-01-01T12:00:00Z",
+      "updated_at": "2023-01-15T09:30:00Z",
+      "is_private": true
     }
     // More groups...
   ]
@@ -375,7 +375,7 @@ The API supports both single-object and collection responses:
 
 2. **Collection Responses**:
    - Return an array of objects in an `items` property
-   - Optionally include pagination metadata when `include_pagination=true`
+   - Optionally include pagination metadata when `includePagination=true`
 
 ### CORS Requirements
 
@@ -410,7 +410,7 @@ Access-Control-Allow-Headers: Content-Type, Authorization, X-API-KEY, X-Client-I
      "collectionIds": ["coll-1", "coll-2"],
      "adminIds": ["user-123"],
      "userIds": ["user-123", "user-456"],
-     "isPrivate": true
+     "is_private": true
    }
    ```
 
@@ -436,33 +436,50 @@ For the Groups tab to function properly, these fields are critical:
    - `name`: For displaying the group name
    - `description`: For displaying group description
    - `purpose`: To control the display style/icon
-   - `collectionIds`: Count of collections for display
-   - `adminIds`: Count of admins for display
-   - `isPrivate`: Whether the group is private
+   - `collection_ids`: Count of collections for display
+   - `admin_ids`: Count of admins for display
+   - `is_private`: Whether the group is private
 
 2. **Group Detail View**:
    - All fields from the list view plus:
-   - `collectionIds`: IDs of collections in this group
+   - `collection_ids`: IDs of collections in this group
    - Access to the actual collection objects
    
 3. **Group Creation/Editing**:
    - Support for all group fields
    - Ability to select collections to include
    - Ability to set group purpose
-   - Setting privacy via `isPrivate`
+   - Setting privacy via `is_private`
 
 4. **User Permissions**:
-   - `adminIds`: List of users with admin rights
-   - `userIds`: List of users who can access the group
-   - `permissionLevels`: Permissions for each user
+   - `admin_ids`: List of users with admin rights
+   - `user_ids`: List of users who can access the group
+   - `permission_levels`: Permissions for each user
 
 ## Authentication Options
 
-The API supports multiple authentication methods:
+The API supports configurable authentication that can be adjusted per environment. See the main Authentication documentation for full details on the three authentication modes: **required**, **optional** (default), and **disabled**.
 
-1. **JWT Token**: Via `Authorization: Bearer <token>` header
-2. **API Key**: Via `X-API-KEY` header with optional `X-Client-ID`
-3. **No Authentication**: For development and testing environments as described in NOAUTH_IMPLEMENTATION.md
+### Quick Configuration
+
+```bash
+# Production - authentication required
+AUTH_MODE=required
+
+# Development - authentication optional (default)
+AUTH_MODE=optional
+
+# Testing - authentication disabled
+AUTH_MODE=disabled
+```
+
+### Group Access Control
+
+When authentication is enabled:
+- Group admins have full access to their groups
+- Group members have read access to their groups
+- Private groups require membership for access
+- Public groups can be viewed by any authenticated user
 
 ## Common API Patterns
 
@@ -488,7 +505,7 @@ Groups define permissions for users. The API should:
 
 ```json
 {
-  "permissionLevels": {
+  "permission_levels": {
     "user-123": "full"
   }
 }
@@ -498,7 +515,7 @@ Groups define permissions for users. The API should:
 
 ```json
 {
-  "permissionLevels": {
+  "permission_levels": {
     "user-456": "read"
   }
 }
@@ -508,7 +525,7 @@ Groups define permissions for users. The API should:
 
 ```json
 {
-  "permissionLevels": {
+  "permission_levels": {
     "user-123": "full",
     "user-456": "read",
     "user-789": "write"
@@ -522,11 +539,11 @@ Groups define permissions for users. The API should:
 
 To implement the Groups API, the following database schema considerations are required:
 
-1. **Groups Table**:
+1. **Group Table**:
    - Primary key: `id` (string, UUID preferred)
-   - Required fields: `name`, `description`, `purpose`, `createdAt`, `isPrivate`
+   - Required fields: `name`, `description`, `purpose`, `created_at`, `is_private`
    - JSON field: `metadata` should be stored as a JSON object to support additional properties
-   - Indexed fields: `purpose`, `createdAt`, `isPrivate` (for efficient querying)
+   - Indexed fields: `purpose`, `created_at`, `is_private` (for efficient querying)
    - Text search fields: `name`, `description` (for search functionality)
 
 2. **Group-Collection Relationships Table**:
@@ -582,7 +599,7 @@ The following SQL scripts create the necessary database schema for implementing 
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
 -- Groups Table
-CREATE TABLE groups (
+CREATE TABLE group (
     id UUID PRIMARY KEY NOT NULL,
     name VARCHAR(255) NOT NULL,
     description TEXT,
@@ -594,9 +611,9 @@ CREATE TABLE groups (
 );
 
 -- Create indexes for groups table
-CREATE INDEX idx_groups_created_at ON groups(created_at);
-CREATE INDEX idx_groups_is_private ON groups(is_private);
-CREATE INDEX idx_groups_name_description ON groups USING GIN (to_tsvector('english', name || ' ' || description));
+CREATE INDEX idx_groups_created_at ON group(created_at);
+CREATE INDEX idx_groups_is_private ON group(is_private);
+CREATE INDEX idx_groups_name_description ON group USING GIN (to_tsvector('english', name || ' ' || description));
 
 -- Group-Collection relationship table
 CREATE TABLE group_collections (

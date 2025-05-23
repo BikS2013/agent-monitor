@@ -66,8 +66,8 @@ interface Conversation {
 - `status` (optional): Filter by status ('active', 'inactive', 'training')
 - `model` (optional): Filter by model type
 - `search` (optional): Search by name or model
-- `sort_by` (optional): Field to sort by (e.g., name, successRate)
-- `sort_order` (optional): Sort direction ('asc' or 'desc')
+- `sortBy` (optional): Field to sort by (e.g., name, successRate)
+- `sortOrder` (optional): Sort direction ('asc' or 'desc')
 
 **Response Format**:
 ```json
@@ -95,7 +95,10 @@ interface Conversation {
       "ownerId": "user-123"
     }
     // More agents...
-  ]
+  ],
+  "total": 25,
+  "page": 1,
+  "pageSize": 20
 }
 ```
 
@@ -108,35 +111,37 @@ interface Conversation {
 **Response Format**:
 ```json
 {
-  "id": "agent-123",
-  "name": "Support Bot",
-  "model": "GPT-4-Turbo",
-  "status": "active",
-  "conversationsProcessed": 1245,
-  "successRate": "85%",
-  "avgResponseTime": "1.2s",
-  "lastActive": "2023-05-15T14:30:00Z",
-  "capabilities": ["general-inquiries", "troubleshooting"],
-  "specializations": ["customer-service", "technical-support"],
-  "metadata": {
-    "version": "1.2",
-    "totalMessagesProcessed": 5892,
-    "avgConfidenceScore": "92%",
-    "responseTimeDistribution": {
-      "under1s": "65%",
-      "1to3s": "25%",
-      "over3s": "10%"
+  "data": {
+    "id": "agent-123",
+    "name": "Support Bot",
+    "model": "GPT-4-Turbo",
+    "status": "active",
+    "conversationsProcessed": 1245,
+    "successRate": "85%",
+    "avgResponseTime": "1.2s",
+    "lastActive": "2023-05-15T14:30:00Z",
+    "capabilities": ["general-inquiries", "troubleshooting"],
+    "specializations": ["customer-service", "technical-support"],
+    "metadata": {
+      "version": "1.2",
+      "totalMessagesProcessed": 5892,
+      "avgConfidenceScore": "92%",
+      "responseTimeDistribution": {
+        "under1s": "65%",
+        "1to3s": "25%",
+        "over3s": "10%"
+      },
+      "topPerformingTasks": [
+        "password-reset",
+        "account-inquiries",
+        "product-information"
+      ]
     },
-    "topPerformingTasks": [
-      "password-reset",
-      "account-inquiries",
-      "product-information"
-    ]
-  },
-  "createdAt": "2023-01-15T10:00:00Z",
-  "updatedAt": "2023-05-15T14:30:00Z",
-  "creatorId": "user-123",
-  "ownerId": "user-123"
+    "createdAt": "2023-01-15T10:00:00Z",
+    "updatedAt": "2023-05-15T14:30:00Z",
+    "creatorId": "user-123",
+    "ownerId": "user-123"
+  }
 }
 ```
 
@@ -160,21 +165,23 @@ interface Conversation {
 **Response Format**:
 ```json
 {
-  "id": "agent-456",
-  "name": "Product Expert Bot",
-  "model": "Claude-3-Opus",
-  "status": "active",
-  "conversationsProcessed": 0,
-  "successRate": "0%",
-  "avgResponseTime": "0s",
-  "lastActive": "2023-05-15T15:00:00Z",
-  "capabilities": ["product-inquiries", "pricing-information"],
-  "specializations": ["product-catalog", "pricing"],
-  "metadata": {},
-  "createdAt": "2023-01-15T10:00:00Z",
-  "updatedAt": "2023-05-15T14:30:00Z",
-  "creatorId": "user-123",
-  "ownerId": "user-123"
+  "data": {
+    "id": "agent-456",
+    "name": "Product Expert Bot",
+    "model": "Claude-3-Opus",
+    "status": "active",
+    "conversationsProcessed": 0,
+    "successRate": "0%",
+    "avgResponseTime": "0s",
+    "lastActive": "2023-05-15T15:00:00Z",
+    "capabilities": ["product-inquiries", "pricing-information"],
+    "specializations": ["product-catalog", "pricing"],
+    "metadata": {},
+    "createdAt": "2023-01-15T10:00:00Z",
+    "updatedAt": "2023-05-15T14:30:00Z",
+    "creatorId": "user-123",
+    "ownerId": "user-123"
+  }
 }
 ```
 
@@ -198,21 +205,23 @@ interface Conversation {
 **Response Format**:
 ```json
 {
-  "id": "agent-456",
-  "name": "Product Expert Bot (Updated)",
-  "model": "Claude-3-Opus",
-  "status": "active",
-  "conversationsProcessed": 0,
-  "successRate": "0%",
-  "avgResponseTime": "0s",
-  "lastActive": "2023-05-15T15:00:00Z",
-  "capabilities": ["product-inquiries", "pricing-information", "inventory-checks"],
-  "specializations": ["product-catalog", "pricing", "inventory"],
-  "metadata": {},
-  "createdAt": "2023-01-15T10:00:00Z",
-  "updatedAt": "2023-05-15T14:30:00Z",
-  "creatorId": "user-123",
-  "ownerId": "user-123"
+  "data": {
+    "id": "agent-456",
+    "name": "Product Expert Bot (Updated)",
+    "model": "Claude-3-Opus",
+    "status": "active",
+    "conversationsProcessed": 0,
+    "successRate": "0%",
+    "avgResponseTime": "0s",
+    "lastActive": "2023-05-15T15:00:00Z",
+    "capabilities": ["product-inquiries", "pricing-information", "inventory-checks"],
+    "specializations": ["product-catalog", "pricing", "inventory"],
+    "metadata": {},
+    "createdAt": "2023-01-15T10:00:00Z",
+    "updatedAt": "2023-05-15T14:30:00Z",
+    "creatorId": "user-123",
+    "ownerId": "user-123"
+  }
 }
 ```
 
@@ -261,11 +270,11 @@ interface Conversation {
 **Query Parameters**:
 - `skip` (optional): Number of records to skip (for pagination)
 - `limit` (optional): Maximum number of records to return (for pagination)
-- `sort_by` (optional): Field to sort by (e.g., created_at, messageCount)
-- `sort_order` (optional): Sort direction ('asc' or 'desc')
+- `sortBy` (optional): Field to sort by (e.g., created_at, messageCount)
+- `sortOrder` (optional): Sort direction ('asc' or 'desc')
 - `status` (optional): Filter by conversation status ('active', 'closed')
 - `conclusion` (optional): Filter by conclusion ('successful', 'unsuccessful', 'uncertain')
-- `include_pagination` (optional): Whether to include pagination metadata
+- `includePagination` (optional): Whether to include pagination metadata
 
 **Response Format**:
 ```json
@@ -289,8 +298,8 @@ interface Conversation {
     }
     // More conversations...
   ],
-  "page_info": {
-    "total_items": 1245,
+  "pageInfo": {
+    "totalItems": 1245,
     "limit": 20,
     "skip": 0
   }
@@ -305,8 +314,8 @@ interface Conversation {
 
 **Query Parameters**:
 - `period` (optional): Time period for metrics ('day', 'week', 'month', 'year')
-- `from_date` (optional): Start date for custom time period
-- `to_date` (optional): End date for custom time period
+- `fromDate` (optional): Start date for custom time period
+- `toDate` (optional): End date for custom time period
 
 **Response Format**:
 ```json
@@ -413,14 +422,20 @@ AI agents can have one of three status values:
 
 ### Response Format
 
-The API supports both single-object and collection responses:
+The API consistently uses structured response formats:
 
 1. **Single Object Responses**:
-   - Return the object directly: `{ id: "agent-123", name: "Support Bot", ... }`
+   - Return the object wrapped in a `data` field: `{ "data": { id: "agent-123", name: "Support Bot", ... } }`
+   - Used for: GET /aiagent/{id}, POST /aiagent, PUT /aiagent/{id}
 
 2. **Collection Responses**:
-   - Return an array of objects in an `items` property
-   - Optionally include pagination metadata when `include_pagination=true`
+   - Return an array of objects wrapped in an `items` property: `{ "items": [...] }`
+   - Used for: GET /aiagent, GET /aiagent/{id}/conversation, GET /user/{id}/ai-agent
+   - Optionally include pagination metadata when `includePagination=true` as `pageInfo`
+
+3. **Special Responses**:
+   - DELETE operations return: `{ "success": true }`
+   - Status update endpoint returns object with specific fields: `{ "id", "name", "status", "updatedAt" }`
 
 ### CORS Requirements
 
@@ -436,20 +451,20 @@ Access-Control-Allow-Headers: Content-Type, Authorization, X-API-KEY, X-Client-I
 
 1. **User Opens AI Agents Tab**:
    ```
-   GET /ai-agent
+   GET /aiagent
    ```
 
 2. **User Views an Agent**:
    ```
-   GET /ai-agent/agent-123
-   GET /ai-agent/agent-123/metrics
-   GET /ai-agent/agent-123/conversation?limit=20
+   GET /aiagent/agent-123
+   GET /aiagent/agent-123/metrics
+   GET /aiagent/agent-123/conversation?limit=20
    ```
 
 3. **User Creates a New Agent**:
    ```
-   GET /ai-model
-   POST /ai-agent
+   GET /aimodel
+   POST /aiagent
    {
      "name": "New Support Bot",
      "model": "GPT-4-Turbo",
@@ -461,7 +476,7 @@ Access-Control-Allow-Headers: Content-Type, Authorization, X-API-KEY, X-Client-I
 
 4. **User Updates Agent Status**:
    ```
-   PATCH /ai-agent/agent-123/status
+   PATCH /aiagent/agent-123/status
    {
      "status": "inactive"
    }
@@ -469,7 +484,7 @@ Access-Control-Allow-Headers: Content-Type, Authorization, X-API-KEY, X-Client-I
 
 5. **User Edits Agent Details**:
    ```
-   PUT /ai-agent/agent-123
+   PUT /aiagent/agent-123
    {
      "name": "Updated Support Bot",
      "model": "GPT-4-Turbo",
@@ -511,11 +526,53 @@ For the AI Agents tab to function properly, these fields are critical:
 
 ## Authentication Options
 
-The API supports multiple authentication methods:
+The API supports configurable authentication that can be adjusted per environment:
 
-1. **JWT Token**: Via `Authorization: Bearer <token>` header
-2. **API Key**: Via `X-API-KEY` header with optional `X-Client-ID`
-3. **No Authentication**: For development and testing environments as described in NOAUTH_IMPLEMENTATION.md
+### Authentication Modes
+
+The API can operate in different authentication modes controlled by the `AUTH_MODE` environment variable:
+
+1. **Required Mode** (`AUTH_MODE=required`)
+   - All protected endpoints require valid JWT authentication
+   - Returns 401 Unauthorized for missing or invalid tokens
+   - Suitable for production environments
+
+2. **Optional Mode** (`AUTH_MODE=optional`) - **Default**
+   - Authentication is validated if provided but not required
+   - Invalid tokens return 401 only if `REQUIRE_AUTHENTICATION=true`
+   - Allows unauthenticated access for development/testing
+   - Suitable for development and staging environments
+
+3. **Disabled Mode** (`AUTH_MODE=disabled`)
+   - No authentication checks performed
+   - All endpoints accessible without tokens
+   - Only for local development or testing
+
+### Authentication Methods
+
+When authentication is enabled, the following methods are supported:
+
+1. **JWT Token**: Via `Authorization: Bearer <token>` header (primary method)
+   - Standard JWT with user ID, role, and permissions encoded
+   - Use `/auth/login` to obtain tokens
+
+2. **API Key**: Via `X-API-KEY` header with optional `X-CLIENT-ID`
+   - For service-to-service or automated access
+
+### Environment Configuration
+
+```bash
+# Production - authentication required
+AUTH_MODE=required
+REQUIRE_AUTHENTICATION=true
+
+# Development - authentication optional  
+AUTH_MODE=optional
+REQUIRE_AUTHENTICATION=false
+
+# Testing - authentication disabled
+AUTH_MODE=disabled
+```
 
 ## Relationships with Other Entities
 
@@ -587,7 +644,7 @@ The following SQL scripts create the necessary database schema for implementing 
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
 -- AI Agents Table
-CREATE TABLE ai_agents (
+CREATE TABLE ai_agent (
     id UUID PRIMARY KEY NOT NULL,
     name VARCHAR(255) NOT NULL,
     model VARCHAR(100) NOT NULL,
@@ -606,10 +663,10 @@ CREATE TABLE ai_agents (
 );
 
 -- Create indexes for ai_agents table
-CREATE INDEX idx_ai_agents_status ON ai_agents(status);
-CREATE INDEX idx_ai_agents_model ON ai_agents(model);
-CREATE INDEX idx_ai_agents_created_at ON ai_agents(created_at);
-CREATE INDEX idx_ai_agents_name_model ON ai_agents USING GIN (to_tsvector('english', name || ' ' || model));
+CREATE INDEX idx_ai_agents_status ON ai_agent(status);
+CREATE INDEX idx_ai_agents_model ON ai_agent(model);
+CREATE INDEX idx_ai_agents_created_at ON ai_agent(created_at);
+CREATE INDEX idx_ai_agents_name_model ON ai_agent USING GIN (to_tsvector('english', name || ' ' || model));
 
 -- AI Agent Metrics Historical Table
 CREATE TABLE ai_agent_metrics (

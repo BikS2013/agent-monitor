@@ -2,9 +2,19 @@
 
 This document provides a comprehensive specification of the API requirements for the Collections tab in the Agent Monitor application.
 
+**Last Updated**: 2025-05-22 - Updated to match current implementation
+
 ## Overview
 
 The Collections tab allows users to create, view, and manage collections of conversations based on various filtering criteria. Collections provide a way to group related conversations for analysis and review.
+
+### Key Implementation Details
+
+- **Consistent Response Format**: All list endpoints return `{"items": [...]}` format (never direct arrays)
+- **Nullable Filter Fields**: Filter elements support null values for flexible filtering
+- **Metadata Fields**: Collections include comprehensive metadata with statistics
+- **ISO Timestamps**: All dates use ISO format with timezone information
+- **UUID Identifiers**: Collection IDs are UUIDs in string format
 
 ## Data Models
 
@@ -12,13 +22,13 @@ The Collections tab allows users to create, view, and manage collections of conv
 
 ```typescript
 interface FilterElement {
-  aiAgentIds?: string[];        // Filter by AI agent IDs
-  timeRange?: {                  // Time period for filtering
-    startDate?: string;       // Start date for time range
-    endDate?: string;         // End date for time range
-    period?: string;        // Predefined period (today, week, month, quarter, year)
-  };
-  outcome?: 'successful' | 'unsuccessful' | 'uncertain' | 'all'; // Filter by conversation outcome
+  aiAgentIds?: string[] | null;     // Filter by AI agent IDs (nullable)
+  timeRange?: {                     // Time period for filtering
+    startDate?: string | null;    // Start date for time range (nullable)
+    endDate?: string | null;      // End date for time range (nullable)
+    period?: string | null;       // Predefined period (today, week, month, quarter, year) (nullable)
+  } | null;
+  outcome?: 'successful' | 'unsuccessful' | 'uncertain' | 'all' | null; // Filter by conversation outcome (nullable)
 }
 ``` 
 
@@ -36,7 +46,7 @@ interface Collection {
   ownerId: string;                // ID of the user who owns the collection
   accessPermissions: string[];    // IDs of users who can access this collection
   metadata: Record<string, any>;  // Additional metadata (statistics, etc.)
-  conversations: string[];        // Array of conversation thread_ids in this collection
+  conversations: string[];        // Array of conversation threadIds in this collection
   isPublic: boolean;              // Whether the collection is publicly accessible
   tags: string[];                 // Tags associated with this collection
 }
@@ -47,7 +57,7 @@ The conversations field is not used to transfer data. It is used at the client s
 
 ```typescript
 interface Conversation {
-  thread_id: string;                // Unique identifier
+  threadId: string;                // Unique identifier
   userId: string;                   // ID of the user who initiated the conversation
   userName: string;                 // Display name of the user
   aiAgentId: string;                // ID of the AI agent
@@ -55,12 +65,13 @@ interface Conversation {
   aiAgentType: string;              // Type/model of the AI agent
   status: 'active' | 'closed';      // Current status
   conclusion: 'successful' | 'unsuccessful' | 'uncertain'; // Outcome status
-  created_at: string;               // When conversation started (ISO format)
-  updated_at?: string;              // When conversation was last updated (ISO format)
-  messages: string[];               // Message IDs
+  created_at: string;               // When conversation started (ISO format with timezone)
+  updated_at?: string;              // When conversation was last updated (ISO format with timezone)
+  messages: any[];                  // Message objects (empty array in collection context)
+  message_ids: string[];            // Message IDs
   tags: string[];                   // Tags associated with the conversation
   resolutionNotes?: string;         // Notes about the resolution
-  duration: string;                 // Duration of conversation
+  duration: string;                 // Duration of conversation in HH:MM:SS format
   messageCount: number;             // Number of messages in the conversation
   confidence: string;               // AI confidence level (0-100%)
 }
@@ -76,29 +87,45 @@ interface Conversation {
 
 **Query Parameters**:
 - `ids` (optional): Comma-separated list of collection IDs to retrieve specific collections
+- `ownerId` (optional): Filter by owner ID
+- `creator` (optional): Filter by creator
+- `isPublic` (optional): Filter by public/private status (true/false)
+- `tags` (optional): Filter by tags (array)
+- `search` (optional): Search in name and description
+- `limit` (optional): Limit the number of results (default: 20, max: 100)
+- `skip` (optional): Skip the first N results (default: 0)
 
 **Response Format**:
 ```json
 {
   "items": [
     {
-      "id": "coll-123",
+      "id": "ccab1a75-f57e-4ac2-8fc3-ed3282d17cb0",
       "name": "High Priority Support Conversations",
       "description": "Collection of all high priority support conversations",
       "filter": [
         {
-          "aiAgentIds": ["agent-456", "agent-789"]
+          "aiAgentIds": ["agent-456", "agent-789"],
+          "timeRange": {
+            "startDate": null,
+            "endDate": null,
+            "period": "month"
+          },
+          "outcome": "successful"
         }
       ],
-      "createdAt": "2023-01-01T12:00:00Z",
-      "updatedAt": "2023-01-15T09:30:00Z",
+      "createdAt": "2025-05-21T19:51:28.487081+00:00",
+      "updatedAt": "2025-05-21T19:51:28.487086+00:00",
       "ownerId": "user-123",
       "creator": "John Doe",
       "accessPermissions": ["user-123"],
       "metadata": {
         "totalConversations": 25,
         "avgDuration": "15m",
-        "successRate": "78%"
+        "successRate": "78%",
+        "activeConversations": 8,
+        "closedConversations": 17,
+        "lastUpdated": "2025-05-21T19:51:28.507045+00:00"
       },
       "isPublic": false,
       "tags": ["support", "high-priority"]
@@ -118,16 +145,22 @@ GET /collection doesn't return conversations. Conversations return as results fr
 **Response Format**:
 ```json
 {
-  "id": "coll-123",
+  "id": "ccab1a75-f57e-4ac2-8fc3-ed3282d17cb0",
   "name": "High Priority Support Conversations",
   "description": "Collection of all high priority support conversations",
   "filter": [
     {
-      "aiAgentIds": ["agent-456", "agent-789"]
+      "aiAgentIds": ["agent-456", "agent-789"],
+      "timeRange": {
+        "startDate": null,
+        "endDate": null,
+        "period": "month"
+      },
+      "outcome": "successful"
     }
   ],
-  "createdAt": "2023-01-01T12:00:00Z",
-  "updatedAt": "2023-01-15T09:30:00Z",
+  "createdAt": "2025-05-21T19:51:28.487081+00:00",
+  "updatedAt": "2025-05-21T19:51:28.487086+00:00",
   "ownerId": "user-123",
   "creator": "John Doe",
   "accessPermissions": ["user-123"],
@@ -140,7 +173,7 @@ GET /collection doesn't return conversations. Conversations return as results fr
     "highPriorityCount": 0,
     "mediumPriorityCount": 0,
     "lowPriorityCount": 0,
-    "lastUpdated": "2023-01-15T09:30:00Z"
+    "lastUpdated": "2025-05-21T19:51:28.507045+00:00"
   },
   "isPublic": false,
   "tags": ["support", "high-priority"]
@@ -160,7 +193,10 @@ GET /collection doesn't return conversations. Conversations return as results fr
   "description": "Collection of unsuccessful conversations from the past week",
   "filter": [
     {
+      "aiAgentIds": null,
       "timeRange": {
+        "startDate": null,
+        "endDate": null,
         "period": "week"
       },
       "outcome": "unsuccessful"
@@ -176,26 +212,32 @@ GET /collection doesn't return conversations. Conversations return as results fr
 **Response Format**:
 ```json
 {
-  "id": "coll-456",
+  "id": "59bd85d5-b558-4f50-a04e-5cce2ff02a6e",
   "name": "Recent Unsuccessful Conversations",
   "description": "Collection of unsuccessful conversations from the past week",
   "filter": [
     {
+      "aiAgentIds": null,
       "timeRange": {
+        "startDate": null,
+        "endDate": null,
         "period": "week"
       },
       "outcome": "unsuccessful"
     }
   ],
-  "createdAt": "2023-01-15T10:00:00Z",
-  "updatedAt": "2023-01-15T10:00:00Z",
+  "createdAt": "2025-05-21T19:46:23.411754+00:00",
+  "updatedAt": "2025-05-21T19:46:23.411763+00:00",
   "ownerId": "user-123",
-  "creator": "John Doe",
+  "creator": "postman-user",
   "accessPermissions": ["user-123"],
   "metadata": {
     "totalConversations": 12,
     "avgDuration": "18m",
-    "successRate": "0%"
+    "successRate": "0%",
+    "activeConversations": 0,
+    "closedConversations": 0,
+    "lastUpdated": "2025-05-21T19:46:23.435983+00:00"
   },
   "isPublic": false,
   "tags": ["unsuccessful", "recent"]
@@ -215,7 +257,10 @@ GET /collection doesn't return conversations. Conversations return as results fr
   "description": "Updated description",
   "filter": [
     {
+      "aiAgentIds": null,
       "timeRange": {
+        "startDate": null,
+        "endDate": null,
         "period": "week"
       },
       "outcome": "unsuccessful"
@@ -228,21 +273,24 @@ GET /collection doesn't return conversations. Conversations return as results fr
 **Response Format**:
 ```json
 {
-  "id": "coll-456",
+  "id": "59bd85d5-b558-4f50-a04e-5cce2ff02a6e",
   "name": "Recent Unsuccessful Conversations (Updated)",
   "description": "Updated description",
   "filter": [
     {
+      "aiAgentIds": null,
       "timeRange": {
+        "startDate": null,
+        "endDate": null,
         "period": "week"
       },
       "outcome": "unsuccessful"
     }
   ],
-  "createdAt": "2023-01-15T10:00:00Z",
-  "updatedAt": "2023-01-15T11:30:00Z",
+  "createdAt": "2025-05-21T19:46:23.411754+00:00",
+  "updatedAt": "2025-05-21T19:46:23.411763+00:00",
   "ownerId": "user-123",
-  "creator": "John Doe",
+  "creator": "postman-user",
   "accessPermissions": ["user-123"],
   "metadata": {
     "totalConversations": 35,
@@ -252,7 +300,8 @@ GET /collection doesn't return conversations. Conversations return as results fr
     "closedConversations": 27,
     "highPriorityCount": 0,
     "mediumPriorityCount": 0,
-    "lowPriorityCount": 0
+    "lowPriorityCount": 0,
+    "lastUpdated": "2025-05-21T19:46:23.435983+00:00"
   },
   "isPublic": false,
   "tags": ["unsuccessful", "updated"]
@@ -281,35 +330,37 @@ GET /collection doesn't return conversations. Conversations return as results fr
 **Query Parameters**:
 - `skip` (optional): Number of records to skip (for pagination)
 - `limit` (optional): Maximum number of records to return (for pagination)
-- `sort_by` (optional): Field to sort by (e.g., created_at, messageCount)
-- `sort_order` (optional): Sort direction ('asc' or 'desc')
-- `include_pagination` (optional): Whether to include pagination metadata
+- `sortBy` (optional): Field to sort by (e.g., created_at, messageCount)
+- `sortOrder` (optional): Sort direction ('asc' or 'desc')
+- `includePagination` (optional): Whether to include pagination metadata
 
 **Response Format**:
 ```json
 {
   "items": [
     {
-      "thread_id": "conv-7",
-      "userId": "user-123",
-      "userName": "John Smith",
-      "aiAgentId": "agent-456",
-      "aiAgentName": "Support Bot",
-      "aiAgentType": "customer-support",
-      "status": "closed",
-      "conclusion": "unsuccessful",
-      "created_at": "2023-01-10T14:30:00Z",
-      "updated_at": "2023-01-10T15:00:00Z",
-      "messages": ["msg-1", "msg-2", "msg-3"],
-      "tags": ["support", "billing"],
-      "duration": "30m",
-      "messageCount": 3,
-      "confidence": "65"
+      "threadId": "850d50be-72cc-4b7f-8569-b2f4757ff537",
+      "userId": "test-user-123",
+      "userName": "Test User",
+      "aiAgentId": "test-assistant-456",
+      "aiAgentName": "Test Assistant",
+      "aiAgentType": "assistant",
+      "status": "active",
+      "conclusion": "successful",
+      "created_at": "2025-05-21T04:26:36.730384+00:00",
+      "updated_at": "2025-05-21T04:26:36.730384+00:00",
+      "tags": [],
+      "resolutionNotes": "",
+      "duration": "00:00:00",
+      "messageCount": 2,
+      "confidence": "75",
+      "messages": [],
+      "message_ids": []
     },
     // More conversations...
   ],
-  "page_info": {
-    "total_items": 35,
+  "pageInfo": {
+    "totalItems": 35,
     "limit": 20,
     "skip": 0
   }
@@ -327,9 +378,9 @@ GET /collection doesn't return conversations. Conversations return as results fr
 {
   "success": true,
   "updated": {
-    "added": 5,      // Number of conversations added to the collection
-    "removed": 2,     // Number of conversations removed from the collection
-    "totalConversations": 38
+    "added": 0,      // Number of conversations added to the collection
+    "removed": 0,    // Number of conversations removed from the collection
+    "totalConversations": 6
   }
 }
 ```
@@ -360,7 +411,11 @@ GET /collection doesn't return conversations. Conversations return as results fr
       "accessPermissions": ["user-123"],
       "metadata": {
         "totalConversations": 25,
-        "avgDuration": "15m"
+        "avgDuration": "00:15:00",
+        "successRate": "78%",
+        "activeConversations": 8,
+        "closedConversations": 17,
+        "lastUpdated": "2025-05-21T19:51:28.507045+00:00"
       },
       "isPublic": false,
       "tags": ["support", "high-priority"]
@@ -396,7 +451,11 @@ GET /collection doesn't return conversations. Conversations return as results fr
       "accessPermissions": ["user-123"],
       "metadata": {
         "totalConversations": 25,
-        "avgDuration": "15m"
+        "avgDuration": "00:15:00",
+        "successRate": "78%",
+        "activeConversations": 8,
+        "closedConversations": 17,
+        "lastUpdated": "2025-05-21T19:51:28.507045+00:00"
       },
       "isPublic": false,
       "tags": ["support", "high-priority"]
@@ -415,15 +474,15 @@ GET /collection doesn't return conversations. Conversations return as results fr
 **Response Format**:
 ```json
 {
-  "totalConversations": 25,
-  "avgDuration": "15m",
-  "successRate": "78%",
-  "activeConversations": 8,
-  "closedConversations": 17,
+  "totalConversations": 0,
+  "avgDuration": "00:00:00",
+  "successRate": "0%",
+  "activeConversations": 0,
+  "closedConversations": 0,
   "highPriorityCount": 0,
   "mediumPriorityCount": 0,
   "lowPriorityCount": 0,
-  "lastUpdated": "2023-01-15T09:30:00Z"
+  "lastUpdated": "2025-05-21T19:51:28.507045+00:00"
 }
 ```
 
@@ -452,14 +511,39 @@ Collections can filter conversations using several types of criteria:
 
 ### Response Format
 
-The API supports both single-object and collection responses:
+The API consistently uses structured response formats:
 
 1. **Single Object Responses**:
-   - Return the object directly: `{ id: "coll-123", name: "Collection 1", ... }`
+   - Return the object directly: `{ id: "ccab1a75-f57e-4ac2-8fc3-ed3282d17cb0", name: "Collection 1", ... }`
+   - Used for: GET /collection/{id}, POST /collection, PUT /collection/{id}
 
 2. **Collection Responses**:
-   - Return an array of objects in an `items` property
-   - Optionally include pagination metadata when `include_pagination=true`
+   - **Always** return an array of objects wrapped in an `items` property: `{ "items": [...] }`
+   - Used for: GET /collection, GET /collection/{id}/conversation, GET /group/{id}/collection, GET /user/{id}/collection
+   - Optionally include pagination metadata when `include_pagination=true` as `page_info`
+
+3. **Special Responses**:
+   - DELETE operations return: `{ "success": true }`
+   - Statistics endpoint returns object directly (not wrapped in items)
+   - Refresh endpoint returns: `{ "success": true, "updated": {...} }`
+
+**Important:** All list endpoints consistently return `{"items": [...]}` format, never direct arrays.
+
+### Metadata Fields
+
+Collection objects include a `metadata` field with the following statistics:
+
+- `totalConversations` (number): Total number of conversations in the collection
+- `avgDuration` (string): Average conversation duration in HH:MM:SS format
+- `successRate` (string): Percentage of successful conversations (e.g., "78%")
+- `activeConversations` (number): Number of currently active conversations
+- `closedConversations` (number): Number of closed conversations
+- `highPriorityCount` (number): Number of high priority conversations (typically 0)
+- `mediumPriorityCount` (number): Number of medium priority conversations (typically 0)
+- `lowPriorityCount` (number): Number of low priority conversations (typically 0)
+- `lastUpdated` (string): ISO timestamp when metadata was last calculated
+
+These fields are automatically calculated and maintained by the system when collections are created, updated, or refreshed.
 
 ### CORS Requirements
 
@@ -551,7 +635,7 @@ For the Collections tab to function properly, these fields are critical:
 
 4. **Collection Conversation Table**:
    - Each conversation must include:
-     - `thread_id`: Unique conversation identifier (shown as ID in UI)
+     - `threadId`: Unique conversation identifier (shown as ID in UI)
      - `userName`: For displaying who initiated the conversation
      - `aiAgentName`: For displaying which AI handled the conversation
      - `status`: Active or closed
@@ -562,11 +646,27 @@ For the Collections tab to function properly, these fields are critical:
 
 ## Authentication Options
 
-The API supports multiple authentication methods:
+The API supports configurable authentication that can be adjusted per environment. See the main Authentication documentation for full details on the three authentication modes: **required**, **optional** (default), and **disabled**.
 
-1. **JWT Token**: Via `Authorization: Bearer <token>` header
-2. **API Key**: Via `X-API-KEY` header with optional `X-Client-ID`
-3. **No Authentication**: For development and testing environments as described in NOAUTH_IMPLEMENTATION.md
+### Quick Configuration
+
+```bash
+# Production - authentication required
+AUTH_MODE=required
+
+# Development - authentication optional (default)
+AUTH_MODE=optional
+
+# Testing - authentication disabled
+AUTH_MODE=disabled
+```
+
+### Collection Access Control
+
+When authentication is enabled:
+- Collection owners can always access their collections
+- Public collections can be accessed by any authenticated user
+- Private collections require ownership or explicit access permissions
 
 ## Appendix: Filter Criteria Examples
 
@@ -699,7 +799,7 @@ The following SQL scripts create the necessary database schema for implementing 
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
 -- Collections Table
-CREATE TABLE collections (
+CREATE TABLE collection (
     id UUID PRIMARY KEY NOT NULL,
     name VARCHAR(255) NOT NULL,
     description TEXT,
@@ -715,8 +815,8 @@ CREATE TABLE collections (
 );
 
 -- Create indexes for collections table
-CREATE INDEX idx_collections_owner_id ON collections(owner_id);
-CREATE INDEX idx_collections_is_public ON collections(is_public);
+CREATE INDEX idx_collections_owner_id ON collection(owner_id);
+CREATE INDEX idx_collections_is_public ON collection(is_public);
 
 -- Collection Access Permissions Table (for more granular control)
 CREATE TABLE collection_permissions (

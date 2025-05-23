@@ -1,0 +1,891 @@
+{
+	"info": {
+		"_postman_id": "conversations-api-tests",
+		"name": "Conversations API Tests",
+		"description": "Comprehensive test collection for Conversations API endpoints including CRUD operations, filtering, and message management.",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"auth": {
+		"type": "bearer",
+		"bearer": [
+			{
+				"key": "token",
+				"value": "{{authToken}}",
+				"type": "string"
+			}
+		]
+	},
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					"// Set default environment variables if not exists",
+					"if (!pm.environment.has('baseUrl')) {",
+					"    pm.environment.set('baseUrl', 'http://localhost:8001');",
+					"}",
+					"// Set dynamic timestamp for unique values",
+					"pm.globals.set('timestamp', Date.now());"
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					"// Global test to ensure response is JSON",
+					"pm.test('Response is valid JSON', function () {",
+					"    try {",
+					"        pm.response.json();",
+					"    } catch (e) {",
+					"        pm.expect.fail('Response is not valid JSON');",
+					"    }",
+					"});",
+					"",
+					"// Global test for response time",
+					"pm.test('Response time is reasonable', function () {",
+					"    pm.expect(pm.response.responseTime).to.be.below(5000);",
+					"});"
+				]
+			}
+		}
+	],
+	"item": [
+		{
+			"name": "Setup Tests",
+			"item": [
+				{
+					"name": "Health Check",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('API is healthy', function () {",
+									"    pm.response.to.have.status(200);",
+									"    const responseJson = pm.response.json();",
+									"    pm.expect(responseJson).to.have.property('message');",
+									"    pm.expect(responseJson).to.have.property('version');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/",
+							"host": ["{{baseUrl}}"],
+							"path": [""]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Conversation CRUD Tests",
+			"item": [
+				{
+					"name": "Create Conversation",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Conversation created successfully', function () {",
+									"    pm.response.to.have.status(201);",
+									"    const responseJson = pm.response.json();",
+									"    pm.expect(responseJson).to.have.property('id');",
+									"    pm.expect(responseJson).to.have.property('userId');",
+									"    pm.expect(responseJson).to.have.property('userName');",
+									"    pm.expect(responseJson).to.have.property('aiAgentId');",
+									"    pm.expect(responseJson).to.have.property('aiAgentName');",
+									"    pm.expect(responseJson).to.have.property('status', 'active');",
+									"    pm.expect(responseJson).to.have.property('createdAt');",
+									"    pm.expect(responseJson).to.have.property('messages');",
+									"    ",
+									"    // Store conversation ID for subsequent tests",
+									"    pm.environment.set('testConversationId', responseJson.id);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"userId\": \"user-{{timestamp}}\",\n  \"userName\": \"Test User {{timestamp}}\",\n  \"aiAgentId\": \"agent-{{timestamp}}\",\n  \"aiAgentName\": \"Test AI Agent\",\n  \"aiAgentType\": \"general\",\n  \"tags\": [\"test\", \"postman\"],\n  \"confidence\": 0.85,\n  \"initial_message\": \"Hello, I need help with my account.\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/conversation",
+							"host": ["{{baseUrl}}"],
+							"path": ["conversation"]
+						}
+					}
+				},
+				{
+					"name": "Get All Conversations",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Conversations list retrieved successfully', function () {",
+									"    pm.response.to.have.status(200);",
+									"    const responseJson = pm.response.json();",
+									"    pm.expect(responseJson).to.have.property('items');",
+									"    pm.expect(responseJson.items).to.be.an('array');",
+									"    ",
+									"    if (responseJson.items.length > 0) {",
+									"        const conversation = responseJson.items[0];",
+									"        pm.expect(conversation).to.have.property('id');",
+									"        pm.expect(conversation).to.have.property('userId');",
+									"        pm.expect(conversation).to.have.property('status');",
+									"    }",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/conversation",
+							"host": ["{{baseUrl}}"],
+							"path": ["conversation"]
+						}
+					}
+				},
+				{
+					"name": "Get Conversation by ID",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Conversation retrieved successfully', function () {",
+									"    pm.response.to.have.status(200);",
+									"    const responseJson = pm.response.json();",
+									"    const testConversationId = pm.environment.get('testConversationId');",
+									"    ",
+									"    pm.expect(responseJson).to.have.property('id', testConversationId);",
+									"    pm.expect(responseJson).to.have.property('userId');",
+									"    pm.expect(responseJson).to.have.property('userName');",
+									"    pm.expect(responseJson).to.have.property('aiAgentId');",
+									"    pm.expect(responseJson).to.have.property('status');",
+									"    pm.expect(responseJson).to.have.property('messages');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/conversation/{{testConversationId}}",
+							"host": ["{{baseUrl}}"],
+							"path": ["conversation", "{{testConversationId}}"]
+						}
+					}
+				},
+				{
+					"name": "Update Conversation",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Conversation updated successfully', function () {",
+									"    pm.response.to.have.status(200);",
+									"    const responseJson = pm.response.json();",
+									"    const testConversationId = pm.environment.get('testConversationId');",
+									"    ",
+									"    pm.expect(responseJson).to.have.property('id', testConversationId);",
+									"    pm.expect(responseJson).to.have.property('status', 'closed');",
+									"    pm.expect(responseJson).to.have.property('conclusion', 'successful');",
+									"    pm.expect(responseJson).to.have.property('updatedAt');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"status\": \"closed\",\n  \"conclusion\": \"successful\",\n  \"tags\": [\"test\", \"postman\", \"updated\"]\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/conversation/{{testConversationId}}",
+							"host": ["{{baseUrl}}"],
+							"path": ["conversation", "{{testConversationId}}"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Message Management Tests",
+			"item": [
+				{
+					"name": "Get Messages",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Messages retrieved successfully', function () {",
+									"    pm.response.to.have.status(200);",
+									"    const responseJson = pm.response.json();",
+									"    pm.expect(responseJson).to.have.property('items');",
+									"    pm.expect(responseJson.items).to.be.an('array');",
+									"    ",
+									"    if (responseJson.items.length > 0) {",
+									"        const message = responseJson.items[0];",
+									"        pm.expect(message).to.have.property('id');",
+									"        pm.expect(message).to.have.property('content');",
+									"        pm.expect(message).to.have.property('sender');",
+									"        pm.expect(message).to.have.property('timestamp');",
+									"    }",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/conversation/{{testConversationId}}/messages",
+							"host": ["{{baseUrl}}"],
+							"path": ["conversation", "{{testConversationId}}", "messages"]
+						}
+					}
+				},
+				{
+					"name": "Add Message",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Message added successfully', function () {",
+									"    pm.response.to.have.status(201);",
+									"    const responseJson = pm.response.json();",
+									"    pm.expect(responseJson).to.have.property('id');",
+									"    pm.expect(responseJson).to.have.property('content', 'Thank you for your help!');",
+									"    pm.expect(responseJson).to.have.property('sender', 'user');",
+									"    pm.expect(responseJson).to.have.property('senderName', 'Test User');",
+									"    pm.expect(responseJson).to.have.property('timestamp');",
+									"    ",
+									"    // Store message ID for subsequent tests",
+									"    pm.environment.set('testMessageId', responseJson.id);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"content\": \"Thank you for your help!\",\n  \"sender\": \"user\",\n  \"senderName\": \"Test User\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/conversation/{{testConversationId}}/messages",
+							"host": ["{{baseUrl}}"],
+							"path": ["conversation", "{{testConversationId}}", "messages"]
+						}
+					}
+				},
+				{
+					"name": "Get Specific Message",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Message retrieved successfully', function () {",
+									"    pm.response.to.have.status(200);",
+									"    const responseJson = pm.response.json();",
+									"    const testMessageId = pm.environment.get('testMessageId');",
+									"    ",
+									"    pm.expect(responseJson).to.have.property('id', testMessageId);",
+									"    pm.expect(responseJson).to.have.property('content');",
+									"    pm.expect(responseJson).to.have.property('sender');",
+									"    pm.expect(responseJson).to.have.property('timestamp');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/conversation/{{testConversationId}}/messages/{{testMessageId}}",
+							"host": ["{{baseUrl}}"],
+							"path": ["conversation", "{{testConversationId}}", "messages", "{{testMessageId}}"]
+						}
+					}
+				},
+				{
+					"name": "Update Message",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Message updated successfully', function () {",
+									"    pm.response.to.have.status(200);",
+									"    const responseJson = pm.response.json();",
+									"    const testMessageId = pm.environment.get('testMessageId');",
+									"    ",
+									"    pm.expect(responseJson).to.have.property('id', testMessageId);",
+									"    pm.expect(responseJson).to.have.property('content', 'Thank you very much for your help!');",
+									"    pm.expect(responseJson).to.have.property('sender');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"content\": \"Thank you very much for your help!\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/conversation/{{testConversationId}}/messages/{{testMessageId}}",
+							"host": ["{{baseUrl}}"],
+							"path": ["conversation", "{{testConversationId}}", "messages", "{{testMessageId}}"]
+						}
+					}
+				},
+				{
+					"name": "Delete Message",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Message deleted successfully', function () {",
+									"    pm.response.to.have.status(204);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/conversation/{{testConversationId}}/messages/{{testMessageId}}",
+							"host": ["{{baseUrl}}"],
+							"path": ["conversation", "{{testConversationId}}", "messages", "{{testMessageId}}"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Relationship Endpoint Tests",
+			"item": [
+				{
+					"name": "Get AI Agent Conversations",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('AI Agent conversations retrieved successfully', function () {",
+									"    pm.response.to.have.status(200);",
+									"    const responseJson = pm.response.json();",
+									"    pm.expect(responseJson).to.have.property('items');",
+									"    pm.expect(responseJson.items).to.be.an('array');",
+									"    ",
+									"    if (responseJson.items.length > 0) {",
+									"        const conversation = responseJson.items[0];",
+									"        pm.expect(conversation).to.have.property('id');",
+									"        pm.expect(conversation).to.have.property('aiAgentId');",
+									"    }",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/aiagent/test-ai-agent/conversation",
+							"host": ["{{baseUrl}}"],
+							"path": ["aiagent", "test-ai-agent", "conversation"]
+						}
+					}
+				},
+				{
+					"name": "Get User Conversations",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('User conversations retrieved successfully', function () {",
+									"    pm.response.to.have.status(200);",
+									"    const responseJson = pm.response.json();",
+									"    pm.expect(responseJson).to.have.property('items');",
+									"    pm.expect(responseJson.items).to.be.an('array');",
+									"    ",
+									"    if (responseJson.items.length > 0) {",
+									"        const conversation = responseJson.items[0];",
+									"        pm.expect(conversation).to.have.property('id');",
+									"        pm.expect(conversation).to.have.property('userId');",
+									"    }",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/user/test-user/conversation",
+							"host": ["{{baseUrl}}"],
+							"path": ["user", "test-user", "conversation"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Advanced Filtering Tests",
+			"item": [
+				{
+					"name": "Complex Filter with POST",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Complex filtering works', function () {",
+									"    pm.response.to.have.status(200);",
+									"    const responseJson = pm.response.json();",
+									"    pm.expect(responseJson).to.have.property('items');",
+									"    pm.expect(responseJson.items).to.be.an('array');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"filters\": {\n    \"userIds\": [\"test-user\", \"another-user\"],\n    \"statuses\": [\"active\", \"completed\"],\n    \"createdAfter\": \"2024-01-01T00:00:00Z\",\n    \"tags\": [\"important\"]\n  },\n  \"sort\": {\n    \"sortBy\": \"createdAt\",\n    \"sortOrder\": \"desc\"\n  },\n  \"pagination\": {\n    \"page\": 1,\n    \"pageSize\": 10,\n    \"includePagination\": true\n  },\n  \"includeMessages\": false\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/conversation/filter",
+							"host": ["{{baseUrl}}"],
+							"path": ["conversation", "filter"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Query Parameter Tests",
+			"item": [
+				{
+					"name": "Test Pagination Parameters",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Pagination parameters work correctly', function () {",
+									"    pm.response.to.have.status(200);",
+									"    const responseJson = pm.response.json();",
+									"    pm.expect(responseJson).to.have.property('items');",
+									"    pm.expect(responseJson.items).to.be.an('array');",
+									"    pm.expect(responseJson.items.length).to.be.at.most(5);",
+									"    ",
+									"    pm.expect(responseJson).to.have.property('pageInfo');",
+									"    pm.expect(responseJson.pageInfo).to.have.property('page', 1);",
+									"    pm.expect(responseJson.pageInfo).to.have.property('pageSize', 5);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/conversation?skip=0&limit=5&includePagination=true",
+							"host": ["{{baseUrl}}"],
+							"path": ["conversation"],
+							"query": [
+								{
+									"key": "skip",
+									"value": "0"
+								},
+								{
+									"key": "limit",
+									"value": "5"
+								},
+								{
+									"key": "includePagination",
+									"value": "true"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Test Include Messages Parameter",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Include messages parameter works correctly', function () {",
+									"    pm.response.to.have.status(200);",
+									"    const responseJson = pm.response.json();",
+									"    pm.expect(responseJson).to.have.property('items');",
+									"    ",
+									"    if (responseJson.items.length > 0) {",
+									"        const conversation = responseJson.items[0];",
+									"        pm.expect(conversation).to.have.property('decodedMessages');",
+									"        pm.expect(conversation.decodedMessages).to.be.an('array');",
+									"    }",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/conversation?includeMessages=true",
+							"host": ["{{baseUrl}}"],
+							"path": ["conversation"],
+							"query": [
+								{
+									"key": "includeMessages",
+									"value": "true"
+								}
+							]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Basic Filtering Tests",
+			"item": [
+				{
+					"name": "Filter by User ID",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Filter by user ID works', function () {",
+									"    pm.response.to.have.status(200);",
+									"    const responseJson = pm.response.json();",
+									"    pm.expect(responseJson).to.have.property('items');",
+									"    pm.expect(responseJson.items).to.be.an('array');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/conversation?user_id=test-user",
+							"host": ["{{baseUrl}}"],
+							"path": ["conversation"],
+							"query": [
+								{
+									"key": "user_id",
+									"value": "test-user"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Filter by Status",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Filter by status works', function () {",
+									"    pm.response.to.have.status(200);",
+									"    const responseJson = pm.response.json();",
+									"    pm.expect(responseJson).to.have.property('items');",
+									"    pm.expect(responseJson.items).to.be.an('array');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/conversation?status=active",
+							"host": ["{{baseUrl}}"],
+							"path": ["conversation"],
+							"query": [
+								{
+									"key": "status",
+									"value": "active"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Search Conversations",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Search conversations works', function () {",
+									"    pm.response.to.have.status(200);",
+									"    const responseJson = pm.response.json();",
+									"    pm.expect(responseJson).to.have.property('items');",
+									"    pm.expect(responseJson.items).to.be.an('array');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/conversation?search=help",
+							"host": ["{{baseUrl}}"],
+							"path": ["conversation"],
+							"query": [
+								{
+									"key": "search",
+									"value": "help"
+								}
+							]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Error Handling Tests",
+			"item": [
+				{
+					"name": "Get Non-existent Conversation (404)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Returns 404 for non-existent conversation', function () {",
+									"    pm.response.to.have.status(404);",
+									"    const responseJson = pm.response.json();",
+									"    pm.expect(responseJson).to.have.property('error');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/conversation/non-existent-id",
+							"host": ["{{baseUrl}}"],
+							"path": ["conversation", "non-existent-id"]
+						}
+					}
+				},
+				{
+					"name": "Get Non-existent Message (404)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Returns 404 for non-existent message', function () {",
+									"    pm.response.to.have.status(404);",
+									"    const responseJson = pm.response.json();",
+									"    pm.expect(responseJson).to.have.property('error');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/conversation/non-existent-id/messages/non-existent-message",
+							"host": ["{{baseUrl}}"],
+							"path": ["conversation", "non-existent-id", "messages", "non-existent-message"]
+						}
+					}
+				},
+				{
+					"name": "Create Conversation with Invalid Data (400)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Returns 400 for invalid conversation data', function () {",
+									"    pm.response.to.have.status(400);",
+									"    const responseJson = pm.response.json();",
+									"    pm.expect(responseJson).to.have.property('error');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"invalid\": \"data\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/conversation",
+							"host": ["{{baseUrl}}"],
+							"path": ["conversation"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Cleanup Tests",
+			"item": [
+				{
+					"name": "Delete Conversation",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Conversation deleted successfully', function () {",
+									"    pm.response.to.have.status(204);",
+									"});",
+									"",
+									"// Clean up environment variables",
+									"pm.environment.unset('testConversationId');",
+									"pm.environment.unset('testMessageId');"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/conversation/{{testConversationId}}",
+							"host": ["{{baseUrl}}"],
+							"path": ["conversation", "{{testConversationId}}"]
+						}
+					}
+				}
+			]
+		}
+	],
+	"variable": [
+		{
+			"key": "baseUrl",
+			"value": "http://localhost:8001",
+			"type": "string"
+		},
+		{
+			"key": "testConversationId",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "testMessageId",
+			"value": "",
+			"type": "string"
+		}
+	]
+}

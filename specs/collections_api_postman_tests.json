@@ -1,0 +1,1622 @@
+{
+  "info": {
+    "_postman_id": "collections-api-tests",
+    "name": "Collections API Tests",
+    "description": "Comprehensive test collection for Collections API endpoints including CRUD operations, filtering, and validation tests.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{authToken}}",
+        "type": "string"
+      }
+    ]
+  },
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Set default environment variables if not exists",
+          "if (!pm.environment.has('baseUrl')) {",
+          "    pm.environment.set('baseUrl', 'http://localhost:8001');",
+          "}",
+          "// Set dynamic timestamp for unique values",
+          "pm.globals.set('timestamp', Date.now());"
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Global test to ensure response is JSON",
+          "pm.test('Response is valid JSON', function () {",
+          "    try {",
+          "        pm.response.json();",
+          "    } catch (e) {",
+          "        pm.expect.fail('Response is not valid JSON');",
+          "    }",
+          "});",
+          "",
+          "// Global test for response time",
+          "pm.test('Response time is reasonable', function () {",
+          "    pm.expect(pm.response.responseTime).to.be.below(5000);",
+          "});"
+        ]
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8001",
+      "type": "string"
+    },
+    {
+      "key": "collectionId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "collectionId1",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "collectionId2",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "initialCollectionCount",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "totalConversations",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Authentication",
+      "item": [
+        {
+          "name": "Admin Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Admin login successful', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    ",
+                  "    const responseJson = pm.response.json();",
+                  "    pm.expect(responseJson).to.have.property('access_token');",
+                  "    pm.expect(responseJson).to.have.property('token_type', 'bearer');",
+                  "    pm.expect(responseJson).to.have.property('user');",
+                  "    ",
+                  "    // Store token for subsequent requests",
+                  "    pm.environment.set('authToken', responseJson.access_token);",
+                  "    ",
+                  "    // Verify user object structure",
+                  "    pm.expect(responseJson.user).to.have.property('user_id');",
+                  "    pm.expect(responseJson.user).to.have.property('email');",
+                  "    pm.expect(responseJson.user).to.have.property('full_name');",
+                  "    pm.expect(responseJson.user).to.have.property('role');",
+                  "    pm.expect(responseJson.user.is_active).to.be.true;",
+                  "});",
+                  "",
+                  "pm.test('Response time is acceptable', function () {",
+                  "    pm.expect(pm.response.responseTime).to.be.below(2000);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"email\": \"admin@example.com\",\n    \"password\": \"admin123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "login"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "1. Health Check",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test(\"Response contains API health status\", function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData).to.have.property('status');",
+              "    pm.expect(jsonData).to.have.property('api');",
+              "    pm.expect(jsonData).to.have.property('database');",
+              "    pm.expect(jsonData.api).to.eql(true);",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/system/health",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "system",
+            "health"
+          ]
+        },
+        "description": "Check the health of the API to ensure it's up and running before tests."
+      },
+      "response": []
+    },
+    {
+      "name": "2. List Collections (Initial)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test(\"Response contains items array\", function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData).to.have.property('items');",
+              "    pm.expect(jsonData.items).to.be.an('array');",
+              "});",
+              "",
+              "// Store initial count for later comparison",
+              "const jsonData = pm.response.json();",
+              "pm.environment.set(\"initialCollectionCount\", jsonData.items.length);"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/collection",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "collection"
+          ]
+        },
+        "description": "Get the initial list of collections to compare with after insertion."
+      },
+      "response": []
+    },
+    {
+      "name": "3. Create Test Collection",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 201\", function () {",
+              "    pm.response.to.have.status(201);",
+              "});",
+              "",
+              "pm.test(\"Response contains collection data\", function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData).to.have.property('id');",
+              "    pm.expect(jsonData).to.have.property('name');",
+              "    pm.expect(jsonData).to.have.property('description');",
+              "    pm.expect(jsonData).to.have.property('filter');",
+              "    pm.expect(jsonData).to.have.property('created_at');",
+              "    pm.expect(jsonData).to.have.property('owner_id');",
+              "    pm.expect(jsonData).to.have.property('metadata');",
+              "});",
+              "",
+              "pm.test(\"Collection name matches request\", function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData.name).to.eql(\"Postman Test Collection\");",
+              "});",
+              "",
+              "pm.test(\"Filter criteria matches request\", function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData.filter).to.be.an('array');",
+              "    pm.expect(jsonData.filter[0]).to.have.property('timeRange');",
+              "    pm.expect(jsonData.filter[0].timeRange.period).to.eql('month');",
+              "});",
+              "",
+              "// Store collection ID for subsequent tests",
+              "const collectionId = pm.response.json().id;",
+              "pm.environment.set(\"collectionId\", collectionId);",
+              "console.log(\"Created collection with ID: \" + collectionId);"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n    \"name\": \"Postman Test Collection\",\n    \"description\": \"Collection created during Postman API testing\",\n    \"filter\": [\n        {\n            \"timeRange\": {\n                \"period\": \"month\"\n            },\n            \"outcome\": \"successful\"\n        }\n    ],\n    \"owner_id\": \"postman-user\",\n    \"is_public\": true,\n    \"tags\": [\"test\", \"postman\", \"api\"]\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/collection",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "collection"
+          ]
+        },
+        "description": "Create a new test collection."
+      },
+      "response": []
+    },
+    {
+      "name": "4. Get Collection by ID",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test(\"Response contains correct collection data\", function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData).to.have.property('id');",
+              "    pm.expect(jsonData.id).to.eql(pm.environment.get(\"collectionId\"));",
+              "    pm.expect(jsonData).to.have.property('name');",
+              "    pm.expect(jsonData.name).to.eql(\"Postman Test Collection\");",
+              "});",
+              "",
+              "pm.test(\"Collection has expected properties\", function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData).to.have.property('description');",
+              "    pm.expect(jsonData).to.have.property('filter');",
+              "    pm.expect(jsonData).to.have.property('created_at');",
+              "    pm.expect(jsonData).to.have.property('owner_id');",
+              "    pm.expect(jsonData).to.have.property('metadata');",
+              "    pm.expect(jsonData).to.have.property('tags');",
+              "    pm.expect(jsonData.tags).to.include(\"test\");",
+              "    pm.expect(jsonData.tags).to.include(\"postman\");",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/collection/{{collectionId}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "collection",
+            "{{collectionId}}"
+          ]
+        },
+        "description": "Get the collection by ID to verify it was created correctly."
+      },
+      "response": []
+    },
+    {
+      "name": "5. List Collections (After Creation)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test(\"Collection count increased by 1\", function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData).to.have.property('items');",
+              "    pm.expect(jsonData.items).to.be.an('array');",
+              "    ",
+              "    const initialCount = parseInt(pm.environment.get(\"initialCollectionCount\")) || 0;",
+              "    pm.expect(jsonData.items.length).to.eql(initialCount + 1);",
+              "});",
+              "",
+              "pm.test(\"New collection is in the list\", function () {",
+              "    var jsonData = pm.response.json();",
+              "    const collectionId = pm.environment.get(\"collectionId\");",
+              "    ",
+              "    const collection = jsonData.items.find(item => item.id === collectionId);",
+              "    pm.expect(collection).to.not.be.undefined;",
+              "    pm.expect(collection.name).to.eql(\"Postman Test Collection\");",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/collection",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "collection"
+          ]
+        },
+        "description": "Get the list of collections after creation to verify the new collection appears."
+      },
+      "response": []
+    },
+    {
+      "name": "6. Update Collection",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test(\"Response contains updated collection data\", function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData).to.have.property('id');",
+              "    pm.expect(jsonData.id).to.eql(pm.environment.get(\"collectionId\"));",
+              "    pm.expect(jsonData).to.have.property('name');",
+              "    pm.expect(jsonData.name).to.eql(\"Updated Postman Test Collection\");",
+              "    pm.expect(jsonData).to.have.property('description');",
+              "    pm.expect(jsonData.description).to.eql(\"Updated description from Postman test\");",
+              "});",
+              "",
+              "pm.test(\"Tags were updated\", function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData).to.have.property('tags');",
+              "    pm.expect(jsonData.tags).to.be.an('array');",
+              "    pm.expect(jsonData.tags).to.include(\"test\");",
+              "    pm.expect(jsonData.tags).to.include(\"postman\");",
+              "    pm.expect(jsonData.tags).to.include(\"updated\");",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n    \"name\": \"Updated Postman Test Collection\",\n    \"description\": \"Updated description from Postman test\",\n    \"tags\": [\"test\", \"postman\", \"updated\"]\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/collection/{{collectionId}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "collection",
+            "{{collectionId}}"
+          ]
+        },
+        "description": "Update the test collection."
+      },
+      "response": []
+    },
+    {
+      "name": "7. Update Collection Filter",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test(\"Response contains updated filter criteria\", function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData).to.have.property('id');",
+              "    pm.expect(jsonData.id).to.eql(pm.environment.get(\"collectionId\"));",
+              "    ",
+              "    pm.expect(jsonData).to.have.property('filter');",
+              "    pm.expect(jsonData.filter).to.be.an('array');",
+              "    pm.expect(jsonData.filter.length).to.eql(2);",
+              "    ",
+              "    // Check first filter element",
+              "    pm.expect(jsonData.filter[0]).to.have.property('timeRange');",
+              "    pm.expect(jsonData.filter[0].timeRange.period).to.eql('month');",
+              "    pm.expect(jsonData.filter[0]).to.have.property('outcome');",
+              "    pm.expect(jsonData.filter[0].outcome).to.eql('successful');",
+              "    ",
+              "    // Check second filter element",
+              "    pm.expect(jsonData.filter[1]).to.have.property('aiAgentIds');",
+              "    pm.expect(jsonData.filter[1].aiAgentIds).to.be.an('array');",
+              "    pm.expect(jsonData.filter[1].aiAgentIds).to.include(\"agent-123\");",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n    \"filter\": [\n        {\n            \"timeRange\": {\n                \"period\": \"month\"\n            },\n            \"outcome\": \"successful\"\n        },\n        {\n            \"aiAgentIds\": [\"agent-123\", \"agent-456\"]\n        }\n    ]\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/collection/{{collectionId}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "collection",
+            "{{collectionId}}"
+          ]
+        },
+        "description": "Update the filter criteria for the test collection."
+      },
+      "response": []
+    },
+    {
+      "name": "8. Get Collection Conversations",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test(\"Response contains conversations array\", function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData).to.have.property('items');",
+              "    pm.expect(jsonData.items).to.be.an('array');",
+              "});",
+              "",
+              "if (pm.response.json().page_info) {",
+              "    pm.test(\"Response contains pagination info when requested\", function () {",
+              "        var jsonData = pm.response.json();",
+              "        pm.expect(jsonData).to.have.property('page_info');",
+              "        pm.expect(jsonData.page_info).to.have.property('total_items');",
+              "        pm.expect(jsonData.page_info).to.have.property('limit');",
+              "        pm.expect(jsonData.page_info).to.have.property('skip');",
+              "    });",
+              "}"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/collection/{{collectionId}}/conversation?limit=10&skip=0&includePagination=true",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "collection",
+            "{{collectionId}}",
+            "conversation"
+          ],
+          "query": [
+            {
+              "key": "limit",
+              "value": "10"
+            },
+            {
+              "key": "skip",
+              "value": "0"
+            },
+            {
+              "key": "includePagination",
+              "value": "true"
+            }
+          ]
+        },
+        "description": "Get conversations in the collection."
+      },
+      "response": []
+    },
+    {
+      "name": "9. Refresh Collection",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test(\"Response contains refresh result data\", function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData).to.have.property('success');",
+              "    pm.expect(jsonData.success).to.be.true;",
+              "    ",
+              "    pm.expect(jsonData).to.have.property('updated');",
+              "    pm.expect(jsonData.updated).to.have.property('added');",
+              "    pm.expect(jsonData.updated).to.have.property('removed');",
+              "    pm.expect(jsonData.updated).to.have.property('totalConversations');",
+              "    ",
+              "    // Store the total conversations count for later comparison",
+              "    pm.environment.set(\"totalConversations\", jsonData.updated.totalConversations);",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/collection/{{collectionId}}/refresh",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "collection",
+            "{{collectionId}}",
+            "refresh"
+          ]
+        },
+        "description": "Refresh the collection to update its conversations based on filter criteria."
+      },
+      "response": []
+    },
+    {
+      "name": "10. Get Collection Statistics",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test(\"Response contains collection statistics\", function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData).to.have.property('totalConversations');",
+              "    pm.expect(jsonData).to.have.property('avgDuration');",
+              "    pm.expect(jsonData).to.have.property('successRate');",
+              "    pm.expect(jsonData).to.have.property('activeConversations');",
+              "    pm.expect(jsonData).to.have.property('closedConversations');",
+              "    pm.expect(jsonData).to.have.property('lastUpdated');",
+              "});",
+              "",
+              "pm.test(\"Total conversations matches refresh result\", function () {",
+              "    var jsonData = pm.response.json();",
+              "    const totalFromRefresh = parseInt(pm.environment.get(\"totalConversations\")) || 0;",
+              "    ",
+              "    // Check if the numbers match - might be 0 if no conversations match filters",
+              "    pm.expect(jsonData.totalConversations).to.eql(totalFromRefresh);",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/collection/{{collectionId}}/statistics",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "collection",
+            "{{collectionId}}",
+            "statistics"
+          ]
+        },
+        "description": "Get statistics for the collection."
+      },
+      "response": []
+    },
+    {
+      "name": "11. Get Collections by User",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test(\"Response contains items array\", function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData).to.have.property('items');",
+              "    pm.expect(jsonData.items).to.be.an('array');",
+              "});",
+              "",
+              "pm.test(\"User's collections include the test collection\", function () {",
+              "    var jsonData = pm.response.json();",
+              "    const collectionId = pm.environment.get(\"collectionId\");",
+              "    ",
+              "    const collection = jsonData.items.find(item => item.id === collectionId);",
+              "    pm.expect(collection).to.not.be.undefined;",
+              "    pm.expect(collection.name).to.include(\"Postman Test Collection\");",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/user/{{testUserId}}/collection",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "user",
+            "postman-user",
+            "collection"
+          ]
+        },
+        "description": "Get collections for a specific user."
+      },
+      "response": []
+    },
+    {
+      "name": "12. Delete Collection",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test(\"Deletion was successful\", function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData).to.have.property('success');",
+              "    pm.expect(jsonData.success).to.be.true;",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "DELETE",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/collection/{{collectionId}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "collection",
+            "{{collectionId}}"
+          ]
+        },
+        "description": "Delete the test collection."
+      },
+      "response": []
+    },
+    {
+      "name": "13. Verify Deletion",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 404\", function () {",
+              "    pm.response.to.have.status(404);",
+              "});",
+              "",
+              "pm.test(\"Collection no longer exists\", function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData).to.have.property('detail');",
+              "    pm.expect(jsonData.detail).to.eql(\"Collection not found\");",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/collection/{{collectionId}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "collection",
+            "{{collectionId}}"
+          ]
+        },
+        "description": "Verify that the collection was successfully deleted."
+      },
+      "response": []
+    },
+    {
+      "name": "14. Create Multiple Collections",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 201\", function () {",
+              "    pm.response.to.have.status(201);",
+              "});",
+              "",
+              "// Store the first collection ID",
+              "const collectionId = pm.response.json().id;",
+              "pm.environment.set(\"collectionId1\", collectionId);",
+              "console.log(\"Created first test collection with ID: \" + collectionId);"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n    \"name\": \"Successful Conversations Collection\",\n    \"description\": \"Collection of successful conversations\",\n    \"filter\": [\n        {\n            \"outcome\": \"successful\"\n        }\n    ],\n    \"owner_id\": \"postman-user\",\n    \"is_public\": true,\n    \"tags\": [\"successful\", \"collection1\"]\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/collection",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "collection"
+          ]
+        },
+        "description": "Create the first of multiple test collections."
+      },
+      "response": []
+    },
+    {
+      "name": "15. Create Second Collection",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 201\", function () {",
+              "    pm.response.to.have.status(201);",
+              "});",
+              "",
+              "// Store the second collection ID",
+              "const collectionId = pm.response.json().id;",
+              "pm.environment.set(\"collectionId2\", collectionId);",
+              "console.log(\"Created second test collection with ID: \" + collectionId);"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n    \"name\": \"Recent Conversations Collection\",\n    \"description\": \"Collection of conversations from the past week\",\n    \"filter\": [\n        {\n            \"timeRange\": {\n                \"period\": \"week\"\n            }\n        }\n    ],\n    \"owner_id\": \"postman-user\",\n    \"is_public\": true,\n    \"tags\": [\"recent\", \"collection2\"]\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/collection",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "collection"
+          ]
+        },
+        "description": "Create the second test collection."
+      },
+      "response": []
+    },
+    {
+      "name": "16. Filter Collections by IDs",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test(\"Response contains exactly 2 collections\", function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData).to.have.property('items');",
+              "    pm.expect(jsonData.items).to.be.an('array');",
+              "    pm.expect(jsonData.items.length).to.eql(2);",
+              "});",
+              "",
+              "pm.test(\"Both test collections are in the results\", function () {",
+              "    var jsonData = pm.response.json();",
+              "    const collectionId1 = pm.environment.get(\"collectionId1\");",
+              "    const collectionId2 = pm.environment.get(\"collectionId2\");",
+              "    ",
+              "    const collection1 = jsonData.items.find(item => item.id === collectionId1);",
+              "    const collection2 = jsonData.items.find(item => item.id === collectionId2);",
+              "    ",
+              "    pm.expect(collection1).to.not.be.undefined;",
+              "    pm.expect(collection2).to.not.be.undefined;",
+              "    ",
+              "    pm.expect(collection1.name).to.eql(\"Successful Conversations Collection\");",
+              "    pm.expect(collection2.name).to.eql(\"Recent Conversations Collection\");",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/collection?ids={{collectionId1}},{{collectionId2}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "collection"
+          ],
+          "query": [
+            {
+              "key": "ids",
+              "value": "{{collectionId1}},{{collectionId2}}"
+            }
+          ]
+        },
+        "description": "Get collections filtered by IDs."
+      },
+      "response": []
+    },
+    {
+      "name": "17. Filter Collections by Tag",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test(\"Response contains at least one collection\", function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData).to.have.property('items');",
+              "    pm.expect(jsonData.items).to.be.an('array');",
+              "    pm.expect(jsonData.items.length).to.be.at.least(1);",
+              "});",
+              "",
+              "pm.test(\"All collections have the filtered tag\", function () {",
+              "    var jsonData = pm.response.json();",
+              "    ",
+              "    jsonData.items.forEach(function(collection) {",
+              "        pm.expect(collection.tags).to.include(\"recent\");",
+              "    });",
+              "});",
+              "",
+              "pm.test(\"Second test collection is in the results\", function () {",
+              "    var jsonData = pm.response.json();",
+              "    const collectionId2 = pm.environment.get(\"collectionId2\");",
+              "    ",
+              "    const collection2 = jsonData.items.find(item => item.id === collectionId2);",
+              "    pm.expect(collection2).to.not.be.undefined;",
+              "    pm.expect(collection2.name).to.eql(\"Recent Conversations Collection\");",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/collection?tags=recent",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "collection"
+          ],
+          "query": [
+            {
+              "key": "tags",
+              "value": "recent"
+            }
+          ]
+        },
+        "description": "Get collections filtered by tag."
+      },
+      "response": []
+    },
+    {
+      "name": "18. Clean Up - Delete Collection 1",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test(\"Deletion was successful\", function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData).to.have.property('success');",
+              "    pm.expect(jsonData.success).to.be.true;",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "DELETE",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/collection/{{collectionId1}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "collection",
+            "{{collectionId1}}"
+          ]
+        },
+        "description": "Clean up by deleting the first test collection."
+      },
+      "response": []
+    },
+    {
+      "name": "19. Clean Up - Delete Collection 2",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test(\"Deletion was successful\", function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData).to.have.property('success');",
+              "    pm.expect(jsonData.success).to.be.true;",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "DELETE",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/collection/{{collectionId2}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "collection",
+            "{{collectionId2}}"
+          ]
+        },
+        "description": "Clean up by deleting the second test collection."
+      },
+      "response": []
+    },
+    {
+      "name": "20. Advanced Filtering Tests",
+      "item": [
+        {
+          "name": "Filter Collections by Owner",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response contains items array\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('items');",
+                  "    pm.expect(jsonData.items).to.be.an('array');",
+                  "});",
+                  "",
+                  "pm.test(\"All collections have correct owner\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    ",
+                  "    if (jsonData.items.length > 0) {",
+                  "        jsonData.items.forEach(function(collection) {",
+                  "            pm.expect(collection.owner_id).to.eql(\"postman-user\");",
+                  "        });",
+                  "    }",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/collection?ownerId=postman-user",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "collection"
+              ],
+              "query": [
+                {
+                  "key": "ownerId",
+                  "value": "postman-user"
+                }
+              ]
+            },
+            "description": "Test filtering collections by owner ID."
+          }
+        },
+        {
+          "name": "Filter Collections by Public Status",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response contains items array\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('items');",
+                  "    pm.expect(jsonData.items).to.be.an('array');",
+                  "});",
+                  "",
+                  "pm.test(\"All collections are public\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    ",
+                  "    if (jsonData.items.length > 0) {",
+                  "        jsonData.items.forEach(function(collection) {",
+                  "            pm.expect(collection.is_public).to.be.true;",
+                  "        });",
+                  "    }",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/collection?isPublic=true",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "collection"
+              ],
+              "query": [
+                {
+                  "key": "isPublic",
+                  "value": "true"
+                }
+              ]
+            },
+            "description": "Test filtering collections by public status."
+          }
+        },
+        {
+          "name": "Search Collections by Name",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response contains items array\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('items');",
+                  "    pm.expect(jsonData.items).to.be.an('array');",
+                  "});",
+                  "",
+                  "pm.test(\"Search results contain search term\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    ",
+                  "    if (jsonData.items.length > 0) {",
+                  "        var foundMatch = false;",
+                  "        jsonData.items.forEach(function(collection) {",
+                  "            if (collection.name.toLowerCase().includes('test') || ",
+                  "                collection.description.toLowerCase().includes('test')) {",
+                  "                foundMatch = true;",
+                  "            }",
+                  "        });",
+                  "        pm.expect(foundMatch).to.be.true;",
+                  "    }",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/collection?search=test",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "collection"
+              ],
+              "query": [
+                {
+                  "key": "search",
+                  "value": "test"
+                }
+              ]
+            },
+            "description": "Test searching collections by name and description."
+          }
+        }
+      ]
+    },
+    {
+      "name": "21. Error Handling Tests",
+      "item": [
+        {
+          "name": "Get Non-existent Collection",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 404\", function () {",
+                  "    pm.response.to.have.status(404);",
+                  "});",
+                  "",
+                  "pm.test(\"Response contains error message\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('detail');",
+                  "    pm.expect(jsonData.detail).to.include('not found');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/collection/00000000-0000-0000-0000-000000000000",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "collection",
+                "00000000-0000-0000-0000-000000000000"
+              ]
+            },
+            "description": "Test error handling for non-existent collection."
+          }
+        },
+        {
+          "name": "Create Collection with Invalid Data",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 422\", function () {",
+                  "    pm.response.to.have.status(422);",
+                  "});",
+                  "",
+                  "pm.test(\"Response contains validation errors\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('detail');",
+                  "    // Validation errors should be present",
+                  "    pm.expect(jsonData.detail).to.not.be.empty;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \"\",\n    \"description\": \"\",\n    \"filter\": \"invalid_filter\",\n    \"owner_id\": \"\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/collection",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "collection"
+              ]
+            },
+            "description": "Test validation with invalid collection data."
+          }
+        },
+        {
+          "name": "Get Collections for Non-existent User",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 or 404\", function () {",
+                  "    // Should either return empty list (200) or user not found (404)",
+                  "    pm.expect([200, 404]).to.include(pm.response.code);",
+                  "});",
+                  "",
+                  "if (pm.response.code === 200) {",
+                  "    pm.test(\"Response contains empty items array\", function () {",
+                  "        var jsonData = pm.response.json();",
+                  "        pm.expect(jsonData).to.have.property('items');",
+                  "        pm.expect(jsonData.items).to.be.an('array');",
+                  "        pm.expect(jsonData.items.length).to.eql(0);",
+                  "    });",
+                  "} else {",
+                  "    pm.test(\"Response contains error message\", function () {",
+                  "        var jsonData = pm.response.json();",
+                  "        pm.expect(jsonData).to.have.property('detail');",
+                  "    });",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/user/non-existent-user/collection",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "user",
+                "non-existent-user",
+                "collection"
+              ]
+            },
+            "description": "Test error handling for non-existent user."
+          }
+        }
+      ]
+    },
+    {
+      "name": "22. Cross-API Integration Tests",
+      "item": [
+        {
+          "name": "Get Collections in Group",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 or 404\", function () {",
+                  "    // 200 if group exists, 404 if not",
+                  "    pm.expect([200, 404]).to.include(pm.response.code);",
+                  "});",
+                  "",
+                  "if (pm.response.code === 200) {",
+                  "    pm.test(\"Response contains items array\", function () {",
+                  "        var jsonData = pm.response.json();",
+                  "        pm.expect(jsonData).to.have.property('items');",
+                  "        pm.expect(jsonData.items).to.be.an('array');",
+                  "    });",
+                  "    ",
+                  "    pm.test(\"All items are collections with required fields\", function () {",
+                  "        var jsonData = pm.response.json();",
+                  "        ",
+                  "        jsonData.items.forEach(function(collection) {",
+                  "            pm.expect(collection).to.have.property('id');",
+                  "            pm.expect(collection).to.have.property('name');",
+                  "            pm.expect(collection).to.have.property('description');",
+                  "            pm.expect(collection).to.have.property('filter');",
+                  "            pm.expect(collection).to.have.property('created_at');",
+                  "            pm.expect(collection).to.have.property('owner_id');",
+                  "        });",
+                  "    });",
+                  "} else {",
+                  "    pm.test(\"Group not found error\", function () {",
+                  "        var jsonData = pm.response.json();",
+                  "        pm.expect(jsonData).to.have.property('detail');",
+                  "        pm.expect(jsonData.detail).to.include('not found');",
+                  "    });",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/group/test-group-id/collection",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "group",
+                "test-group-id",
+                "collection"
+              ]
+            },
+            "description": "Test getting collections that belong to a specific group."
+          }
+        }
+      ]
+    },
+    {
+      "name": "23. Pagination and Sorting Tests",
+      "item": [
+        {
+          "name": "Test Collection Conversations with Sorting",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response contains items array\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('items');",
+                  "    pm.expect(jsonData.items).to.be.an('array');",
+                  "});",
+                  "",
+                  "pm.test(\"Response contains pagination info\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('page_info');",
+                  "    pm.expect(jsonData.page_info).to.have.property('total_items');",
+                  "    pm.expect(jsonData.page_info).to.have.property('limit');",
+                  "    pm.expect(jsonData.page_info).to.have.property('skip');",
+                  "    pm.expect(jsonData.page_info.limit).to.eql(5);",
+                  "    pm.expect(jsonData.page_info.skip).to.eql(0);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/collection/{{collectionId1}}/conversation?limit=5&skip=0&sortBy=created_at&sortOrder=desc&includePagination=true",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "collection",
+                "{{collectionId1}}",
+                "conversation"
+              ],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "5"
+                },
+                {
+                  "key": "skip",
+                  "value": "0"
+                },
+                {
+                  "key": "sortBy",
+                  "value": "created_at"
+                },
+                {
+                  "key": "sortOrder",
+                  "value": "desc"
+                },
+                {
+                  "key": "includePagination",
+                  "value": "true"
+                }
+              ]
+            },
+            "description": "Test collection conversations with sorting and pagination parameters."
+          }
+        },
+        {
+          "name": "Test Collections Pagination",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response contains items array\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('items');",
+                  "    pm.expect(jsonData.items).to.be.an('array');",
+                  "});",
+                  "",
+                  "pm.test(\"Pagination limits work correctly\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    // Should return at most 2 items",
+                  "    pm.expect(jsonData.items.length).to.be.at.most(2);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/collection?limit=2&skip=0",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "collection"
+              ],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "2"
+                },
+                {
+                  "key": "skip",
+                  "value": "0"
+                }
+              ]
+            },
+            "description": "Test pagination parameters on collections list."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Cleanup",
+      "item": [
+        {
+          "name": "Logout",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Logout successful', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    ",
+                  "    const responseJson = pm.response.json();",
+                  "    pm.expect(responseJson).to.have.property('message');",
+                  "    ",
+                  "    // Clear auth token",
+                  "    pm.environment.unset('authToken');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/auth/logout",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "logout"]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

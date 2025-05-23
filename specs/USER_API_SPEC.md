@@ -63,11 +63,11 @@ interface Role {
 - `role` (optional): Filter by role ('admin', 'supervisor', 'executive')
 - `isActive` (optional): Filter by active status (true, false)
 - `search` (optional): Search by name, username, email
-- `sort_by` (optional): Field to sort by (e.g., name, createdAt)
-- `sort_order` (optional): Sort direction ('asc' or 'desc')
+- `sortBy` (optional): Field to sort by (e.g., name, createdAt)
+- `sortOrder` (optional): Sort direction ('asc' or 'desc')
 - `skip` (optional): Number of records to skip (for pagination)
 - `limit` (optional): Maximum number of records to return (for pagination)
-- `include_pagination` (optional): Whether to include pagination metadata
+- `includePagination` (optional): Whether to include pagination metadata
 
 **Response Format**:
 ```json
@@ -88,8 +88,8 @@ interface Role {
     }
     // More users...
   ],
-  "page_info": {
-    "total_items": 50,
+  "pageInfo": {
+    "totalItems": 50,
     "limit": 20,
     "skip": 0
   }
@@ -256,8 +256,8 @@ interface Role {
     }
     // More activity records...
   ],
-  "page_info": {
-    "total_items": 150,
+  "pageInfo": {
+    "totalItems": 150,
     "limit": 20,
     "skip": 0
   }
@@ -294,6 +294,8 @@ interface Role {
 
 **Purpose**: Retrieve groups where the user is an admin.
 
+**Implementation**: This endpoint is implemented in the Groups API module for consistency with group-related operations.
+
 **Query Parameters**:
 - Same as the main Groups API list endpoint
 
@@ -305,6 +307,8 @@ interface Role {
 **Endpoint**: `GET /user/{id}/member-group`
 
 **Purpose**: Retrieve groups where the user is a member.
+
+**Implementation**: This endpoint can be implemented in the Groups API module for consistency with group-related operations.
 
 **Query Parameters**:
 - Same as the main Groups API list endpoint
@@ -568,6 +572,13 @@ interface Role {
 
 ## API Implementation Details
 
+### Field Naming Convention
+
+The User API uses **camelCase** field naming for consistency with other APIs in the project:
+- Database fields use `snake_case` (e.g., `full_name`, `created_at`)
+- API responses use `camelCase` (e.g., `fullName`, `createdAt`)
+- Field aliases ensure proper mapping between database and API formats
+
 ### User Roles
 
 The system supports the following user roles:
@@ -687,17 +698,67 @@ For the User Management system to function properly, these fields are critical:
 
 ## Authentication Options
 
-The API supports multiple authentication methods:
+The API supports configurable authentication that can be adjusted per environment:
+
+### Authentication Modes
+
+The API can operate in different authentication modes controlled by the `AUTH_MODE` environment variable:
+
+1. **Required Mode** (`AUTH_MODE=required`)
+   - All protected endpoints require valid JWT authentication
+   - Returns 401 Unauthorized for missing or invalid tokens
+   - Suitable for production environments
+
+2. **Optional Mode** (`AUTH_MODE=optional`) - **Default**
+   - Authentication is validated if provided but not required
+   - Invalid tokens return 401 only if `REQUIRE_AUTHENTICATION=true`
+   - Allows unauthenticated access for development/testing
+   - Suitable for development and staging environments
+
+3. **Disabled Mode** (`AUTH_MODE=disabled`)
+   - No authentication checks performed
+   - All endpoints accessible without tokens
+   - Only for local development or testing
+
+### Authentication Methods
+
+When authentication is enabled, the following methods are supported:
 
 1. **JWT Token**: Via `Authorization: Bearer <token>` header (primary method)
    - Standard JWT with user ID, role, and permissions encoded
-   - Short expiry time (1 hour) with refresh token support
+   - Configurable expiry time (default: 1 hour) with refresh token support
+   - Use `/auth/login` to obtain tokens
 
 2. **API Key**: Via `X-API-KEY` header with optional `X-CLIENT-ID`
    - For service-to-service or automated access
    - Longer expiry and limited to specific endpoints
 
-3. **No Authentication**: For development and testing environments as described in NOAUTH_IMPLEMENTATION.md
+### Environment Configuration
+
+Configure authentication behavior using environment variables:
+
+```bash
+# Production - authentication required
+AUTH_MODE=required
+REQUIRE_AUTHENTICATION=true
+
+# Development - authentication optional
+AUTH_MODE=optional
+REQUIRE_AUTHENTICATION=false
+
+# Testing - authentication disabled
+AUTH_MODE=disabled
+```
+
+### Endpoint Protection Levels
+
+Different endpoints have different protection levels:
+
+- **Public**: No authentication required (e.g., health checks)
+- **Optional**: Uses configured auth mode (e.g., `/user/current`)
+- **Protected**: Requires authentication (e.g., `/user/{id}` for other users)
+- **Admin Only**: Requires admin role (e.g., user creation/deletion)
+- **Permission-Based**: Requires specific permissions
 
 ## Relationships with Other Entities
 

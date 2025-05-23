@@ -12,7 +12,7 @@ The Conversations tab allows users to browse, filter, and view detailed conversa
 
 ```typescript
 interface Conversation {
-  thread_id: string;                 // Unique identifier
+  threadId: string;                 // Unique identifier
   userId: string;                   // ID of the user who initiated the conversation
   userName: string;                 // Display name of the user
   aiAgentId: string;                // ID of the AI agent
@@ -20,8 +20,8 @@ interface Conversation {
   aiAgentType: string;              // Type/model of the AI agent
   status: 'active' | 'closed';      // Current status
   conclusion: 'successful' | 'unsuccessful' | 'uncertain'; // Outcome status (default: 'uncertain')
-  created_at: string;               // When conversation was created (ISO format)
-  updated_at?: string;              // When conversation was last updated (ISO format)
+  createdAt: string;                // When conversation was created (ISO format)
+  updatedAt?: string;               // When conversation was last updated (ISO format)
   messages: string[];               // Array of message IDs
   tags: string[];                   // Tags/labels for categorization
   resolutionNotes?: string;         // Notes about resolution
@@ -54,17 +54,17 @@ interface Message {
 - `ids` (optional): Comma-separated list of conversation IDs to retrieve specific conversations
 - `skip` (optional): Number of records to skip (for pagination)
 - `limit` (optional): Maximum number of records to return (for pagination)
-- `sort_by` (optional): Field to sort by (e.g., startTimestamp, priority)
-- `sort_order` (optional): Sort direction ('asc' or 'desc')
-- `include_pagination` (optional): Whether to include pagination metadata in response
-- `include_messages` (optional): Whether to include decoded messages in response
+- `sortBy` (optional): Field to sort by (e.g., startTimestamp, priority)
+- `sortOrder` (optional): Sort direction ('asc' or 'desc')
+- `includePagination` (optional): Whether to include pagination metadata in response
+- `includeMessages` (optional): Whether to include decoded messages in response
 
 **Response Format**:
 ```json
 {
   "items": [
     {
-      "thread_id": "conv-123",
+      "threadId": "conv-123",
       "userId": "user-456",
       "userName": "John Doe",
       "aiAgentId": "agent-789",
@@ -72,8 +72,8 @@ interface Message {
       "aiAgentType": "customer-support",
       "status": "active",
       "conclusion": "uncertain",
-      "created_at": "2023-01-01T12:00:00Z",
-      "updated_at": "2023-01-01T12:15:23Z",
+      "createdAt": "2023-01-01T12:00:00Z",
+      "updatedAt": "2023-01-01T12:15:23Z",
       "tags": ["billing", "subscription"],
       "duration": "15m",
       "messageCount": 8,
@@ -81,8 +81,8 @@ interface Message {
     }
     // More conversations...
   ],
-  "page_info": {
-    "total_items": 150,
+  "pageInfo": {
+    "totalItems": 150,
     "limit": 20,
     "skip": 0
   }
@@ -91,17 +91,17 @@ interface Message {
 
 ### 2. Get Conversation Details
 
-**Endpoint**: `GET /conversation/{id}`
+**Endpoint**: `GET /conversation/{thread_id}`
 
 **Purpose**: Retrieve detailed information about a specific conversation.
 
 **Query Parameters**:
-- `include_messages` (optional): Whether to include decoded messages (default: false)
+- `includeMessages` (optional): Whether to include decoded messages (default: false)
 
 **Response Format**:
 ```json
 {
-  "thread_id": "conv-123",
+  "threadId": "conv-123",
   "userId": "user-456",
   "userName": "John Doe",
   "aiAgentId": "agent-789",
@@ -109,8 +109,8 @@ interface Message {
   "aiAgentType": "customer-support",
   "status": "active",
   "conclusion": "uncertain",
-  "created_at": "2023-01-01T12:00:00Z",
-  "updated_at": "2023-01-01T12:15:23Z",
+  "createdAt": "2023-01-01T12:00:00Z",
+  "updatedAt": "2023-01-01T12:15:23Z",
   "tags": ["billing", "subscription"],
   "resolutionNotes": "",
   "duration": "15m",
@@ -136,15 +136,15 @@ interface Message {
 
 ### 3. Get Messages by Conversation ID
 
-**Endpoint**: `GET /conversation/{id}/messages`
+**Endpoint**: `GET /conversation/{thread_id}/messages`
 
 **Purpose**: Retrieve messages for a specific conversation.
 
 **Query Parameters**:
 - `skip` (optional): Number of records to skip (for pagination)
 - `limit` (optional): Maximum number of records to return (for pagination)
-- `sort_by` (optional): Field to sort by (default: timestamp)
-- `sort_order` (optional): Sort direction ('asc' or 'desc', default: 'asc')
+- `sortBy` (optional): Field to sort by (default: timestamp)
+- `sortOrder` (optional): Sort direction ('asc' or 'desc', default: 'asc')
 
 **Response Format**:
 ```json
@@ -164,15 +164,171 @@ interface Message {
     }
     // More messages...
   ],
-  "page_info": {
-    "total_items": 8,
+  "pageInfo": {
+    "totalItems": 8,
     "limit": 20,
     "skip": 0
   }
 }
 ```
 
-### 4. Get Conversations for an AI Agent
+### 4. Create Conversation
+
+**Endpoint**: `POST /conversation`
+
+**Purpose**: Create a new conversation.
+
+**Request Body**:
+```json
+{
+  "userId": "user-456",
+  "userName": "John Doe",
+  "aiAgentId": "agent-789",
+  "aiAgentName": "Support Bot",
+  "aiAgentType": "customer-support",
+  "tags": ["billing", "subscription"],
+  "initialMessage": "Hello, I need help with my subscription",
+  "confidence": "75"
+}
+```
+
+**Response Format**:
+```json
+{
+  "threadId": "conv-123",
+  "userId": "user-456",
+  "userName": "John Doe",
+  "aiAgentId": "agent-789",
+  "aiAgentName": "Support Bot",
+  "aiAgentType": "customer-support",
+  "status": "active",
+  "conclusion": "uncertain",
+  "createdAt": "2023-01-01T12:00:00Z",
+  "tags": ["billing", "subscription"],
+  "duration": "00:00:00",
+  "messageCount": 1,
+  "confidence": "75"
+}
+```
+
+### 5. Update Conversation
+
+**Endpoint**: `PUT /conversation/{thread_id}`
+
+**Purpose**: Update an existing conversation.
+
+**Request Body**:
+```json
+{
+  "status": "closed",
+  "conclusion": "successful",
+  "tags": ["billing", "subscription", "resolved"],
+  "resolutionNotes": "Issue resolved successfully"
+}
+```
+
+**Response Format**:
+```json
+{
+  "threadId": "conv-123",
+  "userId": "user-456",
+  "userName": "John Doe",
+  "aiAgentId": "agent-789",
+  "aiAgentName": "Support Bot",
+  "aiAgentType": "customer-support",
+  "status": "closed",
+  "conclusion": "successful",
+  "createdAt": "2023-01-01T12:00:00Z",
+  "updatedAt": "2023-01-01T12:30:00Z",
+  "tags": ["billing", "subscription", "resolved"],
+  "resolutionNotes": "Issue resolved successfully",
+  "duration": "00:30:00",
+  "messageCount": 8,
+  "confidence": "85"
+}
+```
+
+### 6. Delete Conversation
+
+**Endpoint**: `DELETE /conversation/{thread_id}`
+
+**Purpose**: Delete a conversation.
+
+**Response**: 204 No Content
+
+### 7. Add Message to Conversation
+
+**Endpoint**: `POST /conversation/{thread_id}/messages`
+
+**Purpose**: Add a new message to a conversation.
+
+**Request Body**:
+```json
+{
+  "content": "Thank you for your help!",
+  "sender": "user",
+  "senderName": "John Doe"
+}
+```
+
+**Response Format**:
+```json
+{
+  "id": "msg-003",
+  "content": "Thank you for your help!",
+  "sender": "user",
+  "senderName": "John Doe"
+}
+```
+
+### 8. Get Specific Message
+
+**Endpoint**: `GET /conversation/{thread_id}/messages/{message_id}`
+
+**Purpose**: Retrieve a specific message from a conversation.
+
+**Response Format**:
+```json
+{
+  "id": "msg-001",
+  "content": "Hello, I need help with my subscription",
+  "sender": "user",
+  "senderName": "John Doe"
+}
+```
+
+### 9. Update Message
+
+**Endpoint**: `PUT /conversation/{thread_id}/messages/{message_id}`
+
+**Purpose**: Update a message in a conversation.
+
+**Request Body**:
+```json
+{
+  "content": "Hello, I need help with my subscription billing"
+}
+```
+
+**Response Format**:
+```json
+{
+  "id": "msg-001",
+  "content": "Hello, I need help with my subscription billing",
+  "sender": "user",
+  "senderName": "John Doe"
+}
+```
+
+### 10. Delete Message
+
+**Endpoint**: `DELETE /conversation/{thread_id}/messages/{message_id}`
+
+**Purpose**: Delete a message from a conversation.
+
+**Response**: 204 No Content
+
+### 11. Get Conversations for an AI Agent
 
 **Endpoint**: `GET /aiagent/{id}/conversation`
 
@@ -184,7 +340,7 @@ interface Message {
 **Response Format**:
 - Same as the List Conversations endpoint
 
-### 5. Get Conversations for a User
+### 12. Get Conversations for a User
 
 **Endpoint**: `GET /user/{id}/conversation`
 
@@ -196,7 +352,7 @@ interface Message {
 **Response Format**:
 - Same as the List Conversations endpoint
 
-### 6. Filter Conversations
+### 13. Filter Conversations
 
 **Endpoint**: `POST /conversation/filter`
 
@@ -222,8 +378,8 @@ interface Message {
   "items": [
     // Conversations matching the criteria
   ],
-  "page_info": {
-    "total_items": 12,
+  "pageInfo": {
+    "totalItems": 12,
     "limit": 20,
     "skip": 0
   }
@@ -251,7 +407,7 @@ interface Message {
 For the Conversations tab to function properly, these fields are critical:
 
 1. **Conversation List View**:
-   - `thread_id`: Unique conversation identifier
+   - `threadId`: Unique conversation identifier
    - `userName`: For displaying who initiated the conversation
    - `aiAgentName`: For displaying which AI handled the conversation
    - `aiAgentType`: For displaying the model/type
@@ -284,7 +440,7 @@ The API should support filtering conversations by:
 
 1. **Load Conversations List**:
    ```
-   GET /conversation?limit=20&skip=0&sort_by=created_at&sort_order=desc&include_pagination=true
+   GET /conversation?limit=20&skip=0&sortBy=created_at&sortOrder=desc&includePagination=true
    ```
 
 2. **Apply Filters**:
@@ -299,7 +455,7 @@ The API should support filtering conversations by:
 
 3. **View Conversation Details**:
    ```
-   GET /conversation/conv-123?include_messages=true
+   GET /conversation/conv-123?includeMessages=true
    ```
 
 4. **Load More Messages** (if pagination is needed for long conversations):
@@ -319,11 +475,27 @@ Access-Control-Allow-Headers: Content-Type, Authorization, X-API-KEY, X-Client-I
 
 ## Authentication Options
 
-The API should support multiple authentication methods:
+The API supports configurable authentication that can be adjusted per environment. See the main Authentication documentation for full details on the three authentication modes: **required**, **optional** (default), and **disabled**.
 
-1. **JWT Token**: Via `Authorization: Bearer <token>` header
-2. **API Key**: Via `X-API-KEY` header with optional `X-Client-ID`
-3. **No Authentication**: For development and testing environments
+### Quick Configuration
+
+```bash
+# Production - authentication required
+AUTH_MODE=required
+
+# Development - authentication optional (default)
+AUTH_MODE=optional
+
+# Testing - authentication disabled
+AUTH_MODE=disabled
+```
+
+### Conversation Access Control
+
+When authentication is enabled:
+- Users can access conversations they initiated
+- AI agent owners can access conversations handled by their agents
+- Admin users can access all conversations
 
 
 
