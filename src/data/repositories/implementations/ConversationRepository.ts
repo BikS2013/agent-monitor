@@ -18,7 +18,16 @@ export class ConversationRepository extends BaseRepository<Conversation> impleme
    */
   async getById(id: string, includeRelations: boolean = false): Promise<Conversation | null> {
     console.log(`ConversationRepository: Getting conversation thread_id=${id} with includeRelations=${includeRelations}`);
-    let conversation = await this.dataSource.getConversationById(id);
+    
+    // First check if we already have this conversation in memory
+    const allConversations = await this.dataSource.getConversations();
+    let conversation = allConversations[id];
+    
+    if (!conversation) {
+      // If not found in bulk fetch, try individual fetch
+      console.log(`ConversationRepository: Conversation not found in bulk fetch, trying individual fetch for thread_id=${id}`);
+      conversation = await this.dataSource.getConversationById(id);
+    }
 
     if (!conversation) {
       console.warn(`ConversationRepository: Conversation thread_id=${id} not found`);
@@ -291,6 +300,43 @@ export class ConversationRepository extends BaseRepository<Conversation> impleme
       .then(messages => messages.length > 0 ? messages[0] : null);
 
     return firstMessage ? firstMessage.timestamp : null;
+  }
+
+  /**
+   * Get messages for a conversation (lazy loading)
+   * @param thread_id Conversation thread ID
+   * @param options Query options
+   */
+  async getMessages(thread_id: string, options?: QueryOptions): Promise<QueryResult<Message>> {
+    console.log(`ConversationRepository: Getting messages for conversation thread_id=${thread_id}`);
+    
+    try {
+      // Get messages from the data source
+      const messages = await this.dataSource.getMessagesByConversationId(thread_id);
+      console.log(`ConversationRepository: Retrieved ${messages.length} messages for conversation thread_id=${thread_id}`);
+      
+      // Apply filtering if provided
+      const filteredMessages = options?.filter ? 
+        messages.filter(msg => {
+          // Apply any message-specific filters here
+          return true;
+        }) : messages;
+      
+      const total = filteredMessages.length;
+      
+      // Apply pagination if provided
+      const paginatedMessages = this.applyPagination(filteredMessages, options);
+      
+      return this.formatQueryResult(paginatedMessages, total, options);
+    } catch (error) {
+      console.error(`ConversationRepository: Error getting messages for conversation ${thread_id}:`, error);
+      return {
+        data: [],
+        total: 0,
+        page: options?.page || 1,
+        pageSize: options?.pageSize || 50
+      };
+    }
   }
 
   /**

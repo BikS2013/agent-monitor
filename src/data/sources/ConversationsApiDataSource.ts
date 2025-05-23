@@ -81,20 +81,84 @@ export class ConversationsApiDataSource implements IDataSource {
    */
   async getMessagesByConversationId(conversationId: string): Promise<Message[]> {
     try {
+      // First try to get the conversation with messages included
       const conversation = await this.apiClient.getConversation(conversationId, true);
       
       // Handle different response formats
       let messages: any[] = [];
       
-      if (conversation.decodedMessages) {
+      // Log the conversation response for debugging
+      console.log(`ConversationsApiDataSource: Conversation response structure:`, {
+        hasDecodedMessages: !!conversation.decodedMessages,
+        hasDecoded_messages: !!conversation.decoded_messages,
+        hasMessages: !!conversation.messages,
+        messagesType: Array.isArray(conversation.messages) ? 'array' : typeof conversation.messages,
+        messageCount: conversation.messageCount || conversation.message_count || 0
+      });
+      
+      if (conversation.decodedMessages && Array.isArray(conversation.decodedMessages)) {
         messages = conversation.decodedMessages;
-      } else if (conversation.decoded_messages) {
+        console.log(`ConversationsApiDataSource: Using decodedMessages field (${messages.length} messages)`);
+      } else if (conversation.decoded_messages && Array.isArray(conversation.decoded_messages)) {
         messages = conversation.decoded_messages;
-      } else if (conversation.messages) {
+        console.log(`ConversationsApiDataSource: Using decoded_messages field (${messages.length} messages)`);
+      } else if (conversation.messages && Array.isArray(conversation.messages) && 
+                 conversation.messages.length > 0 && 
+                 typeof conversation.messages[0] === 'object') {
+        // If messages array contains objects, use them directly
         messages = conversation.messages;
+        console.log(`ConversationsApiDataSource: Using messages field with objects (${messages.length} messages)`);
+      } else {
+        // If messages are not included or are just IDs, fetch them separately
+        console.log(`ConversationsApiDataSource: Messages not included in conversation response, fetching separately for ${conversationId}`);
+        try {
+          const messagesResponse = await this.apiClient.getConversationMessages(conversationId);
+          console.log(`ConversationsApiDataSource: Separate messages response:`, {
+            hasItems: !!messagesResponse?.items,
+            isArray: Array.isArray(messagesResponse),
+            responseType: typeof messagesResponse
+          });
+          
+          if (messagesResponse && messagesResponse.items && Array.isArray(messagesResponse.items)) {
+            messages = messagesResponse.items;
+            console.log(`ConversationsApiDataSource: Using items from separate messages response (${messages.length} messages)`);
+          } else if (Array.isArray(messagesResponse)) {
+            messages = messagesResponse;
+            console.log(`ConversationsApiDataSource: Using array from separate messages response (${messages.length} messages)`);
+          } else {
+            console.warn(`ConversationsApiDataSource: Unexpected messages response format:`, messagesResponse);
+          }
+        } catch (msgError) {
+          console.error(`ConversationsApiDataSource: Error fetching messages separately:`, msgError);
+        }
       }
       
-      return messages.map(msg => this.transformApiMessage(msg));
+      // Validate messages before transformation
+      if (!Array.isArray(messages)) {
+        console.warn(`ConversationsApiDataSource: Messages is not an array, returning empty array`);
+        return [];
+      }
+      
+      if (messages.length === 0) {
+        console.log(`ConversationsApiDataSource: No messages found for conversation ${conversationId}`);
+        return [];
+      }
+      
+      console.log(`ConversationsApiDataSource: Transforming ${messages.length} messages`);
+      return messages.map((msg, index) => {
+        try {
+          return this.transformApiMessage(msg);
+        } catch (error) {
+          console.error(`ConversationsApiDataSource: Error transforming message ${index}:`, error, msg);
+          // Return a placeholder message on error
+          return {
+            id: `error_msg_${index}`,
+            content: '[Error loading message]',
+            sender: 'user' as const,
+            senderName: 'Unknown'
+          };
+        }
+      });
     } catch (error) {
       console.error(`Failed to get messages for conversation ${conversationId}:`, error);
       return [];
@@ -142,12 +206,22 @@ export class ConversationsApiDataSource implements IDataSource {
    */
   async getConversationById(id: string): Promise<Conversation | null> {
     try {
+      console.log(`ConversationsApiDataSource: Getting conversation by ID: ${id}`);
       const conversation = await this.apiClient.getConversation(id);
-      if (!conversation) return null;
+      if (!conversation) {
+        console.warn(`ConversationsApiDataSource: No conversation returned for ID: ${id}`);
+        return null;
+      }
       
+      console.log(`ConversationsApiDataSource: Successfully retrieved conversation ${id}`);
       return this.transformApiConversation(conversation);
-    } catch (error) {
-      console.error(`Failed to get conversation ${id}:`, error);
+    } catch (error: any) {
+      // Check if it's a 404 error
+      if (error.status === 404) {
+        console.warn(`ConversationsApiDataSource: Conversation ${id} not found (404)`);
+      } else {
+        console.error(`ConversationsApiDataSource: Failed to get conversation ${id}:`, error);
+      }
       return null;
     }
   }
@@ -158,27 +232,44 @@ export class ConversationsApiDataSource implements IDataSource {
    */
   async getConversations(ids?: string[]): Promise<Record<string, Conversation>> {
     try {
-      const result = await this.apiClient.getConversations({ ids });
+      const result = await this.apiClient.getConversations({ 
+        ids,
+        include_pagination: true,
+        include_messages: false
+      });
       
       // Handle different response formats
-      if (typeof result === 'object' && !Array.isArray(result)) {
-        // Object format with IDs as keys
-        return Object.entries(result).reduce((acc, [id, conversation]) => {
-          acc[id] = this.transformApiConversation(conversation);
-          return acc;
-        }, {} as Record<string, Conversation>);
+      if (result && result.items && Array.isArray(result.items)) {
+        // Paginated response format (as per API spec)
+        console.log(`ConversationsApiDataSource: Processing ${result.items.length} conversations from paginated response`);
+        const conversationsMap: Record<string, Conversation> = {};
+        
+        for (const conversation of result.items) {
+          const transformed = this.transformApiConversation(conversation);
+          conversationsMap[transformed.thread_id] = transformed;
+          
+          // Log the mapping for debugging
+          console.log(`ConversationsApiDataSource: Mapped conversation:`, {
+            original_id: conversation.id || conversation.threadId || conversation.thread_id,
+            internal_thread_id: transformed.thread_id,
+            userName: transformed.userName
+          });
+        }
+        
+        return conversationsMap;
       } else if (Array.isArray(result)) {
-        // Array format
+        // Direct array format
+        console.log(`ConversationsApiDataSource: Processing ${result.length} conversations from array response`);
         return result.reduce((acc, conversation) => {
           const transformed = this.transformApiConversation(conversation);
           acc[transformed.thread_id] = transformed;
           return acc;
         }, {} as Record<string, Conversation>);
-      } else if (result.items && Array.isArray(result.items)) {
-        // Paginated response format
-        return result.items.reduce((acc, conversation) => {
-          const transformed = this.transformApiConversation(conversation);
-          acc[transformed.thread_id] = transformed;
+      } else if (typeof result === 'object' && !Array.isArray(result)) {
+        // Object format with IDs as keys
+        console.log(`ConversationsApiDataSource: Processing conversations from object response`);
+        return Object.entries(result).reduce((acc, [id, conversation]) => {
+          acc[id] = this.transformApiConversation(conversation);
           return acc;
         }, {} as Record<string, Conversation>);
       }
@@ -272,12 +363,26 @@ export class ConversationsApiDataSource implements IDataSource {
    * Create a new conversation
    * @param data Conversation data without the ID
    */
-  async createConversation(data: Omit<Conversation, 'id'>): Promise<Conversation> {
-    console.warn('createConversation not implemented for Conversations API');
-    return {
-      ...data as any,
-      thread_id: `conv_${Date.now()}`,
-    };
+  async createConversation(data: Omit<Conversation, 'thread_id'>): Promise<Conversation> {
+    try {
+      // Transform internal format to API format
+      const apiData = {
+        userId: data.userId,
+        userName: data.userName,
+        aiAgentId: data.aiAgentId,
+        aiAgentName: data.aiAgentName,
+        aiAgentType: data.aiAgentType,
+        tags: data.tags || [],
+        confidence: data.confidence ? parseFloat(data.confidence.replace('%', '')) / 100 : 0.75,
+        initialMessage: data.messages && data.messages.length > 0 ? data.messages[0] : ''
+      };
+
+      const result = await this.apiClient.createConversation(apiData);
+      return this.transformApiConversation(result);
+    } catch (error) {
+      console.error('Failed to create conversation:', error);
+      throw error;
+    }
   }
 
   /**
@@ -286,8 +391,21 @@ export class ConversationsApiDataSource implements IDataSource {
    * @param data Updated conversation data
    */
   async updateConversation(id: string, data: Partial<Conversation>): Promise<Conversation | null> {
-    console.warn('updateConversation not implemented for Conversations API');
-    return null;
+    try {
+      // Transform internal format to API format
+      const apiData: any = {};
+      
+      if (data.status !== undefined) apiData.status = data.status;
+      if (data.conclusion !== undefined) apiData.conclusion = data.conclusion;
+      if (data.tags !== undefined) apiData.tags = data.tags;
+      if (data.resolutionNotes !== undefined) apiData.resolutionNotes = data.resolutionNotes;
+      
+      const result = await this.apiClient.updateConversation(id, apiData);
+      return this.transformApiConversation(result);
+    } catch (error) {
+      console.error(`Failed to update conversation ${id}:`, error);
+      return null;
+    }
   }
 
   /**
@@ -295,8 +413,12 @@ export class ConversationsApiDataSource implements IDataSource {
    * @param id Conversation ID
    */
   async deleteConversation(id: string): Promise<boolean> {
-    console.warn('deleteConversation not implemented for Conversations API');
-    return false;
+    try {
+      return await this.apiClient.deleteConversation(id);
+    } catch (error) {
+      console.error(`Failed to delete conversation ${id}:`, error);
+      return false;
+    }
   }
 
   // #endregion
@@ -573,8 +695,47 @@ export class ConversationsApiDataSource implements IDataSource {
    * @param filterCriteria Filter criteria
    */
   async filterConversations(filterCriteria: any): Promise<string[]> {
-    console.warn('filterConversations not implemented for Conversations API');
-    return [];
+    try {
+      // Transform filter criteria to API format
+      const apiFilter: any = {};
+      
+      if (filterCriteria.aiAgentIds) {
+        apiFilter.aiAgentIds = filterCriteria.aiAgentIds;
+      }
+      
+      if (filterCriteria.timeRange) {
+        apiFilter.timeRange = {
+          startDate: filterCriteria.timeRange.startDate,
+          endDate: filterCriteria.timeRange.endDate
+        };
+      }
+      
+      if (filterCriteria.status) {
+        apiFilter.status = filterCriteria.status;
+      }
+      
+      if (filterCriteria.conclusion) {
+        apiFilter.conclusion = filterCriteria.conclusion;
+      }
+      
+      if (filterCriteria.search) {
+        apiFilter.search = filterCriteria.search;
+      }
+      
+      const result = await this.apiClient.filterConversations(apiFilter);
+      
+      // Extract thread IDs from the result
+      if (result && result.items && Array.isArray(result.items)) {
+        return result.items.map(conv => conv.threadId || conv.thread_id);
+      } else if (Array.isArray(result)) {
+        return result.map(conv => conv.threadId || conv.thread_id);
+      }
+      
+      return [];
+    } catch (error) {
+      console.error('Failed to filter conversations:', error);
+      return [];
+    }
   }
 
   // #endregion
@@ -603,20 +764,64 @@ export class ConversationsApiDataSource implements IDataSource {
    * Transform API message to internal Message format
    */
   private transformApiMessage(apiMessage: any): Message {
-    return {
-      id: apiMessage.id || apiMessage.message_id || `msg_${Date.now()}`,
-      content: apiMessage.content || apiMessage.text || '',
-      sender: apiMessage.sender || (apiMessage.role === 'assistant' ? 'ai' : 'user'),
-      senderName: apiMessage.sender_name || apiMessage.senderName || (apiMessage.role === 'assistant' ? 'AI Assistant' : 'User')
+    // Log the raw message for debugging
+    console.log('ConversationsApiDataSource: Transforming API message:', apiMessage);
+    
+    // Determine sender type
+    let sender: 'user' | 'ai' = 'user';
+    if (apiMessage.sender === 'ai' || apiMessage.sender === 'assistant' || apiMessage.role === 'assistant') {
+      sender = 'ai';
+    } else if (apiMessage.sender === 'user' || apiMessage.role === 'user') {
+      sender = 'user';
+    }
+    
+    // Determine sender name
+    let senderName = apiMessage.senderName || apiMessage.sender_name || '';
+    if (!senderName) {
+      senderName = sender === 'ai' ? 'AI Assistant' : 'User';
+    }
+    
+    const transformed = {
+      id: apiMessage.id || apiMessage.message_id || `msg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      content: apiMessage.content || apiMessage.text || apiMessage.message || '',
+      sender: sender,
+      senderName: senderName
     };
+    
+    console.log('ConversationsApiDataSource: Transformed message:', transformed);
+    return transformed;
   }
 
   /**
    * Transform API conversation to internal Conversation format
    */
   private transformApiConversation(apiConversation: any): Conversation {
-    return {
-      thread_id: apiConversation.thread_id || `thread_${Date.now()}`,
+    // Log the raw conversation for debugging
+    console.log('ConversationsApiDataSource: Raw API conversation:', {
+      threadId: apiConversation.threadId,
+      thread_id: apiConversation.thread_id,
+      id: apiConversation.id,
+      hasMessages: !!apiConversation.messages,
+      hasDecodedMessages: !!apiConversation.decodedMessages
+    });
+    
+    // Handle confidence value - ensure it's a string with %
+    let confidence = apiConversation.confidence || '0';
+    if (typeof confidence === 'number') {
+      confidence = `${Math.round(confidence * 100)}`;
+    }
+    if (!confidence.includes('%')) {
+      confidence = `${confidence}%`;
+    }
+
+    // Determine the thread ID - API might use 'id' instead of 'threadId'
+    const thread_id = apiConversation.threadId || 
+                     apiConversation.thread_id || 
+                     apiConversation.id || 
+                     `thread_${Date.now()}`;
+
+    const transformed = {
+      thread_id: thread_id,
       userId: apiConversation.userId || apiConversation.user_id || '',
       userName: apiConversation.userName || apiConversation.user_name || 'Unknown User',
       aiAgentId: apiConversation.aiAgentId || apiConversation.ai_agent_id || '',
@@ -624,15 +829,22 @@ export class ConversationsApiDataSource implements IDataSource {
       aiAgentType: apiConversation.aiAgentType || apiConversation.ai_agent_type || 'general',
       status: apiConversation.status || 'active',
       conclusion: apiConversation.conclusion || 'uncertain',
-      created_at: apiConversation.created_at || apiConversation.createdAt || new Date().toISOString(),
-      updated_at: apiConversation.updated_at || apiConversation.updatedAt,
+      created_at: apiConversation.createdAt || apiConversation.created_at || new Date().toISOString(),
+      updated_at: apiConversation.updatedAt || apiConversation.updated_at,
       messages: apiConversation.messages || [],
       tags: apiConversation.tags || [],
       resolutionNotes: apiConversation.resolutionNotes || apiConversation.resolution_notes || '',
       duration: apiConversation.duration || '0m',
       messageCount: apiConversation.messageCount || apiConversation.message_count || 0,
-      confidence: apiConversation.confidence || '0%'
+      confidence: confidence
     };
+    
+    console.log('ConversationsApiDataSource: Transformed conversation:', {
+      thread_id: transformed.thread_id,
+      messageCount: transformed.messageCount
+    });
+    
+    return transformed;
   }
 
   // #endregion

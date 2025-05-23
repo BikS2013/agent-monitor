@@ -312,10 +312,10 @@ export class ApiClient {
   } = {}): Promise<any> {
     const params: any = {
       skip: options.skip || 0,
-      sort_by: options.sort_by || 'created_at',
-      sort_order: options.sort_order || 'desc',
-      include_pagination: options.include_pagination || false,
-      include_messages: options.include_messages || false
+      sortBy: options.sort_by || 'startTimestamp',
+      sortOrder: options.sort_order || 'desc',
+      includePagination: options.include_pagination || false,
+      includeMessages: options.include_messages || false
     };
     
     if (options.ids && options.ids.length > 0) {
@@ -326,7 +326,7 @@ export class ApiClient {
       params.limit = options.limit;
     }
     
-    return this.get('/conversations/', params);
+    return this.get('/conversation', params);
   }
   
   /**
@@ -334,9 +334,8 @@ export class ApiClient {
    */
   async getConversation(thread_id: string, includeMessages: boolean = false): Promise<any> {
     console.log(`ApiClient: Getting conversation with thread_id ${thread_id} with includeMessages=${includeMessages}`);
-    const result = await this.get(`/conversations/${thread_id}`, {
-      include_messages: includeMessages,
-      expand: 'messages'  // Some API formats use expand instead
+    const result = await this.get(`/conversation/${thread_id}`, {
+      includeMessages: includeMessages
     });
 
     // Log if messages were included in the response
@@ -353,28 +352,83 @@ export class ApiClient {
    * Create a new conversation
    */
   async createConversation(conversationData: any): Promise<any> {
-    return this.post('/conversations/', conversationData);
+    return this.post('/conversation', conversationData);
   }
   
   /**
    * Update an existing conversation
    */
   async updateConversation(thread_id: string, conversationData: any): Promise<any> {
-    return this.put(`/conversations/${thread_id}`, conversationData);
+    return this.put(`/conversation/${thread_id}`, conversationData);
   }
   
   /**
    * Delete a conversation
    */
   async deleteConversation(thread_id: string): Promise<boolean> {
-    return this.delete(`/conversations/${thread_id}`);
+    await this.delete(`/conversation/${thread_id}`);
+    return true;
   }
   
   /**
    * Filter conversations based on complex criteria
    */
-  async filterConversations(filterCriteria: any): Promise<string[]> {
-    return this.post('/conversations/filter', filterCriteria);
+  async filterConversations(filterCriteria: any): Promise<any> {
+    return this.post('/conversation/filter', filterCriteria);
+  }
+  
+  /**
+   * Get messages for a specific conversation
+   */
+  async getConversationMessages(
+    thread_id: string,
+    options: {
+      skip?: number,
+      limit?: number,
+      sortBy?: string,
+      sortOrder?: 'asc' | 'desc'
+    } = {}
+  ): Promise<any> {
+    const params: any = {
+      skip: options.skip || 0,
+      sortBy: options.sortBy || 'timestamp',
+      sortOrder: options.sortOrder || 'asc'
+    };
+    
+    if (options.limit) {
+      params.limit = options.limit;
+    }
+    
+    return this.get(`/conversation/${thread_id}/messages`, params);
+  }
+  
+  /**
+   * Add a message to a conversation
+   */
+  async addMessageToConversation(thread_id: string, messageData: any): Promise<any> {
+    return this.post(`/conversation/${thread_id}/messages`, messageData);
+  }
+  
+  /**
+   * Get a specific message from a conversation
+   */
+  async getConversationMessage(thread_id: string, message_id: string): Promise<any> {
+    return this.get(`/conversation/${thread_id}/messages/${message_id}`);
+  }
+  
+  /**
+   * Update a message in a conversation
+   */
+  async updateConversationMessage(thread_id: string, message_id: string, messageData: any): Promise<any> {
+    return this.put(`/conversation/${thread_id}/messages/${message_id}`, messageData);
+  }
+  
+  /**
+   * Delete a message from a conversation
+   */
+  async deleteConversationMessage(thread_id: string, message_id: string): Promise<boolean> {
+    await this.delete(`/conversation/${thread_id}/messages/${message_id}`);
+    return true;
   }
   
   /**
@@ -392,16 +446,16 @@ export class ApiClient {
   ): Promise<any> {
     const params: any = {
       skip: options.skip || 0,
-      sort_by: options.sort_by || 'created_at',
-      sort_order: options.sort_order || 'desc',
-      include_pagination: options.include_pagination || false
+      sortBy: options.sort_by || 'startTimestamp',
+      sortOrder: options.sort_order || 'desc',
+      includePagination: options.include_pagination || false
     };
     
     if (options.limit) {
       params.limit = options.limit;
     }
     
-    return this.get(`/collection/${collectionId}/conversations`, params);
+    return this.get(`/collection/${collectionId}/conversation`, params);
   }
   
   /**
@@ -418,18 +472,17 @@ export class ApiClient {
     } = {}
   ): Promise<any> {
     const params: any = {
-      ai_agent_id: aiAgentId,
       skip: options.skip || 0,
-      sort_by: options.sort_by || 'created_at',
-      sort_order: options.sort_order || 'desc',
-      include_pagination: options.include_pagination || false
+      sortBy: options.sort_by || 'startTimestamp',
+      sortOrder: options.sort_order || 'desc',
+      includePagination: options.include_pagination || false
     };
     
     if (options.limit) {
       params.limit = options.limit;
     }
     
-    return this.get(`/conversations/`, params);
+    return this.get(`/aiagent/${aiAgentId}/conversation`, params);
   }
   
   /**
@@ -446,18 +499,17 @@ export class ApiClient {
     } = {}
   ): Promise<any> {
     const params: any = {
-      user_id: userId,
       skip: options.skip || 0,
-      sort_by: options.sort_by || 'created_at',
-      sort_order: options.sort_order || 'desc',
-      include_pagination: options.include_pagination || false
+      sortBy: options.sort_by || 'startTimestamp',
+      sortOrder: options.sort_order || 'desc',
+      includePagination: options.include_pagination || false
     };
     
     if (options.limit) {
       params.limit = options.limit;
     }
     
-    return this.get(`/conversations/`, params);
+    return this.get(`/user/${userId}/conversation`, params);
   }
   
   // #endregion
