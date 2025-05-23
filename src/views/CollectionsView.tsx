@@ -136,8 +136,9 @@ const CollectionsView: React.FC<CollectionsViewProps> = ({
                 setIsNewCollectionModalOpen(true);
               }}
               className={`p-2 ${theme === 'dark' ? 'hover:bg-gray-700' : 'hover:bg-gray-100'} rounded`}
+              title="Add New Collection"
             >
-              <Plus size={20} className={`${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`} />
+              <Plus size={18} className={`${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`} />
             </button>
           </div>
 
@@ -180,11 +181,10 @@ const CollectionsView: React.FC<CollectionsViewProps> = ({
                     setCollectionToEdit(null);
                     setIsNewCollectionModalOpen(true);
                   }}
-                  className={`px-3 py-1.5 ${theme === 'dark' ? 'bg-indigo-900 hover:bg-indigo-950' : 'bg-indigo-700 hover:bg-indigo-800'} rounded flex items-center space-x-1`}
+                  className={`p-2 ${theme === 'dark' ? 'hover:bg-indigo-900' : 'hover:bg-indigo-700'} rounded`}
                   title="Add New Collection"
                 >
-                  <Plus size={16} />
-                  <span className="text-sm">Add Collection</span>
+                  <Plus size={18} />
                 </button>
                 <div className={`h-6 w-px ${theme === 'dark' ? 'bg-indigo-700' : 'bg-indigo-500'}`}></div>
                 <button
