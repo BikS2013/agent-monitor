@@ -47,6 +47,7 @@ interface DataContextType {
   addAIAgent: (agentData: Omit<AIAgent, 'id'>) => Promise<AIAgent>;
 
   // Data update methods
+  updateCollection: (collectionId: string, collectionData: Partial<Collection>) => Promise<Collection>;
   updateGroup: (group: Group) => Promise<Group>;
   updateAIAgent: (agent: AIAgent) => Promise<AIAgent>;
 
@@ -512,6 +513,35 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   };
 
   /**
+   * Update an existing collection
+   */
+  const updateCollection = async (collectionId: string, collectionData: Partial<Collection>): Promise<Collection> => {
+    if (!initialized || !collectionRepository) {
+      throw new Error('Collection repository not initialized');
+    }
+
+    try {
+      // Update the collection
+      const updatedCollection = await collectionRepository.update(collectionId, collectionData);
+
+      if (!updatedCollection) {
+        throw new Error('Failed to update collection');
+      }
+
+      // Update collections state
+      setCollections(prev => ({
+        ...prev,
+        [collectionId]: updatedCollection
+      }));
+
+      return updatedCollection;
+    } catch (error) {
+      console.error('Failed to update collection:', error);
+      throw error;
+    }
+  };
+
+  /**
    * Add a new group
    */
   const addGroup = async (groupData: Omit<Group, 'id'>): Promise<Group> => {
@@ -727,6 +757,7 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     addAIAgent,
 
     // Data update methods
+    updateCollection,
     updateGroup,
     updateAIAgent,
 

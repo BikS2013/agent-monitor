@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import Modal from '../common/Modal';
 import { useData } from '../../context/DataContext';
-import { useConversationsData } from '../../context/ConversationsDataContext';
 import { Collection, User } from '../../data/types';
 import { Calendar, Bot, CheckCircle, Filter, Plus, Trash2, MessageCircle, AlertCircle } from 'lucide-react';
 import { filterConversationsByCollectionCriteria } from '../../data/filterUtils';
@@ -14,8 +13,7 @@ interface NewCollectionModalProps {
 }
 
 const NewCollectionModal: React.FC<NewCollectionModalProps> = ({ isOpen, onClose, collectionToEdit }) => {
-  const { getCurrentUser, aiAgents, conversations } = useData();
-  const { addCollection, updateCollection } = useConversationsData();
+  const { getCurrentUser, aiAgents, conversations, addCollection, updateCollection } = useData();
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { theme } = useTheme();

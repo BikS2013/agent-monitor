@@ -4,7 +4,7 @@ import CollectionsList from '../components/CollectionsList';
 import CollectionDetail from '../components/CollectionDetail';
 import NewCollectionModal from '../components/modals/NewCollectionModal';
 import DeleteCollectionModal from '../components/modals/DeleteCollectionModal';
-import { useConversationsData } from '../context/ConversationsDataContext';
+import { useData } from '../context/DataContext';
 import { Collection, Conversation } from '../data/types';
 import { useTheme } from '../context/ThemeContext';
 import { filterConversationsByCollection } from '../data/filterUtils';
@@ -50,7 +50,7 @@ const CollectionsView: React.FC<CollectionsViewProps> = ({
   selectedCollection,
   setSelectedCollection
 }) => {
-  const { collections, loading, conversations, deleteCollection } = useConversationsData();
+  const { collections, loading, conversations, deleteCollection } = useData();
   const { theme } = useTheme();
   const [isNewCollectionModalOpen, setIsNewCollectionModalOpen] = React.useState(false);
   const [isDeleteCollectionModalOpen, setIsDeleteCollectionModalOpen] = React.useState(false);
