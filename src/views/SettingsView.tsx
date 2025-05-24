@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Settings, User, Bell, Shield, Database, Bot, Save, HardDrive, AlertCircle, Globe, MessageCircle } from 'lucide-react';
+import { Settings, User, Bell, Shield, Database, Bot, Save, HardDrive, AlertCircle, Globe, MessageCircle, Brain } from 'lucide-react';
 import { useData } from '../context/DataContext';
 import { useTheme } from '../context/ThemeContext';
 import { useRepositories } from '../context/RepositoryContext';
@@ -8,6 +8,7 @@ import { User as UserType } from '../data/types';
 import config from '../config';
 import ApiSettings from '../components/settings/ApiSettings';
 import ConversationsApiSettings from '../components/settings/ConversationsApiSettings';
+import { AIAgentsApiSettings } from '../components/settings/AIAgentsApiSettings';
 
 const SettingsView: React.FC = () => {
   const { getCurrentUser } = useData();
@@ -16,12 +17,35 @@ const SettingsView: React.FC = () => {
   const { initialize } = useRepositories();
   const [dataSize, setDataSize] = useState<DataSize | 'dynamic'>('medium');
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [showAIAgentsApiSettings, setShowAIAgentsApiSettings] = useState(false);
+  const [aiAgentsApiSettings, setAIAgentsApiSettings] = useState<{
+    baseUrl: string;
+    authToken?: string;
+    clientSecret?: string;
+    clientId?: string;
+    noAuth: boolean;
+    enabled: boolean;
+  }>({
+    baseUrl: 'http://localhost:8000',
+    noAuth: true,
+    enabled: false
+  });
 
   // Load saved data settings
   useEffect(() => {
     const savedSetting = localStorage.getItem('dataSize');
     if (savedSetting) {
       setDataSize(savedSetting as DataSize);
+    }
+
+    // Load AI Agents API settings
+    const savedAIAgentsSettings = localStorage.getItem('aiAgentsApiSettings');
+    if (savedAIAgentsSettings) {
+      try {
+        setAIAgentsApiSettings(JSON.parse(savedAIAgentsSettings));
+      } catch (error) {
+        console.error('Failed to parse AI Agents API settings:', error);
+      }
     }
 
     const fetchUser = async () => {
@@ -54,6 +78,17 @@ const SettingsView: React.FC = () => {
     } catch (error) {
       console.error('Failed to change data size:', error);
       setIsLoading(false);
+    }
+  };
+
+  // Handle AI Agents API settings save
+  const handleAIAgentsApiSave = (settings: typeof aiAgentsApiSettings) => {
+    setAIAgentsApiSettings(settings);
+    localStorage.setItem('aiAgentsApiSettings', JSON.stringify(settings));
+    
+    // If API was enabled/disabled, reload to apply changes
+    if (settings.enabled !== aiAgentsApiSettings.enabled) {
+      window.location.reload();
     }
   };
 
@@ -287,6 +322,45 @@ const SettingsView: React.FC = () => {
                   </h3>
 
                   <ConversationsApiSettings />
+                </div>
+
+                {/* AI Agents API Settings Section */}
+                <div className={`p-4 rounded-md ${
+                  theme === 'dark' ? 'bg-gray-600' : 'bg-gray-50'
+                }`}>
+                  <h3 className={`font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'} mb-4 flex items-center`}>
+                    <Brain size={16} className="text-blue-500 mr-2" />
+                    AI Agents API Connection
+                  </h3>
+
+                  <div className="space-y-3">
+                    <p className={`text-sm ${theme === 'dark' ? 'text-gray-300' : 'text-gray-500'}`}>
+                      Configure a dedicated API connection for AI Agents data, independent from other APIs.
+                    </p>
+                    
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className={`text-sm font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+                          Status: {aiAgentsApiSettings.enabled ? 'Enabled' : 'Disabled'}
+                        </p>
+                        {aiAgentsApiSettings.enabled && (
+                          <p className={`text-xs ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
+                            {aiAgentsApiSettings.baseUrl}
+                          </p>
+                        )}
+                      </div>
+                      <button
+                        onClick={() => setShowAIAgentsApiSettings(true)}
+                        className={`px-4 py-2 rounded-md ${
+                          theme === 'dark'
+                            ? 'bg-gray-700 hover:bg-gray-600 text-white'
+                            : 'bg-gray-200 hover:bg-gray-300 text-gray-800'
+                        } transition-colors`}
+                      >
+                        Configure
+                      </button>
+                    </div>
+                  </div>
                 </div>
 
                 {/* Local Dataset Settings */}
@@ -525,6 +599,15 @@ const SettingsView: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* AI Agents API Settings Modal */}
+      {showAIAgentsApiSettings && (
+        <AIAgentsApiSettings
+          onClose={() => setShowAIAgentsApiSettings(false)}
+          onSave={handleAIAgentsApiSave}
+          settings={aiAgentsApiSettings}
+        />
+      )}
     </div>
   );
 };

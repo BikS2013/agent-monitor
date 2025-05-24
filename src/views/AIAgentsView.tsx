@@ -2,13 +2,13 @@ import React, { useState } from 'react';
 import { Bot, Filter, Plus, Search } from 'lucide-react';
 import AIAgentsList from '../components/AIAgentsList';
 import AIAgentDetail from '../components/AIAgentDetail';
-import { useData } from '../context/DataContext';
+import { useAIAgentsData } from '../context/AIAgentsDataContext';
 import { AIAgent } from '../data/types';
 import { useTheme } from '../context/ThemeContext';
 import NewAIAgentModal from '../components/modals/NewAIAgentModal';
 
 const AIAgentsView: React.FC = () => {
-  const { aiAgents } = useData();
+  const { aiAgents } = useAIAgentsData();
   const { theme } = useTheme();
   const [selectedAgent, setSelectedAgent] = useState<AIAgent | null>(null);
   const [searchText, setSearchText] = useState('');

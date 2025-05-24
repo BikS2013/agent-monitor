@@ -13,6 +13,8 @@ import { useTheme } from './context/ThemeContext';
 import { useRepositories } from './context/RepositoryContext';
 import { ConversationsRepositoryProvider } from './context/ConversationsRepositoryContext';
 import { ConversationsDataProvider } from './context/ConversationsDataContext';
+import { AIAgentsRepositoryProvider } from './context/AIAgentsRepositoryContext';
+import { AIAgentsDataProvider } from './context/AIAgentsDataContext';
 
 const App: React.FC = () => {
   const [currentView, setCurrentView] = useState('dashboard');
@@ -145,7 +147,13 @@ const App: React.FC = () => {
           </ConversationsDataProvider>
         );
       case 'agents':
-        return <AIAgentsView />;
+        return (
+          <AIAgentsRepositoryProvider>
+            <AIAgentsDataProvider>
+              <AIAgentsView />
+            </AIAgentsDataProvider>
+          </AIAgentsRepositoryProvider>
+        );
       case 'analytics':
         return <AnalyticsView />;
       case 'settings':

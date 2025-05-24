@@ -145,6 +145,7 @@
         const API_KEYS = [
             'agentMonitor_apiSettings',
             'agentMonitor_conversationsApiSettings',
+            'aiAgentsApiSettings',
             'agentMonitor_dataSource',
             'agentMonitor_apiBaseUrl',
             'agentMonitor_apiToken',
@@ -200,6 +201,27 @@
                 } catch (e) {
                     html += '<div class="error">Error parsing conversations API settings: ' + e.message + '</div>';
                 }
+            }
+
+            // Check AI Agents API settings
+            const aiAgentsApiSettings = localStorage.getItem('aiAgentsApiSettings');
+            if (aiAgentsApiSettings) {
+                try {
+                    const settings = JSON.parse(aiAgentsApiSettings);
+                    html += '<div class="item">';
+                    html += '<div class="key">AI Agents API Configuration</div>';
+                    html += `<div class="success">Enabled: ${settings.enabled ? 'Yes' : 'No'}</div>`;
+                    html += `<div class="parsed">Base URL: ${settings.baseUrl || 'Not set'}</div>`;
+                    html += `<div class="parsed">No Auth: ${settings.noAuth ? 'Yes' : 'No'}</div>`;
+                    if (settings.enabled && !settings.baseUrl) {
+                        html += '<div class="warning">⚠️ AI Agents API is enabled but no base URL is set!</div>';
+                    }
+                    html += '</div>';
+                } catch (e) {
+                    html += '<div class="error">Error parsing AI Agents API settings: ' + e.message + '</div>';
+                }
+            } else {
+                html += '<div class="warning">No AI Agents API settings found</div>';
             }
 
             // Check data source
@@ -334,6 +356,17 @@
                 jwtToken: ''
             };
             localStorage.setItem('agentMonitor_conversationsApiSettings', JSON.stringify(convApiSettings));
+            
+            // Set AI Agents API settings
+            const aiAgentsApiSettings = {
+                enabled: true,
+                baseUrl: 'http://localhost:8000',
+                noAuth: true,
+                authToken: '',
+                clientSecret: '',
+                clientId: ''
+            };
+            localStorage.setItem('aiAgentsApiSettings', JSON.stringify(aiAgentsApiSettings));
             
             showStatus('Reset to API mode with default settings!', 'success');
             refreshData();

@@ -71,29 +71,58 @@ export class RepositoryFactory {
       // Test data access
       console.log('RepositoryFactory: Testing data access...');
 
-      // Test conversation access
-      const conversationRepo = this.getConversationRepository();
-      const conversations = await conversationRepo.getAll();
-      console.log('RepositoryFactory: Conversation test -', {
-        count: conversations.data.length,
-        success: conversations.data.length > 0
-      });
+      // Check if we're using an AI Agents API data source that doesn't support all operations
+      const isAIAgentsApiDataSource = this.dataSource.constructor.name === 'AIAgentsApiDataSource';
+      
+      if (isAIAgentsApiDataSource) {
+        console.log('RepositoryFactory: Using AI Agents API - testing AI agents access only');
+        
+        // Test AI agents access (supported by AI Agents API)
+        const aiAgentRepo = this.getAIAgentRepository();
+        const aiAgents = await aiAgentRepo.getAll();
+        console.log('RepositoryFactory: AI Agents test -', {
+          count: aiAgents.data.length,
+          success: aiAgents.data.length >= 0 // 0 is valid for empty responses
+        });
 
-      // Test collection access
-      const collectionRepo = this.getCollectionRepository();
-      const collections = await collectionRepo.getAll();
-      console.log('RepositoryFactory: Collection test -', {
-        count: collections.data.length,
-        success: collections.data.length > 0
-      });
+        // Test user access (limited support by AI Agents API)
+        try {
+          const userRepo = this.getUserRepository();
+          const users = await userRepo.getAll();
+          console.log('RepositoryFactory: Users test -', {
+            count: users.data.length,
+            success: users.data.length >= 0
+          });
+        } catch (userError) {
+          console.log('RepositoryFactory: Users test - limited support, skipping');
+        }
+      } else {
+        console.log('RepositoryFactory: Using full data source - testing all entities');
+        
+        // Test conversation access
+        const conversationRepo = this.getConversationRepository();
+        const conversations = await conversationRepo.getAll();
+        console.log('RepositoryFactory: Conversation test -', {
+          count: conversations.data.length,
+          success: conversations.data.length > 0
+        });
 
-      // Test group access
-      const groupRepo = this.getGroupRepository();
-      const groups = await groupRepo.getAll();
-      console.log('RepositoryFactory: Group test -', {
-        count: groups.data.length,
-        success: groups.data.length > 0
-      });
+        // Test collection access
+        const collectionRepo = this.getCollectionRepository();
+        const collections = await collectionRepo.getAll();
+        console.log('RepositoryFactory: Collection test -', {
+          count: collections.data.length,
+          success: collections.data.length > 0
+        });
+
+        // Test group access
+        const groupRepo = this.getGroupRepository();
+        const groups = await groupRepo.getAll();
+        console.log('RepositoryFactory: Group test -', {
+          count: groups.data.length,
+          success: groups.data.length > 0
+        });
+      }
     } catch (error) {
       console.error('RepositoryFactory: Failed to initialize data source:', error);
       throw error;
