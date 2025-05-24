@@ -4,7 +4,7 @@ import CollectionsList from '../components/CollectionsList';
 import CollectionDetail from '../components/CollectionDetail';
 import NewCollectionModal from '../components/modals/NewCollectionModal';
 import DeleteCollectionModal from '../components/modals/DeleteCollectionModal';
-import { useData } from '../context/DataContext';
+import { useCollectionsData } from '../hooks/useCollectionsData';
 import { Collection, Conversation } from '../data/types';
 import { useTheme } from '../context/ThemeContext';
 import { filterConversationsByCollection } from '../data/filterUtils';
@@ -50,7 +50,7 @@ const CollectionsView: React.FC<CollectionsViewProps> = ({
   selectedCollection,
   setSelectedCollection
 }) => {
-  const { collections, loading, conversations, deleteCollection } = useData();
+  const { collections, loading, conversations, deleteCollection, isUsingCollectionsApi } = useCollectionsData();
   const { theme } = useTheme();
   const [isNewCollectionModalOpen, setIsNewCollectionModalOpen] = React.useState(false);
   const [isDeleteCollectionModalOpen, setIsDeleteCollectionModalOpen] = React.useState(false);
@@ -63,17 +63,19 @@ const CollectionsView: React.FC<CollectionsViewProps> = ({
     console.log('CollectionsView: Collections data', {
       count: Object.keys(collections).length,
       ids: Object.keys(collections),
-      loading: loading.collections
+      loading: loading.collections,
+      usingCollectionsApi: isUsingCollectionsApi
     });
-  }, [collections, loading.collections]);
+  }, [collections, loading.collections, isUsingCollectionsApi]);
 
   // Debug: Log conversations data
   React.useEffect(() => {
     console.log('CollectionsView: Conversations data', {
       count: Object.keys(conversations).length,
-      ids: Object.keys(conversations).slice(0, 5) // Show first 5 for brevity
+      ids: Object.keys(conversations).slice(0, 5), // Show first 5 for brevity
+      usingCollectionsApi: isUsingCollectionsApi
     });
-  }, [conversations]);
+  }, [conversations, isUsingCollectionsApi]);
 
   // Debug log to check if collections are loaded
   console.log('Collections in CollectionsView:', Object.keys(collections).length, collections);
@@ -129,7 +131,12 @@ const CollectionsView: React.FC<CollectionsViewProps> = ({
         {/* A2 area - Fixed sidebar header */}
         <div className={`p-4 ${theme === 'dark' ? 'border-gray-700' : 'border-gray-200'} border-b`}>
           <div className="flex items-center justify-between mb-4">
-            <h2 className={`text-lg font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>Collections</h2>
+            <div>
+              <h2 className={`text-lg font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>Collections</h2>
+              {isUsingCollectionsApi && (
+                <p className="text-xs text-blue-600 mt-1">Using Collections API</p>
+              )}
+            </div>
             <button
               onClick={() => {
                 setCollectionToEdit(null);

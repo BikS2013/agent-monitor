@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import Modal from '../common/Modal';
 import { useData } from '../../context/DataContext';
+import { useCollectionsData } from '../../hooks/useCollectionsData';
 import { Collection, User } from '../../data/types';
 import { Calendar, Bot, CheckCircle, Filter, Plus, Trash2, MessageCircle, AlertCircle } from 'lucide-react';
 import { filterConversationsByCollectionCriteria } from '../../data/filterUtils';
@@ -13,10 +14,16 @@ interface NewCollectionModalProps {
 }
 
 const NewCollectionModal: React.FC<NewCollectionModalProps> = ({ isOpen, onClose, collectionToEdit }) => {
-  const { getCurrentUser, aiAgents, conversations, addCollection, updateCollection } = useData();
+  const { getCurrentUser, aiAgents } = useData();
+  const { conversations, addCollection, updateCollection, isUsingCollectionsApi } = useCollectionsData();
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { theme } = useTheme();
+
+  // Debug: Log which API is being used
+  React.useEffect(() => {
+    console.log('NewCollectionModal: Using Collections API:', isUsingCollectionsApi);
+  }, [isUsingCollectionsApi]);
 
   useEffect(() => {
     const fetchUser = async () => {
