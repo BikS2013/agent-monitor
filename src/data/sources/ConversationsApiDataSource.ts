@@ -2,7 +2,6 @@ import {
   AIAgent,
   Collection,
   Conversation,
-  FilterElement,
   Group,
   Message,
   User
@@ -284,6 +283,7 @@ export class ConversationsApiDataSource implements IDataSource {
 
   /**
    * Get all conversations for a specific collection
+   * Note: This method is kept for backwards compatibility and to support collection-related conversation queries
    * @param collectionId Collection ID
    */
   async getConversationsByCollectionId(collectionId: string): Promise<Conversation[]> {
@@ -424,22 +424,15 @@ export class ConversationsApiDataSource implements IDataSource {
 
   // #endregion
 
-  // #region Collection Methods
+  // #region Collection Methods - Not Supported
 
   /**
    * Get a specific collection by ID
    * @param id Collection ID
    */
   async getCollectionById(id: string): Promise<Collection | null> {
-    try {
-      const collection = await this.apiClient.getCollection(id);
-      if (!collection) return null;
-
-      return this.transformApiCollection(collection);
-    } catch (error) {
-      console.error(`Failed to get collection ${id}:`, error);
-      return null;
-    }
+    console.warn('getCollectionById not supported by Conversations API, use Collections API instead');
+    return null;
   }
 
   /**
@@ -447,36 +440,8 @@ export class ConversationsApiDataSource implements IDataSource {
    * @param ids Optional array of collection IDs. If not provided, returns all collections
    */
   async getCollections(ids?: string[]): Promise<Record<string, Collection>> {
-    try {
-      const result = await this.apiClient.getCollections({ ids });
-
-      // Handle different response formats
-      let collections: any[] = [];
-      
-      if (result.items && Array.isArray(result.items)) {
-        // Standard API response format with items wrapper
-        collections = result.items;
-      } else if (Array.isArray(result)) {
-        // Direct array format (legacy)
-        collections = result;
-      } else if (typeof result === 'object' && !Array.isArray(result) && !result.items) {
-        // Object format with IDs as keys (legacy)
-        return Object.entries(result).reduce((acc, [id, coll]) => {
-          acc[id] = this.transformApiCollection(coll);
-          return acc;
-        }, {} as Record<string, Collection>);
-      }
-
-      // Transform array to record with IDs as keys
-      return collections.reduce((acc, coll) => {
-        const transformed = this.transformApiCollection(coll);
-        acc[transformed.id] = transformed;
-        return acc;
-      }, {} as Record<string, Collection>);
-    } catch (error) {
-      console.error('Failed to get collections:', error);
-      return {};
-    }
+    console.warn('getCollections not supported by Conversations API, use Collections API instead');
+    return {};
   }
 
   /**
@@ -484,25 +449,8 @@ export class ConversationsApiDataSource implements IDataSource {
    * @param groupId Group ID
    */
   async getCollectionsByGroupId(groupId: string): Promise<Collection[]> {
-    try {
-      const result = await this.apiClient.getCollectionsByGroup(groupId);
-      
-      // Handle different response formats
-      let collections: any[] = [];
-      
-      if (result.items && Array.isArray(result.items)) {
-        // Standard API response format with items wrapper
-        collections = result.items;
-      } else if (Array.isArray(result)) {
-        // Direct array format (legacy)
-        collections = result;
-      }
-      
-      return collections.map(coll => this.transformApiCollection(coll));
-    } catch (error) {
-      console.error(`Failed to get collections for group ${groupId}:`, error);
-      return [];
-    }
+    console.warn('getCollectionsByGroupId not supported by Conversations API, use Collections API instead');
+    return [];
   }
 
   /**
@@ -510,25 +458,8 @@ export class ConversationsApiDataSource implements IDataSource {
    * @param creatorId Creator user ID
    */
   async getCollectionsByCreatorId(creatorId: string): Promise<Collection[]> {
-    try {
-      const result = await this.apiClient.getCollectionsByCreator(creatorId);
-      
-      // Handle different response formats
-      let collections: any[] = [];
-      
-      if (result.items && Array.isArray(result.items)) {
-        // Standard API response format with items wrapper
-        collections = result.items;
-      } else if (Array.isArray(result)) {
-        // Direct array format (legacy)
-        collections = result;
-      }
-      
-      return collections.map(coll => this.transformApiCollection(coll));
-    } catch (error) {
-      console.error(`Failed to get collections for creator ${creatorId}:`, error);
-      return [];
-    }
+    console.warn('getCollectionsByCreatorId not supported by Conversations API, use Collections API instead');
+    return [];
   }
 
   /**
@@ -536,14 +467,11 @@ export class ConversationsApiDataSource implements IDataSource {
    * @param data Collection data without the ID
    */
   async createCollection(data: Omit<Collection, 'id'>): Promise<Collection> {
-    try {
-      const apiData = this.prepareCollectionForApi(data as Collection);
-      const result = await this.apiClient.createCollection(apiData);
-      return this.transformApiCollection(result);
-    } catch (error) {
-      console.error('Failed to create collection:', error);
-      throw error;
-    }
+    console.warn('createCollection not supported by Conversations API, use Collections API instead');
+    return {
+      ...data as any,
+      id: `collection_${Date.now()}`,
+    };
   }
 
   /**
@@ -552,15 +480,8 @@ export class ConversationsApiDataSource implements IDataSource {
    * @param data Updated collection data
    */
   async updateCollection(id: string, data: Partial<Collection>): Promise<Collection | null> {
-    try {
-      const apiData = this.prepareCollectionForApi(data as Collection);
-      const result = await this.apiClient.updateCollection(id, apiData);
-      if (!result) return null;
-      return this.transformApiCollection(result);
-    } catch (error) {
-      console.error(`Failed to update collection ${id}:`, error);
-      return null;
-    }
+    console.warn('updateCollection not supported by Conversations API, use Collections API instead');
+    return null;
   }
 
   /**
@@ -568,12 +489,8 @@ export class ConversationsApiDataSource implements IDataSource {
    * @param id Collection ID
    */
   async deleteCollection(id: string): Promise<boolean> {
-    try {
-      return await this.apiClient.deleteCollection(id);
-    } catch (error) {
-      console.error(`Failed to delete collection ${id}:`, error);
-      return false;
-    }
+    console.warn('deleteCollection not supported by Conversations API, use Collections API instead');
+    return false;
   }
 
   // #endregion
@@ -931,77 +848,6 @@ export class ConversationsApiDataSource implements IDataSource {
     return transformed;
   }
 
-  /**
-   * Transform API collection format to app format
-   */
-  private transformApiCollection(apiCollection: any): Collection {
-    // Create the collection object in our app format
-    return {
-      id: apiCollection.id,
-      name: apiCollection.name || '',
-      description: apiCollection.description || '',
-      createdAt: apiCollection.createdAt || apiCollection.created_at || new Date().toISOString(),
-      updatedAt: apiCollection.updatedAt || apiCollection.updated_at || new Date().toISOString(),
-      ownerId: apiCollection.ownerId || apiCollection.owner_id || '',
-      conversationIds: Array.isArray(apiCollection.conversations)
-                        ? apiCollection.conversations
-                        : (Array.isArray(apiCollection.conversationIds)
-                          ? apiCollection.conversationIds
-                          : (apiCollection.conversation_ids || [])),
-      metadata: apiCollection.metadata || {},
-      isPublic: apiCollection.isPublic || apiCollection.is_public || false,
-      tags: Array.isArray(apiCollection.tags) ? apiCollection.tags : [],
-      // Additional fields from the API specification
-      filter: apiCollection.filter || [],
-      creator: apiCollection.creator || '',
-      accessPermissions: Array.isArray(apiCollection.accessPermissions) 
-                          ? apiCollection.accessPermissions 
-                          : (apiCollection.access_permissions || [])
-    };
-  }
-
-  /**
-   * Prepare collection data for API
-   */
-  private prepareCollectionForApi(collection: Partial<Collection>): any {
-    // Create a copy to avoid modifying the original
-    const apiData: any = { ...collection };
-
-    // Handle filter field - keep as is since API expects 'filter'
-    if (apiData.filter) {
-      // Ensure filter is an array
-      if (!Array.isArray(apiData.filter)) {
-        apiData.filter = [apiData.filter];
-      }
-    } else if (apiData.filterCriteria) {
-      // Convert legacy filterCriteria to new filter format
-      const filter: FilterElement = {};
-      
-      if (apiData.filterCriteria.aiAgentBased) {
-        filter.aiAgentIds = apiData.filterCriteria.aiAgentBased;
-      }
-      
-      if (apiData.filterCriteria.timeBased) {
-        filter.timeRange = apiData.filterCriteria.timeBased;
-      }
-      
-      if (apiData.filterCriteria.outcomeBased) {
-        filter.outcome = apiData.filterCriteria.outcomeBased;
-      }
-      
-      apiData.filter = [filter];
-      delete apiData.filterCriteria;
-    }
-
-    // Remove conversations field if present (not sent to API)
-    delete apiData.conversations;
-    delete apiData.conversationIds;
-
-    // Keep most fields as-is since the API spec uses camelCase
-    // Only convert fields that are truly snake_case in the API
-    
-    return apiData;
-  }
 
 
   // #endregion
