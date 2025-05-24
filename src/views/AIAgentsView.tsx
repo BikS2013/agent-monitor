@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Bot, Filter, Plus, Search } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Bot, Filter, Plus, Search, RefreshCw } from 'lucide-react';
 import AIAgentsList from '../components/AIAgentsList';
 import AIAgentDetail from '../components/AIAgentDetail';
 import { useAIAgentsData } from '../context/AIAgentsDataContext';
@@ -8,12 +8,38 @@ import { useTheme } from '../context/ThemeContext';
 import NewAIAgentModal from '../components/modals/NewAIAgentModal';
 
 const AIAgentsView: React.FC = () => {
-  const { aiAgents } = useAIAgentsData();
+  const { aiAgents, cleanupInvalidAgents } = useAIAgentsData();
   const { theme } = useTheme();
   const [selectedAgent, setSelectedAgent] = useState<AIAgent | null>(null);
   const [searchText, setSearchText] = useState('');
   const [isNewAgentModalOpen, setIsNewAgentModalOpen] = useState(false);
   const [isFiltersOpen, setIsFiltersOpen] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  // Sync selectedAgent with updated agent data from context
+  useEffect(() => {
+    if (selectedAgent && aiAgents[selectedAgent.id]) {
+      // Update selectedAgent with the latest data from context
+      const updatedAgent = aiAgents[selectedAgent.id];
+      // Only update if the agent data has actually changed to avoid infinite loops
+      if (JSON.stringify(updatedAgent) !== JSON.stringify(selectedAgent)) {
+        setSelectedAgent(updatedAgent);
+      }
+    }
+  }, [aiAgents, selectedAgent]); // Watch for changes in aiAgents and selectedAgent
+
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    try {
+      // Clean up invalid agents and refresh data
+      cleanupInvalidAgents();
+      console.log('AI Agents data refreshed successfully');
+    } catch (error) {
+      console.error('Failed to refresh AI agents data:', error);
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
 
   return (
     <div className="flex flex-1 h-screen">
@@ -24,6 +50,14 @@ const AIAgentsView: React.FC = () => {
           <div className="flex items-center justify-between mb-4">
             <h2 className={`text-lg font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>AI Agents</h2>
             <div className="flex space-x-1">
+              <button
+                onClick={handleRefresh}
+                disabled={isRefreshing}
+                className={`p-2 ${theme === 'dark' ? 'hover:bg-gray-700' : 'hover:bg-gray-100'} rounded`}
+                title="Refresh agents"
+              >
+                <RefreshCw size={20} className={`${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'} ${isRefreshing ? 'animate-spin' : ''}`} />
+              </button>
               <button
                 onClick={() => setIsFiltersOpen(!isFiltersOpen)}
                 className={`p-2 ${theme === 'dark' ? 'hover:bg-gray-700' : 'hover:bg-gray-100'} rounded`}
@@ -66,7 +100,10 @@ const AIAgentsView: React.FC = () => {
       {selectedAgent ? (
         <div className={`flex-1 ${theme === 'dark' ? 'bg-gray-800' : 'bg-gray-50'} flex flex-col`} style={{ height: 'calc(100vh - 64px)' }}>
           {/* A3 area - Fixed content header and B2 area - Scrollable content are handled in AIAgentDetail */}
-          <AIAgentDetail agent={selectedAgent} />
+          <AIAgentDetail
+            agent={selectedAgent}
+            onAgentDeleted={() => setSelectedAgent(null)}
+          />
         </div>
       ) : (
         <div className={`flex-1 flex items-center justify-center ${theme === 'dark' ? 'bg-gray-800' : 'bg-gray-50'}`} style={{ height: 'calc(100vh - 64px)' }}>

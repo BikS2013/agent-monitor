@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import Modal from '../common/Modal';
-import { useData } from '../../context/DataContext';
+import { useAIAgentsData } from '../../context/AIAgentsDataContext';
 import { Bot, Plus, Trash2 } from 'lucide-react';
 import { useTheme } from '../../context/ThemeContext';
 
@@ -10,7 +10,7 @@ interface NewAIAgentModalProps {
 }
 
 const NewAIAgentModal: React.FC<NewAIAgentModalProps> = ({ isOpen, onClose }) => {
-  const { addAIAgent } = useData();
+  const { createAIAgent } = useAIAgentsData();
   const { theme } = useTheme();
 
   const [name, setName] = useState('');
@@ -42,30 +42,35 @@ const NewAIAgentModal: React.FC<NewAIAgentModalProps> = ({ isOpen, onClose }) =>
     setSpecializations(specializations.filter(s => s !== specialization));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Create new AI agent
-    addAIAgent({
-      name,
-      model,
-      status: 'active',
-      conversationsProcessed: 0,
-      successRate: '0%',
-      avgResponseTime: '0s',
-      lastActive: 'Just now',
-      capabilities,
-      specializations
-    });
+    try {
+      // Create new AI agent
+      await createAIAgent({
+        name,
+        model, // Use model to match the AIAgent interface
+        status: 'active',
+        conversationsProcessed: 0,
+        successRate: '0%',
+        avgResponseTime: '0m',
+        lastActive: new Date().toISOString(),
+        capabilities,
+        specializations
+      });
 
-    // Reset form and close modal
-    setName('');
-    setModel('GPT-4-Turbo');
-    setCapabilities(['general-inquiries']);
-    setSpecializations(['customer-service']);
-    setNewCapability('');
-    setNewSpecialization('');
-    onClose();
+      // Reset form and close modal
+      setName('');
+      setModel('GPT-4-Turbo');
+      setCapabilities(['general-inquiries']);
+      setSpecializations(['customer-service']);
+      setNewCapability('');
+      setNewSpecialization('');
+      onClose();
+    } catch (error) {
+      console.error('Failed to create AI agent:', error);
+      // You could add error handling UI here if needed
+    }
   };
 
   return (

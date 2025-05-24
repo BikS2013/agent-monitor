@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Bot, Activity, Clock, CheckCircle } from 'lucide-react';
 import { AIAgent } from '../data/types';
 import NewAIAgentModal from './modals/NewAIAgentModal';
 import { useTheme } from '../context/ThemeContext';
+import { useAIAgentsData } from '../context/AIAgentsDataContext';
 
 interface AIAgentsListProps {
   aiAgents: Record<string, AIAgent>;
@@ -16,6 +17,7 @@ const AIAgentsList: React.FC<AIAgentsListProps> = ({
   setSelectedAgent
 }) => {
   const { theme } = useTheme();
+  const { cleanupInvalidAgents } = useAIAgentsData();
   const [isNewAgentModalOpen, setIsNewAgentModalOpen] = useState(false);
   const [searchText, setSearchText] = useState('');
   const [isFiltersOpen, setIsFiltersOpen] = useState(false);
@@ -23,8 +25,59 @@ const AIAgentsList: React.FC<AIAgentsListProps> = ({
   const [modelFilter, setModelFilter] = useState('all');
   const [uniqueModels, setUniqueModels] = useState<string[]>(['all']);
 
-  // Get agents array safely
-  const agentsArray = aiAgents ? Object.values(aiAgents) : [];
+  // Get agents array safely - use useMemo to ensure proper re-computation
+  const agentsArray = useMemo(() => {
+    if (!aiAgents) return [];
+
+    // Process and migrate agents, filtering out truly invalid ones
+    return Object.values(aiAgents).map(agent => {
+      // Handle migration from old field structure
+      if (agent && typeof agent === 'object') {
+        const migratedAgent = { ...agent };
+
+        // Migrate modelName to model if needed
+        if (!migratedAgent.model && (agent as any).modelName) {
+          migratedAgent.model = (agent as any).modelName;
+        }
+
+        // Provide default values for missing fields
+        if (!migratedAgent.model || migratedAgent.model.trim() === '') {
+          migratedAgent.model = 'Unknown Model';
+        }
+
+        if (!migratedAgent.name || migratedAgent.name.trim() === '') {
+          migratedAgent.name = 'Unnamed Agent';
+        }
+
+        if (!migratedAgent.status) {
+          migratedAgent.status = 'inactive';
+        }
+
+        return migratedAgent;
+      }
+
+      return agent;
+    }).filter(agent => {
+      // Only filter out agents that are completely invalid
+      const isValid = agent &&
+        typeof agent === 'object' &&
+        agent.id &&
+        agent.name &&
+        agent.model &&
+        agent.status;
+
+      if (!isValid) {
+        console.warn('Invalid agent found and filtered out:', agent);
+      }
+
+      return isValid;
+    });
+  }, [aiAgents]);
+
+  // Clean up invalid agents on mount
+  useEffect(() => {
+    cleanupInvalidAgents();
+  }, []); // Run once on mount
 
   // Extract unique models with improved error handling
   useEffect(() => {
@@ -43,46 +96,49 @@ const AIAgentsList: React.FC<AIAgentsListProps> = ({
 
     // Set unique models with 'all' as first option
     setUniqueModels(['all', ...Array.from(models)]);
-  }, [aiAgents]);
+  }, [agentsArray]); // Changed dependency from aiAgents to agentsArray
 
   // Filter agents by search text, status, and model with null/undefined checks
-  const displayedAgents = agentsArray.filter(agent => {
-    // Defensive check: ensure agent has required properties
-    if (!agent || typeof agent !== 'object') {
-      return false;
-    }
-
-    // Search filter with null/undefined checks
-    if (searchText.trim() !== '') {
-      const search = searchText.toLowerCase();
-
-      // Safe property access with null/undefined checks
-      const nameMatch = agent.name && typeof agent.name === 'string'
-        ? agent.name.toLowerCase().includes(search)
-        : false;
-
-      const modelMatch = agent.model && typeof agent.model === 'string'
-        ? agent.model.toLowerCase().includes(search)
-        : false;
-
-      if (!nameMatch && !modelMatch) {
+  const displayedAgents = useMemo(() => {
+    return agentsArray.filter(agent => {
+      // Defensive check: ensure agent has required properties
+      if (!agent || typeof agent !== 'object' || !agent.id) {
+        console.warn('Invalid agent found:', agent);
         return false;
       }
-    }
 
-    // Status filter with null/undefined check
-    if (statusFilter !== 'all' && agent.status !== statusFilter) {
-      return false;
-    }
+      // Search filter with null/undefined checks
+      if (searchText.trim() !== '') {
+        const search = searchText.toLowerCase();
 
-    // Model filter with null/undefined check
-    if (modelFilter !== 'all' &&
-        (agent.model !== modelFilter || !agent.model)) {
-      return false;
-    }
+        // Safe property access with null/undefined checks
+        const nameMatch = agent.name && typeof agent.name === 'string'
+          ? agent.name.toLowerCase().includes(search)
+          : false;
 
-    return true;
-  });
+        const modelMatch = agent.model && typeof agent.model === 'string'
+          ? agent.model.toLowerCase().includes(search)
+          : false;
+
+        if (!nameMatch && !modelMatch) {
+          return false;
+        }
+      }
+
+      // Status filter with null/undefined check
+      if (statusFilter !== 'all' && agent.status !== statusFilter) {
+        return false;
+      }
+
+      // Model filter with null/undefined check
+      if (modelFilter !== 'all' &&
+          (agent.model !== modelFilter || !agent.model)) {
+        return false;
+      }
+
+      return true;
+    });
+  }, [agentsArray, searchText, statusFilter, modelFilter]);
 
   return (
     <div className={`${theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} flex flex-col h-full`}>
@@ -131,7 +187,11 @@ const AIAgentsList: React.FC<AIAgentsListProps> = ({
           displayedAgents.map((agent) => (
           <div
             key={agent.id}
-            onClick={() => setSelectedAgent(agent)}
+            onClick={() => {
+              // Always get the latest agent data from aiAgents when selecting
+              const latestAgent = aiAgents[agent.id] || agent;
+              setSelectedAgent(latestAgent);
+            }}
             className={`p-4 ${theme === 'dark' ? 'border-gray-700' : 'border-gray-200'} border-b cursor-pointer ${
               theme === 'dark'
                 ? (selectedAgent?.id === agent.id ? 'bg-gray-700' : 'hover:bg-gray-700')

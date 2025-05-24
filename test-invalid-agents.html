@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Invalid Agents Fix</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .test-section {
+            margin-bottom: 30px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .success {
+            background-color: #d4edda;
+            border-color: #c3e6cb;
+            color: #155724;
+        }
+        .error {
+            background-color: #f8d7da;
+            border-color: #f5c6cb;
+            color: #721c24;
+        }
+        .info {
+            background-color: #d1ecf1;
+            border-color: #bee5eb;
+            color: #0c5460;
+        }
+        pre {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 4px;
+            overflow-x: auto;
+        }
+        .button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        .button:hover {
+            background: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 Invalid Agents Fix Test</h1>
+        
+        <div class="test-section success">
+            <h2>✅ Fixes Applied</h2>
+            <p>The following fixes have been successfully applied to resolve the "Invalid agent found" errors:</p>
+            <ul>
+                <li><strong>NewAIAgentModal.tsx</strong>: Fixed field mismatch from <code>modelName</code> to <code>model</code></li>
+                <li><strong>EditAIAgentModal.tsx</strong>: Fixed React key warnings for capabilities and specializations</li>
+                <li><strong>AIAgentDetail.tsx</strong>: Fixed React key warnings for capabilities and specializations</li>
+                <li><strong>AIAgentsList.tsx</strong>: Added data validation and filtering of invalid agents</li>
+                <li><strong>AIAgentsDataContext.tsx</strong>: Added cleanup function for invalid agents</li>
+            </ul>
+        </div>
+
+        <div class="test-section info">
+            <h2>🔍 What Was Fixed</h2>
+            <p>The error you saw was caused by:</p>
+            <pre>Invalid agent found: { id: undefined, name: '', modelName: '', version: '', createdAt: '2025-05-24T09:04:50.585Z' }</pre>
+            
+            <p><strong>Root Causes:</strong></p>
+            <ol>
+                <li><strong>Field Name Mismatch</strong>: The NewAIAgentModal was using <code>modelName</code> instead of <code>model</code></li>
+                <li><strong>Invalid Data Structure</strong>: Agents were being created with wrong field names</li>
+                <li><strong>Missing Validation</strong>: No validation to filter out invalid agents</li>
+                <li><strong>React Key Warnings</strong>: Using array indices instead of unique content as keys</li>
+            </ol>
+        </div>
+
+        <div class="test-section info">
+            <h2>🛠️ Technical Details</h2>
+            
+            <h3>1. Fixed Field Mapping</h3>
+            <p><strong>Before:</strong></p>
+            <pre>await createAIAgent({
+  name,
+  modelName: model, // ❌ Wrong field name
+  version: '1.0',
+  // ... other fields
+});</pre>
+            
+            <p><strong>After:</strong></p>
+            <pre>await createAIAgent({
+  name,
+  model, // ✅ Correct field name
+  status: 'active',
+  conversationsProcessed: 0,
+  successRate: '0%',
+  avgResponseTime: '0m',
+  lastActive: new Date().toISOString(),
+  capabilities,
+  specializations
+});</pre>
+
+            <h3>2. Added Data Validation</h3>
+            <pre>const agentsArray = useMemo(() => {
+  if (!aiAgents) return [];
+  
+  // Filter out any invalid agents and log them
+  return Object.values(aiAgents).filter(agent => {
+    const isValid = agent && 
+      typeof agent === 'object' && 
+      agent.id && 
+      agent.name && 
+      agent.model && 
+      agent.status;
+    
+    if (!isValid) {
+      console.warn('Invalid agent found and filtered out:', agent);
+    }
+    
+    return isValid;
+  });
+}, [aiAgents]);</pre>
+
+            <h3>3. Fixed React Keys</h3>
+            <p><strong>Before:</strong></p>
+            <pre>{capabilities.map((capability, index) => (
+  &lt;div key={index}&gt; {/* ❌ Using index */}</pre>
+            
+            <p><strong>After:</strong></p>
+            <pre>{capabilities.map((capability) => (
+  &lt;div key={capability}&gt; {/* ✅ Using content */}</pre>
+        </div>
+
+        <div class="test-section success">
+            <h2>🎯 Expected Results</h2>
+            <p>After these fixes, you should see:</p>
+            <ul>
+                <li>✅ No more "Invalid agent found" console warnings</li>
+                <li>✅ No more React key prop warnings</li>
+                <li>✅ AI agents created through the modal work correctly</li>
+                <li>✅ Editing AI agents updates all fields properly</li>
+                <li>✅ List updates in real-time when agents are modified</li>
+                <li>✅ All UI components display updated data immediately</li>
+            </ul>
+        </div>
+
+        <div class="test-section info">
+            <h2>🧪 Testing Steps</h2>
+            <ol>
+                <li><strong>Create a new AI agent</strong> using the "+" button</li>
+                <li><strong>Edit an existing agent</strong> and change its name, model, or status</li>
+                <li><strong>Check the browser console</strong> - should be clean of warnings</li>
+                <li><strong>Verify real-time updates</strong> - changes should appear immediately</li>
+                <li><strong>Test capabilities/specializations</strong> - add/remove items in edit modal</li>
+            </ol>
+        </div>
+
+        <div class="test-section">
+            <h2>🔧 Manual Cleanup (if needed)</h2>
+            <p>If you still see invalid agents, the cleanup function will automatically run when the component loads. You can also manually trigger it by opening the browser console and running:</p>
+            <pre>// This will clean up any remaining invalid agents
+// The function is automatically called when AIAgentsList loads</pre>
+        </div>
+    </div>
+</body>
+</html>

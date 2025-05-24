@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Agents List Refresh Button Demo</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .demo-sidebar {
+            width: 384px;
+            background: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            margin: 20px 0;
+            overflow: hidden;
+        }
+        .demo-header {
+            padding: 16px;
+            border-bottom: 1px solid #e5e7eb;
+            background: #f9fafb;
+        }
+        .demo-title {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 16px;
+        }
+        .demo-buttons {
+            display: flex;
+            gap: 4px;
+        }
+        .btn {
+            padding: 8px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            background: transparent;
+            color: #6b7280;
+            transition: all 0.2s;
+        }
+        .btn:hover {
+            background: #f3f4f6;
+        }
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        .icon {
+            width: 20px;
+            height: 20px;
+            display: inline-block;
+        }
+        .spinning {
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        .search-box {
+            position: relative;
+        }
+        .search-input {
+            width: 100%;
+            padding: 8px 8px 8px 40px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+        .search-icon {
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 16px;
+            height: 16px;
+            color: #9ca3af;
+        }
+        .section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+        }
+        .feature-list {
+            list-style: none;
+            padding: 0;
+        }
+        .feature-list li {
+            padding: 8px 0;
+            border-bottom: 1px solid #f3f4f6;
+        }
+        .feature-list li:last-child {
+            border-bottom: none;
+        }
+        .code-block {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 4px;
+            border-left: 4px solid #2563eb;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            overflow-x: auto;
+        }
+        .highlight {
+            background: #fef3c7;
+            padding: 2px 4px;
+            border-radius: 3px;
+        }
+        .success {
+            background: #d1fae5;
+            padding: 2px 4px;
+            border-radius: 3px;
+        }
+        .button-order {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            padding: 12px;
+            background: #f9fafb;
+            border-radius: 6px;
+            margin: 10px 0;
+        }
+        .button-order .btn-demo {
+            padding: 6px 8px;
+            border: 1px solid #d1d5db;
+            border-radius: 4px;
+            background: white;
+            font-size: 12px;
+            color: #374151;
+        }
+        .button-order .new {
+            background: #dbeafe;
+            border-color: #3b82f6;
+            color: #1d4ed8;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔄 Refresh Button Added to AI Agents List</h1>
+        
+        <div class="section">
+            <h2>✨ New Button Layout</h2>
+            <p>I've added a refresh button to the AI Agents list header, positioned before the filter and add buttons:</p>
+            
+            <div class="demo-sidebar">
+                <div class="demo-header">
+                    <div class="demo-title">
+                        <h3 style="margin: 0; font-size: 18px; color: #111827;">AI Agents</h3>
+                        <div class="demo-buttons">
+                            <button class="btn" title="Refresh agents" onclick="simulateRefresh(this)">
+                                <span class="icon">🔄</span>
+                            </button>
+                            <button class="btn" title="Filter agents">
+                                <span class="icon">🔍</span>
+                            </button>
+                            <button class="btn" title="Add new agent">
+                                <span class="icon">➕</span>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="search-box">
+                        <span class="search-icon">🔍</span>
+                        <input type="text" class="search-input" placeholder="Search AI agents..." />
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>🎯 Button Order & Positioning</h2>
+            <p>The buttons are now arranged in logical order from left to right:</p>
+            
+            <div class="button-order">
+                <span class="btn-demo new">🔄 Refresh</span>
+                <span>→</span>
+                <span class="btn-demo">🔍 Filter</span>
+                <span>→</span>
+                <span class="btn-demo">➕ Add</span>
+            </div>
+            
+            <ul class="feature-list">
+                <li><strong>🔄 Refresh (NEW):</strong> Cleans up invalid agents and refreshes data</li>
+                <li><strong>🔍 Filter:</strong> Toggle filters panel (existing)</li>
+                <li><strong>➕ Add:</strong> Create new agent (existing)</li>
+            </ul>
+        </div>
+
+        <div class="section">
+            <h2>🔧 Implementation Details</h2>
+            
+            <h3>Refresh Functionality</h3>
+            <div class="code-block">
+const handleRefresh = async () => {
+  setIsRefreshing(true);
+  try {
+    <span class="highlight">cleanupInvalidAgents();</span> // Migrates old agents & refreshes
+    console.log('AI Agents data refreshed successfully');
+  } catch (error) {
+    console.error('Failed to refresh AI agents data:', error);
+  } finally {
+    setIsRefreshing(false);
+  }
+};
+            </div>
+
+            <h3>Button Implementation</h3>
+            <div class="code-block">
+&lt;button
+  onClick={handleRefresh}
+  disabled={isRefreshing}
+  className="p-2 hover:bg-gray-100 rounded"
+  title="Refresh agents"
+&gt;
+  &lt;RefreshCw 
+    size={20} 
+    className={`text-gray-600 <span class="success">${isRefreshing ? 'animate-spin' : ''}</span>`} 
+  /&gt;
+&lt;/button&gt;
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>🎨 Visual Features</h2>
+            <ul class="feature-list">
+                <li><strong>🔄 Spinning Animation:</strong> Icon spins during refresh operation</li>
+                <li><strong>🚫 Disabled State:</strong> Button disabled while refreshing</li>
+                <li><strong>🎯 Hover Effect:</strong> Background changes on hover</li>
+                <li><strong>💡 Tooltip:</strong> "Refresh agents" tooltip on hover</li>
+                <li><strong>🎨 Consistent Styling:</strong> Matches existing button design</li>
+            </ul>
+        </div>
+
+        <div class="section">
+            <h2>🔄 What the Refresh Does</h2>
+            <ul class="feature-list">
+                <li><strong>🧹 Data Cleanup:</strong> Runs <code>cleanupInvalidAgents()</code></li>
+                <li><strong>🔄 Migration:</strong> Converts old <code>modelName</code> to <code>model</code></li>
+                <li><strong>✨ Default Values:</strong> Adds missing fields with defaults</li>
+                <li><strong>📊 Re-render:</strong> Triggers component re-render with fresh data</li>
+                <li><strong>📝 Logging:</strong> Console messages for success/error</li>
+            </ul>
+        </div>
+
+        <div class="section">
+            <h2>🎯 User Experience</h2>
+            <p>When users click the refresh button:</p>
+            <ol>
+                <li><strong>Visual Feedback:</strong> Button becomes disabled, icon starts spinning</li>
+                <li><strong>Data Processing:</strong> Invalid agents are cleaned up and migrated</li>
+                <li><strong>UI Update:</strong> Agent list refreshes with clean data</li>
+                <li><strong>Completion:</strong> Button re-enables, spinning stops</li>
+                <li><strong>Feedback:</strong> Console message confirms success</li>
+            </ol>
+        </div>
+
+        <div class="section">
+            <h2>✅ What You'll See</h2>
+            <p>After refreshing the page, you should see:</p>
+            <ul class="feature-list">
+                <li>✅ <strong>New refresh button</strong> in the AI Agents header (leftmost position)</li>
+                <li>✅ <strong>Spinning animation</strong> when clicked</li>
+                <li>✅ <strong>Button order:</strong> Refresh → Filter → Add</li>
+                <li>✅ <strong>Consistent styling</strong> with existing buttons</li>
+                <li>✅ <strong>Console messages</strong> for refresh operations</li>
+                <li>✅ <strong>Data migration</strong> for invalid agents</li>
+            </ul>
+        </div>
+
+        <div class="section">
+            <h2>🔗 Consistency Across Views</h2>
+            <p>Now all major views have refresh functionality:</p>
+            <ul class="feature-list">
+                <li><strong>📋 Collections:</strong> Refresh button in detail header</li>
+                <li><strong>👥 Groups:</strong> Refresh button in detail header</li>
+                <li><strong>🤖 AI Agents List:</strong> Refresh button in list header (NEW)</li>
+                <li><strong>🤖 AI Agent Detail:</strong> Refresh button in detail header</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        function simulateRefresh(button) {
+            const icon = button.querySelector('.icon');
+            button.disabled = true;
+            icon.classList.add('spinning');
+            
+            setTimeout(() => {
+                button.disabled = false;
+                icon.classList.remove('spinning');
+                alert('AI Agents data refreshed successfully!\n\n• Invalid agents cleaned up\n• Data migrated to new format\n• Agent list updated');
+            }, 2000);
+        }
+    </script>
+</body>
+</html>

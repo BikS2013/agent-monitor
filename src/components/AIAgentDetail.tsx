@@ -1,16 +1,59 @@
 import React, { useState } from 'react';
-import { Bot, Activity, Clock, CheckCircle, MessageCircle, BarChart3, Settings, Power, Zap, Edit } from 'lucide-react';
+import { Bot, Activity, Clock, CheckCircle, MessageCircle, BarChart3, Settings, Power, Zap, Edit, RefreshCw, Trash2 } from 'lucide-react';
 import { AIAgent } from '../data/types';
 import { useTheme } from '../context/ThemeContext';
+import { useAIAgentsData } from '../context/AIAgentsDataContext';
 import EditAIAgentModal from './modals/EditAIAgentModal';
 
 interface AIAgentDetailProps {
   agent: AIAgent;
+  onAgentDeleted?: () => void;
 }
 
-const AIAgentDetail: React.FC<AIAgentDetailProps> = ({ agent }) => {
+const AIAgentDetail: React.FC<AIAgentDetailProps> = ({ agent, onAgentDeleted }) => {
   const { theme } = useTheme();
+  const { deleteAIAgent, cleanupInvalidAgents } = useAIAgentsData();
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    try {
+      // Clean up invalid agents and refresh data
+      cleanupInvalidAgents();
+      console.log('Agent data refreshed successfully');
+    } catch (error) {
+      console.error('Failed to refresh agent data:', error);
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!confirm(`Are you sure you want to delete the agent "${agent.name}"? This action cannot be undone.`)) {
+      return;
+    }
+
+    setIsDeleting(true);
+    try {
+      const success = await deleteAIAgent(agent.id);
+      if (success) {
+        console.log(`Agent "${agent.name}" deleted successfully`);
+        // Call the callback to notify parent component
+        onAgentDeleted?.();
+      } else {
+        console.error('Failed to delete agent');
+        alert('Failed to delete agent. Please try again.');
+      }
+    } catch (error) {
+      console.error('Error deleting agent:', error);
+      alert('An error occurred while deleting the agent. Please try again.');
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
   return (
     <div className="flex-1 flex flex-col h-full">
       {/* A3 area - Fixed header */}
@@ -34,6 +77,14 @@ const AIAgentDetail: React.FC<AIAgentDetailProps> = ({ agent }) => {
             </button>
             <button
               className="p-2 hover:bg-white hover:bg-opacity-10 rounded"
+              onClick={handleRefresh}
+              disabled={isRefreshing}
+              title="Refresh Agent Data"
+            >
+              <RefreshCw size={18} className={isRefreshing ? 'animate-spin' : ''} />
+            </button>
+            <button
+              className="p-2 hover:bg-white hover:bg-opacity-10 rounded"
               onClick={() => setIsEditModalOpen(true)}
               title="Edit Agent"
             >
@@ -44,6 +95,14 @@ const AIAgentDetail: React.FC<AIAgentDetailProps> = ({ agent }) => {
             </button>
             <button className="p-2 hover:bg-white hover:bg-opacity-10 rounded" title="Agent Settings">
               <Settings size={18} />
+            </button>
+            <button
+              className="p-2 hover:bg-red-600 hover:bg-opacity-20 rounded"
+              onClick={handleDelete}
+              disabled={isDeleting}
+              title="Delete Agent"
+            >
+              <Trash2 size={18} className={isDeleting ? 'opacity-50' : ''} />
             </button>
           </div>
         </div>
@@ -97,8 +156,8 @@ const AIAgentDetail: React.FC<AIAgentDetailProps> = ({ agent }) => {
 
               {agent.capabilities && (
                 <div className="space-y-2">
-                  {agent.capabilities.map((capability, index) => (
-                    <div key={index} className={`flex items-center p-2 ${theme === 'dark' ? 'bg-gray-800' : 'bg-gray-50'} rounded`}>
+                  {agent.capabilities.map((capability) => (
+                    <div key={capability} className={`flex items-center p-2 ${theme === 'dark' ? 'bg-gray-800' : 'bg-gray-50'} rounded`}>
                       <CheckCircle size={16} className="text-green-500 mr-2" />
                       <span className={`capitalize ${theme === 'dark' ? 'text-gray-200' : 'text-gray-700'}`}>{capability}</span>
                     </div>
@@ -115,8 +174,8 @@ const AIAgentDetail: React.FC<AIAgentDetailProps> = ({ agent }) => {
 
               {agent.specializations && (
                 <div className="space-y-2">
-                  {agent.specializations.map((specialization, index) => (
-                    <div key={index} className={`flex items-center p-2 ${theme === 'dark' ? 'bg-gray-800' : 'bg-gray-50'} rounded`}>
+                  {agent.specializations.map((specialization) => (
+                    <div key={specialization} className={`flex items-center p-2 ${theme === 'dark' ? 'bg-gray-800' : 'bg-gray-50'} rounded`}>
                       <CheckCircle size={16} className="text-green-500 mr-2" />
                       <span className={`capitalize ${theme === 'dark' ? 'text-gray-200' : 'text-gray-700'}`}>{specialization}</span>
                     </div>

@@ -51,7 +51,7 @@ export const AIAgentsRepositoryProvider: React.FC<AIAgentsRepositoryProviderProp
       // Check if AI Agents API is enabled
       if (parsedAiAgentsSettings?.enabled) {
         console.log('AIAgentsRepositoryContext: AI Agents API is enabled, attempting to connect...');
-        
+
         try {
           const aiAgentsApiDataSource = new AIAgentsApiDataSource(
             parsedAiAgentsSettings.baseUrl || 'http://localhost:8000',
@@ -62,7 +62,7 @@ export const AIAgentsRepositoryProvider: React.FC<AIAgentsRepositoryProviderProp
           );
 
           await aiAgentsApiDataSource.initialize();
-          
+
           await RepositoryFactory.initialize(aiAgentsApiDataSource);
           setRepositories({
             aiAgents: RepositoryFactory.getAIAgentRepository(),
@@ -95,24 +95,52 @@ export const AIAgentsRepositoryProvider: React.FC<AIAgentsRepositoryProviderProp
         default:
           // Use sample data from the main data source
           const sampleDataModule = await import('../data/sampleData');
-          const sampleData = sampleDataModule;
+          // Create a mutable copy of the sample data to allow updates
+          const mutableAIAgents = { ...sampleDataModule.aiAgents };
+          const mutableUsers = { ...sampleDataModule.users };
+
           dataSource = {
             initialize: async () => {},
-            getAIAgents: async () => sampleData.aiAgents,
-            getAIAgentById: async (id: string) => sampleData.aiAgents[id] || null,
-            getAIAgentsByStatus: async (status: string) => 
-              Object.values(sampleData.aiAgents).filter(agent => agent.status === status),
-            createAIAgent: async (data: any) => ({ ...data, id: `ai-agent-${Date.now()}` }),
-            updateAIAgent: async (id: string, data: any) => ({ ...sampleData.aiAgents[id], ...data }),
-            deleteAIAgent: async () => true,
-            getUsers: async () => sampleData.users,
-            getUserById: async (id: string) => sampleData.users[id] || null,
-            getUsersByRole: async (role: string) => 
-              Object.values(sampleData.users).filter(user => user.role === role),
-            getCurrentUser: async () => sampleData.users['user1'] || null,
-            createUser: async (data: any) => ({ ...data, id: `user-${Date.now()}` }),
-            updateUser: async (id: string, data: any) => ({ ...sampleData.users[id], ...data }),
-            deleteUser: async () => true,
+            getAIAgents: async () => mutableAIAgents,
+            getAIAgentById: async (id: string) => mutableAIAgents[id] || null,
+            getAIAgentsByStatus: async (status: string) =>
+              Object.values(mutableAIAgents).filter(agent => agent.status === status),
+            createAIAgent: async (data: any) => {
+              const newAgent = { ...data, id: `ai-agent-${Date.now()}` };
+              mutableAIAgents[newAgent.id] = newAgent;
+              return newAgent;
+            },
+            updateAIAgent: async (id: string, data: any) => {
+              if (!mutableAIAgents[id]) return null;
+              // Update the agent in the mutable copy
+              mutableAIAgents[id] = { ...mutableAIAgents[id], ...data };
+              return mutableAIAgents[id];
+            },
+            deleteAIAgent: async (id: string) => {
+              if (!mutableAIAgents[id]) return false;
+              delete mutableAIAgents[id];
+              return true;
+            },
+            getUsers: async () => mutableUsers,
+            getUserById: async (id: string) => mutableUsers[id] || null,
+            getUsersByRole: async (role: string) =>
+              Object.values(mutableUsers).filter(user => user.role === role),
+            getCurrentUser: async () => mutableUsers['user1'] || null,
+            createUser: async (data: any) => {
+              const newUser = { ...data, id: `user-${Date.now()}` };
+              mutableUsers[newUser.id] = newUser;
+              return newUser;
+            },
+            updateUser: async (id: string, data: any) => {
+              if (!mutableUsers[id]) return null;
+              mutableUsers[id] = { ...mutableUsers[id], ...data };
+              return mutableUsers[id];
+            },
+            deleteUser: async (id: string) => {
+              if (!mutableUsers[id]) return false;
+              delete mutableUsers[id];
+              return true;
+            },
             saveData: async () => {},
             clearCache: async () => {},
             // Stub other required methods
@@ -149,7 +177,7 @@ export const AIAgentsRepositoryProvider: React.FC<AIAgentsRepositoryProviderProp
       }
 
       await dataSource.initialize();
-      
+
       await RepositoryFactory.initialize(dataSource);
       setRepositories({
         aiAgents: RepositoryFactory.getAIAgentRepository(),

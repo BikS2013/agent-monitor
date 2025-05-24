@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Refresh & Delete Buttons Demo</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .demo-header {
+            background: #2563eb;
+            color: white;
+            padding: 16px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        .demo-buttons {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 12px;
+        }
+        .btn {
+            padding: 8px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            transition: background-color 0.2s;
+        }
+        .btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+        .btn.status {
+            background: #10b981;
+            padding: 4px 12px;
+            font-size: 14px;
+        }
+        .btn.delete {
+            background: rgba(239, 68, 68, 0.2);
+        }
+        .btn.delete:hover {
+            background: rgba(239, 68, 68, 0.3);
+        }
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        .icon {
+            width: 18px;
+            height: 18px;
+            display: inline-block;
+        }
+        .spinning {
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        .section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+        }
+        .feature-list {
+            list-style: none;
+            padding: 0;
+        }
+        .feature-list li {
+            padding: 8px 0;
+            border-bottom: 1px solid #f3f4f6;
+        }
+        .feature-list li:last-child {
+            border-bottom: none;
+        }
+        .code-block {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 4px;
+            border-left: 4px solid #2563eb;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            overflow-x: auto;
+        }
+        .highlight {
+            background: #fef3c7;
+            padding: 2px 4px;
+            border-radius: 3px;
+        }
+        .success {
+            background: #d1fae5;
+            padding: 2px 4px;
+            border-radius: 3px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔄 Refresh & Delete Buttons Added</h1>
+        
+        <div class="section">
+            <h2>✨ New Button Layout</h2>
+            <p>I've added refresh and delete buttons to the AI agent detail header, similar to the Collections and Groups pages:</p>
+            
+            <div class="demo-header">
+                <div style="display: flex; align-items: center; justify-between;">
+                    <div style="display: flex; align-items: center;">
+                        <div style="background: rgba(255,255,255,0.2); padding: 8px; border-radius: 8px; margin-right: 12px;">
+                            🤖
+                        </div>
+                        <div>
+                            <h3 style="margin: 0; font-size: 18px;">Test Support Bot - rttt</h3>
+                            <p style="margin: 0; font-size: 14px; opacity: 0.9;">Unknown Model</p>
+                        </div>
+                    </div>
+                    <div class="demo-buttons">
+                        <button class="btn status">active</button>
+                        <button class="btn" title="Refresh Agent Data" onclick="simulateRefresh(this)">
+                            <span class="icon">🔄</span>
+                        </button>
+                        <button class="btn" title="Edit Agent">
+                            <span class="icon">✏️</span>
+                        </button>
+                        <button class="btn" title="Toggle Agent Status">
+                            <span class="icon">⚡</span>
+                        </button>
+                        <button class="btn" title="Agent Settings">
+                            <span class="icon">⚙️</span>
+                        </button>
+                        <button class="btn delete" title="Delete Agent" onclick="simulateDelete()">
+                            <span class="icon">🗑️</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>🎯 Button Features</h2>
+            <ul class="feature-list">
+                <li><strong>🔄 Refresh Button:</strong> Cleans up invalid agents and refreshes data</li>
+                <li><strong>🗑️ Delete Button:</strong> Permanently deletes the agent with confirmation</li>
+                <li><strong>🔄 Loading States:</strong> Refresh button spins during operation</li>
+                <li><strong>⚠️ Confirmation:</strong> Delete requires user confirmation</li>
+                <li><strong>🔙 Navigation:</strong> After deletion, returns to agent selection view</li>
+                <li><strong>🎨 Visual Feedback:</strong> Hover effects and disabled states</li>
+            </ul>
+        </div>
+
+        <div class="section">
+            <h2>🔧 Implementation Details</h2>
+            
+            <h3>Refresh Functionality</h3>
+            <div class="code-block">
+const handleRefresh = async () => {
+  setIsRefreshing(true);
+  try {
+    <span class="highlight">cleanupInvalidAgents();</span> // Migrates old agents
+    console.log('Agent data refreshed successfully');
+  } catch (error) {
+    console.error('Failed to refresh agent data:', error);
+  } finally {
+    setIsRefreshing(false);
+  }
+};
+            </div>
+
+            <h3>Delete Functionality</h3>
+            <div class="code-block">
+const handleDelete = async () => {
+  if (!confirm(`Are you sure you want to delete "${agent.name}"?`)) {
+    return;
+  }
+  
+  setIsDeleting(true);
+  try {
+    const success = await <span class="highlight">deleteAIAgent(agent.id);</span>
+    if (success) {
+      <span class="success">onAgentDeleted?.();</span> // Navigate back
+    }
+  } catch (error) {
+    alert('An error occurred while deleting the agent.');
+  } finally {
+    setIsDeleting(false);
+  }
+};
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>🎨 Button Styling</h2>
+            <p>The buttons follow the same design pattern as other pages:</p>
+            <ul class="feature-list">
+                <li><strong>Refresh:</strong> Standard hover effect with spinning animation</li>
+                <li><strong>Delete:</strong> Red hover effect to indicate destructive action</li>
+                <li><strong>Disabled States:</strong> Reduced opacity when operations are in progress</li>
+                <li><strong>Tooltips:</strong> Clear descriptions for each button</li>
+            </ul>
+        </div>
+
+        <div class="section">
+            <h2>🔄 Button Order</h2>
+            <p>The buttons are arranged in logical order from left to right:</p>
+            <ol>
+                <li><strong>Status Badge</strong> - Shows current agent status</li>
+                <li><strong>Refresh</strong> - Data refresh operations</li>
+                <li><strong>Edit</strong> - Modify agent settings</li>
+                <li><strong>Power</strong> - Toggle agent status</li>
+                <li><strong>Settings</strong> - Agent configuration</li>
+                <li><strong>Delete</strong> - Destructive action (rightmost)</li>
+            </ol>
+        </div>
+
+        <div class="section">
+            <h2>✅ What You'll See</h2>
+            <p>After refreshing the page, you should see:</p>
+            <ul class="feature-list">
+                <li>✅ <strong>Refresh button</strong> next to the status badge</li>
+                <li>✅ <strong>Delete button</strong> at the far right (red hover effect)</li>
+                <li>✅ <strong>Spinning animation</strong> when refresh is clicked</li>
+                <li>✅ <strong>Confirmation dialog</strong> when delete is clicked</li>
+                <li>✅ <strong>Navigation back</strong> to agent list after deletion</li>
+                <li>✅ <strong>Console messages</strong> for successful operations</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        function simulateRefresh(button) {
+            const icon = button.querySelector('.icon');
+            button.disabled = true;
+            icon.classList.add('spinning');
+            
+            setTimeout(() => {
+                button.disabled = false;
+                icon.classList.remove('spinning');
+                alert('Agent data refreshed successfully!');
+            }, 2000);
+        }
+
+        function simulateDelete() {
+            if (confirm('Are you sure you want to delete the agent "Test Support Bot - rttt"? This action cannot be undone.')) {
+                alert('Agent deleted successfully! (In the real app, you would be navigated back to the agent list)');
+            }
+        }
+    </script>
+</body>
+</html>

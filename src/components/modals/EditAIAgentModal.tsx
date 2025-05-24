@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import Modal from '../common/Modal';
-import { useData } from '../../context/DataContext';
+import { useAIAgentsData } from '../../context/AIAgentsDataContext';
 import { AIAgent } from '../../data/types';
 import { Bot, Plus, Trash2 } from 'lucide-react';
 import { useTheme } from '../../context/ThemeContext';
@@ -12,9 +12,9 @@ interface EditAIAgentModalProps {
 }
 
 const EditAIAgentModal: React.FC<EditAIAgentModalProps> = ({ isOpen, onClose, agent }) => {
-  const { updateAIAgent } = useData();
+  const { updateAIAgent } = useAIAgentsData();
   const { theme } = useTheme();
-  
+
   // Form state
   const [name, setName] = useState(agent.name || '');
   const [model, setModel] = useState(agent.model || '');
@@ -23,7 +23,7 @@ const EditAIAgentModal: React.FC<EditAIAgentModalProps> = ({ isOpen, onClose, ag
   const [specializations, setSpecializations] = useState<string[]>(agent.specializations || []);
   const [newCapability, setNewCapability] = useState('');
   const [newSpecialization, setNewSpecialization] = useState('');
-  
+
   // Reset form when agent changes
   useEffect(() => {
     if (isOpen) {
@@ -36,45 +36,68 @@ const EditAIAgentModal: React.FC<EditAIAgentModalProps> = ({ isOpen, onClose, ag
       setNewSpecialization('');
     }
   }, [isOpen, agent]);
-  
-  const handleSubmit = (e: React.FormEvent) => {
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    const updatedAgent: AIAgent = {
-      ...agent,
-      name,
-      model,
-      status,
-      capabilities,
-      specializations,
-    };
-    
-    updateAIAgent(updatedAgent);
-    onClose();
+
+    // Validate required fields
+    if (!name.trim()) {
+      alert('Agent name is required.');
+      return;
+    }
+
+    if (!model) {
+      alert('AI model is required.');
+      return;
+    }
+
+    try {
+      // Preserve all existing agent data and only update the changed fields
+      const updatedData: Partial<AIAgent> = {
+        name: name.trim(),
+        model,
+        status,
+        capabilities,
+        specializations,
+        // Preserve existing statistics and metadata
+        conversationsProcessed: agent.conversationsProcessed || 0,
+        successRate: agent.successRate || '0%',
+        avgResponseTime: agent.avgResponseTime || '0m',
+        lastActive: agent.lastActive || new Date().toISOString(),
+      };
+
+      console.log('Updating agent with data:', updatedData);
+      await updateAIAgent(agent.id, updatedData);
+      console.log('Agent updated successfully');
+      onClose();
+    } catch (error) {
+      console.error('Failed to update AI agent:', error);
+      alert('Failed to update agent. Please try again.');
+    }
   };
-  
+
   const handleAddCapability = () => {
     if (newCapability.trim()) {
       setCapabilities(prev => [...prev, newCapability.trim()]);
       setNewCapability('');
     }
   };
-  
+
   const handleRemoveCapability = (capability: string) => {
     setCapabilities(prev => prev.filter(cap => cap !== capability));
   };
-  
+
   const handleAddSpecialization = () => {
     if (newSpecialization.trim()) {
       setSpecializations(prev => [...prev, newSpecialization.trim()]);
       setNewSpecialization('');
     }
   };
-  
+
   const handleRemoveSpecialization = (specialization: string) => {
     setSpecializations(prev => prev.filter(spec => spec !== specialization));
   };
-  
+
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Edit AI Agent">
       <form onSubmit={handleSubmit} className="space-y-4">
@@ -84,7 +107,7 @@ const EditAIAgentModal: React.FC<EditAIAgentModalProps> = ({ isOpen, onClose, ag
           }`}>
             <Bot size={24} className={theme === 'dark' ? 'text-blue-300' : 'text-blue-600'} />
           </div>
-          
+
           <div className="flex-1">
             <label htmlFor="name" className={`block text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'} mb-1`}>
               Agent Name
@@ -95,15 +118,15 @@ const EditAIAgentModal: React.FC<EditAIAgentModalProps> = ({ isOpen, onClose, ag
               value={name}
               onChange={(e) => setName(e.target.value)}
               className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                theme === 'dark' 
-                  ? 'bg-gray-600 border-gray-500 text-white' 
+                theme === 'dark'
+                  ? 'bg-gray-600 border-gray-500 text-white'
                   : 'bg-white border-gray-300 text-gray-900'
               }`}
               required
             />
           </div>
         </div>
-        
+
         <div>
           <label htmlFor="model" className={`block text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'} mb-1`}>
             AI Model
@@ -113,8 +136,8 @@ const EditAIAgentModal: React.FC<EditAIAgentModalProps> = ({ isOpen, onClose, ag
             value={model}
             onChange={(e) => setModel(e.target.value)}
             className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-              theme === 'dark' 
-                ? 'bg-gray-600 border-gray-500 text-white' 
+              theme === 'dark'
+                ? 'bg-gray-600 border-gray-500 text-white'
                 : 'bg-white border-gray-300 text-gray-900'
             }`}
           >
@@ -125,7 +148,7 @@ const EditAIAgentModal: React.FC<EditAIAgentModalProps> = ({ isOpen, onClose, ag
             <option value="Llama-3-70B">Llama-3-70B</option>
           </select>
         </div>
-        
+
         <div>
           <label htmlFor="status" className={`block text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'} mb-1`}>
             Status
@@ -135,8 +158,8 @@ const EditAIAgentModal: React.FC<EditAIAgentModalProps> = ({ isOpen, onClose, ag
             value={status}
             onChange={(e) => setStatus(e.target.value as 'active' | 'inactive' | 'training')}
             className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-              theme === 'dark' 
-                ? 'bg-gray-600 border-gray-500 text-white' 
+              theme === 'dark'
+                ? 'bg-gray-600 border-gray-500 text-white'
                 : 'bg-white border-gray-300 text-gray-900'
             }`}
           >
@@ -145,7 +168,7 @@ const EditAIAgentModal: React.FC<EditAIAgentModalProps> = ({ isOpen, onClose, ag
             <option value="training">Training</option>
           </select>
         </div>
-        
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label className={`block text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'} mb-1`}>
@@ -158,8 +181,8 @@ const EditAIAgentModal: React.FC<EditAIAgentModalProps> = ({ isOpen, onClose, ag
                 onChange={(e) => setNewCapability(e.target.value)}
                 placeholder="Add capability"
                 className={`flex-1 px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                  theme === 'dark' 
-                    ? 'bg-gray-600 border-gray-500 text-white placeholder-gray-400' 
+                  theme === 'dark'
+                    ? 'bg-gray-600 border-gray-500 text-white placeholder-gray-400'
                     : 'bg-white border-gray-300 text-gray-900'
                 }`}
               />
@@ -176,8 +199,8 @@ const EditAIAgentModal: React.FC<EditAIAgentModalProps> = ({ isOpen, onClose, ag
             <div className={`border rounded-md p-2 max-h-32 overflow-y-auto ${
               theme === 'dark' ? 'border-gray-600' : 'border-gray-300'
             }`}>
-              {capabilities.map((capability, index) => (
-                <div key={index} className={`flex items-center justify-between py-1 px-2 rounded mb-1 last:mb-0 ${
+              {capabilities.map((capability) => (
+                <div key={capability} className={`flex items-center justify-between py-1 px-2 rounded mb-1 last:mb-0 ${
                   theme === 'dark' ? 'bg-gray-600' : 'bg-gray-50'
                 }`}>
                   <span className={`text-sm ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>{capability}</span>
@@ -197,7 +220,7 @@ const EditAIAgentModal: React.FC<EditAIAgentModalProps> = ({ isOpen, onClose, ag
               )}
             </div>
           </div>
-          
+
           <div>
             <label className={`block text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'} mb-1`}>
               Specializations
@@ -209,8 +232,8 @@ const EditAIAgentModal: React.FC<EditAIAgentModalProps> = ({ isOpen, onClose, ag
                 onChange={(e) => setNewSpecialization(e.target.value)}
                 placeholder="Add specialization"
                 className={`flex-1 px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                  theme === 'dark' 
-                    ? 'bg-gray-600 border-gray-500 text-white placeholder-gray-400' 
+                  theme === 'dark'
+                    ? 'bg-gray-600 border-gray-500 text-white placeholder-gray-400'
                     : 'bg-white border-gray-300 text-gray-900'
                 }`}
               />
@@ -227,8 +250,8 @@ const EditAIAgentModal: React.FC<EditAIAgentModalProps> = ({ isOpen, onClose, ag
             <div className={`border rounded-md p-2 max-h-32 overflow-y-auto ${
               theme === 'dark' ? 'border-gray-600' : 'border-gray-300'
             }`}>
-              {specializations.map((specialization, index) => (
-                <div key={index} className={`flex items-center justify-between py-1 px-2 rounded mb-1 last:mb-0 ${
+              {specializations.map((specialization) => (
+                <div key={specialization} className={`flex items-center justify-between py-1 px-2 rounded mb-1 last:mb-0 ${
                   theme === 'dark' ? 'bg-gray-600' : 'bg-gray-50'
                 }`}>
                   <span className={`text-sm ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>{specialization}</span>
@@ -249,7 +272,7 @@ const EditAIAgentModal: React.FC<EditAIAgentModalProps> = ({ isOpen, onClose, ag
             </div>
           </div>
         </div>
-        
+
         <div className={`pt-4 flex justify-end space-x-3 ${theme === 'dark' ? 'border-t border-gray-600' : ''}`}>
           <button
             type="button"
