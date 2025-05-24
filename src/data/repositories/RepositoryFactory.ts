@@ -1,4 +1,6 @@
 import { IDataSource } from '../sources/IDataSource';
+import { IGroupDataSource } from '../sources/interfaces/IGroupDataSource';
+import { ICollectionDataSource } from '../sources/interfaces/ICollectionDataSource';
 import { JsonDataSource } from '../sources/JsonDataSource';
 import { DynamicDataSource } from '../sources/DynamicDataSource';
 import { GroupApiDataSource } from '../sources/GroupApiDataSource';
@@ -30,8 +32,8 @@ import {
  */
 export class RepositoryFactory {
   private static dataSource: IDataSource | null = null;
-  private static groupDataSource: IDataSource | null = null;
-  private static collectionsDataSource: IDataSource | null = null;
+  private static groupDataSource: IDataSource | IGroupDataSource | null = null;
+  private static collectionsDataSource: IDataSource | ICollectionDataSource | null = null;
 
   /**
    * Initialize the factory with a data source
@@ -39,7 +41,7 @@ export class RepositoryFactory {
    * @param groupDataSource Optional separate data source for groups
    * @param collectionsDataSource Optional separate data source for collections
    */
-  static async initialize(dataSource?: IDataSource, dataSize?: DataSize | 'dynamic', groupDataSource?: IDataSource, collectionsDataSource?: IDataSource): Promise<void> {
+  static async initialize(dataSource?: IDataSource, dataSize?: DataSize | 'dynamic', groupDataSource?: IDataSource | IGroupDataSource, collectionsDataSource?: IDataSource | ICollectionDataSource): Promise<void> {
     if (!dataSource) {
       if (dataSize === 'dynamic') {
         // Use dynamically generated data
@@ -276,7 +278,7 @@ export class RepositoryFactory {
    * Set the group data source independently
    * @param groupDataSource Data source specifically for groups
    */
-  static async setGroupDataSource(groupDataSource: IDataSource): Promise<void> {
+  static async setGroupDataSource(groupDataSource: IDataSource | IGroupDataSource): Promise<void> {
     try {
       console.log('RepositoryFactory: Setting independent group data source:', groupDataSource.constructor.name);
       await groupDataSource.initialize();
@@ -292,7 +294,7 @@ export class RepositoryFactory {
    * Set the collections data source independently
    * @param collectionsDataSource Data source specifically for collections
    */
-  static async setCollectionsDataSource(collectionsDataSource: IDataSource): Promise<void> {
+  static async setCollectionsDataSource(collectionsDataSource: IDataSource | ICollectionDataSource): Promise<void> {
     try {
       console.log('RepositoryFactory: Setting independent collections data source:', collectionsDataSource.constructor.name);
       await collectionsDataSource.initialize();

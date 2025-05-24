@@ -11,6 +11,7 @@ import {
 
 import { RepositoryFactory } from '../data/repositories/RepositoryFactory';
 import { IDataSource } from '../data/sources/IDataSource';
+import { IGroupDataSource } from '../data/sources/interfaces/IGroupDataSource';
 import { ApiDataSource } from '../data/sources/ApiDataSource';
 import { GroupApiDataSource } from '../data/sources/GroupApiDataSource';
 import { DataSize } from '../data/jsonDataSource';
@@ -48,7 +49,7 @@ export const RepositoryProvider: React.FC<{ children: ReactNode }> = ({ children
     try {
       // Use the provided data source, or create one based on configuration
       let effectiveDataSource = dataSource;
-      let groupDataSource: IDataSource | undefined;
+      let groupDataSource: IDataSource | IGroupDataSource | undefined;
 
       if (!effectiveDataSource) {
         // Check if Groups API is enabled separately (independent of main API)

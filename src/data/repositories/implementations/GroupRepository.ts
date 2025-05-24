@@ -3,13 +3,15 @@ import { QueryOptions, FilterOptions, QueryResult } from '../interfaces/IReposit
 import { Group, Collection } from '../../types';
 import { BaseRepository } from './BaseRepository';
 import { IDataSource } from '../../sources/IDataSource';
+import { IGroupDataSource } from '../../sources/interfaces/IGroupDataSource';
 
 /**
  * Repository implementation for Group entities
+ * Accepts both full IDataSource and specialized IGroupDataSource
  */
 export class GroupRepository extends BaseRepository<Group> implements IGroupRepository {
-  constructor(dataSource: IDataSource) {
-    super(dataSource);
+  constructor(dataSource: IDataSource | IGroupDataSource) {
+    super(dataSource as IDataSource);
   }
   
   /**
@@ -117,6 +119,11 @@ export class GroupRepository extends BaseRepository<Group> implements IGroupRepo
       };
     }
     
+    // Check if the data source supports collection queries
+    if (!this.dataSource.getCollectionsByGroupId) {
+      return this.formatQueryResult([], 0, options);
+    }
+    
     // Get all collections in the group
     const collections = await this.dataSource.getCollectionsByGroupId(groupId);
     
@@ -146,11 +153,12 @@ export class GroupRepository extends BaseRepository<Group> implements IGroupRepo
       return false;
     }
     
-    // Check if the collection exists
-    const collection = await this.dataSource.getCollectionById(collectionId);
-    
-    if (!collection) {
-      return false;
+    // Check if the collection exists (if supported by data source)
+    if (this.dataSource.getCollectionById) {
+      const collection = await this.dataSource.getCollectionById(collectionId);
+      if (!collection) {
+        return false;
+      }
     }
     
     // Check if the collection is already in the group

@@ -3,13 +3,15 @@ import { QueryOptions, FilterOptions, QueryResult } from '../interfaces/IReposit
 import { Collection, Conversation } from '../../types';
 import { BaseRepository } from './BaseRepository';
 import { IDataSource } from '../../sources/IDataSource';
+import { ICollectionDataSource } from '../../sources/interfaces/ICollectionDataSource';
 
 /**
  * Repository implementation for Collection entities
+ * Accepts both full IDataSource and specialized ICollectionDataSource
  */
 export class CollectionRepository extends BaseRepository<Collection> implements ICollectionRepository {
-  constructor(dataSource: IDataSource) {
-    super(dataSource);
+  constructor(dataSource: IDataSource | ICollectionDataSource) {
+    super(dataSource as IDataSource);
   }
   
   /**

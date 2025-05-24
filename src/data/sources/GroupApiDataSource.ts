@@ -1,20 +1,13 @@
-import {
-  AIAgent,
-  Collection,
-  Conversation,
-  FilterElement,
-  Group,
-  Message,
-  User
-} from '../types';
-import { IDataSource } from './IDataSource';
+import { Group } from '../types';
+import { IGroupDataSource } from './interfaces/IGroupDataSource';
 import { ApiClient } from '../api/ApiClient';
 
 /**
- * API client implementation specifically for Group operations.
- * This implementation communicates with the main API server for group management.
+ * API client implementation of the IGroupDataSource interface.
+ * This implementation is dedicated to Group operations and can be configured
+ * independently from other API data sources.
  */
-export class GroupApiDataSource implements IDataSource {
+export class GroupApiDataSource implements IGroupDataSource {
   private apiClient: ApiClient;
 
   /**
@@ -33,6 +26,21 @@ export class GroupApiDataSource implements IDataSource {
     noAuth: boolean = false
   ) {
     this.apiClient = new ApiClient(baseUrl, authToken, clientSecret, clientId, noAuth);
+  }
+
+  /**
+   * Sets the authentication token for API requests
+   * @param token JWT token for authentication
+   */
+  public setAuthToken(token: string): void {
+    this.apiClient.setAuthToken(token);
+  }
+
+  /**
+   * Clears the authentication token
+   */
+  public clearAuthToken(): void {
+    this.apiClient.clearAuthToken();
   }
 
   /**
@@ -56,131 +64,19 @@ export class GroupApiDataSource implements IDataSource {
     }
   }
 
-  // #region Message Methods - Not Supported
-
-  async getMessageById(id: string): Promise<Message | null> {
-    console.warn('getMessageById not supported by Group API');
-    return null;
+  /**
+   * Save all data to persistent storage
+   */
+  async saveData(): Promise<void> {
+    await this.apiClient.saveData();
   }
 
-  async getMessages(ids?: string[]): Promise<Record<string, Message>> {
-    console.warn('getMessages not supported by Group API');
-    return {};
+  /**
+   * Clear all cached data
+   */
+  async clearCache(): Promise<void> {
+    await this.apiClient.clearCache();
   }
-
-  async getMessagesByConversationId(conversationId: string): Promise<Message[]> {
-    console.warn('getMessagesByConversationId not supported by Group API');
-    return [];
-  }
-
-  async createMessage(data: Omit<Message, 'id'>): Promise<Message> {
-    console.warn('createMessage not supported by Group API');
-    return {
-      ...data as any,
-      id: `msg_${Date.now()}`,
-    };
-  }
-
-  async updateMessage(id: string, data: Partial<Message>): Promise<Message | null> {
-    console.warn('updateMessage not supported by Group API');
-    return null;
-  }
-
-  async deleteMessage(id: string): Promise<boolean> {
-    console.warn('deleteMessage not supported by Group API');
-    return false;
-  }
-
-  // #endregion
-
-  // #region Conversation Methods - Not Supported
-
-  async getConversationById(id: string): Promise<Conversation | null> {
-    console.warn('getConversationById not supported by Group API');
-    return null;
-  }
-
-  async getConversations(ids?: string[]): Promise<Record<string, Conversation>> {
-    console.warn('getConversations not supported by Group API');
-    return {};
-  }
-
-  async getConversationsByCollectionId(collectionId: string): Promise<Conversation[]> {
-    console.warn('getConversationsByCollectionId not supported by Group API');
-    return [];
-  }
-
-  async getConversationsByAIAgentId(aiAgentId: string): Promise<Conversation[]> {
-    console.warn('getConversationsByAIAgentId not supported by Group API');
-    return [];
-  }
-
-  async getConversationsByUserId(userId: string): Promise<Conversation[]> {
-    console.warn('getConversationsByUserId not supported by Group API');
-    return [];
-  }
-
-  async createConversation(data: Omit<Conversation, 'thread_id'>): Promise<Conversation> {
-    console.warn('createConversation not supported by Group API');
-    return {
-      ...data as any,
-      thread_id: `thread_${Date.now()}`,
-    };
-  }
-
-  async updateConversation(id: string, data: Partial<Conversation>): Promise<Conversation | null> {
-    console.warn('updateConversation not supported by Group API');
-    return null;
-  }
-
-  async deleteConversation(id: string): Promise<boolean> {
-    console.warn('deleteConversation not supported by Group API');
-    return false;
-  }
-
-  // #endregion
-
-  // #region Collection Methods - Not Supported
-
-  async getCollectionById(id: string): Promise<Collection | null> {
-    console.warn('getCollectionById not supported by Group API');
-    return null;
-  }
-
-  async getCollections(ids?: string[]): Promise<Record<string, Collection>> {
-    console.warn('getCollections not supported by Group API');
-    return {};
-  }
-
-  async getCollectionsByGroupId(groupId: string): Promise<Collection[]> {
-    console.warn('getCollectionsByGroupId not supported by Group API');
-    return [];
-  }
-
-  async getCollectionsByCreatorId(creatorId: string): Promise<Collection[]> {
-    console.warn('getCollectionsByCreatorId not supported by Group API');
-    return [];
-  }
-
-  async createCollection(data: Omit<Collection, 'id'>): Promise<Collection> {
-    console.warn('createCollection not supported by Group API');
-    return {
-      ...data as any,
-      id: `coll_${Date.now()}`,
-    };
-  }
-
-  async updateCollection(id: string, data: Partial<Collection>): Promise<Collection | null> {
-    console.warn('updateCollection not supported by Group API');
-    return null;
-  }
-
-  async deleteCollection(id: string): Promise<boolean> {
-    console.warn('deleteCollection not supported by Group API');
-    return false;
-  }
-
-  // #endregion
 
   // #region Group Methods
 
@@ -227,7 +123,7 @@ export class GroupApiDataSource implements IDataSource {
             console.log(`GroupApiDataSource.getGroups: Processing group with key ${key}:`, group);
             const transformed = this.transformApiGroup(group as any);
             // Use the group's actual ID if available, otherwise use the key
-            const groupId = transformed.id || group.id || key;
+            const groupId = transformed.id || (group as any).id || key;
             console.log(`GroupApiDataSource.getGroups: Transformed group ${groupId}:`, transformed);
             acc[groupId] = { ...transformed, id: groupId };
             return acc;
@@ -316,106 +212,6 @@ export class GroupApiDataSource implements IDataSource {
       console.error(`Failed to delete group ${id}:`, error);
       return false;
     }
-  }
-
-  // #endregion
-
-  // #region AI Agent Methods - Not Supported
-
-  async getAIAgentById(id: string): Promise<AIAgent | null> {
-    console.warn('getAIAgentById not supported by Group API');
-    return null;
-  }
-
-  async getAIAgents(ids?: string[]): Promise<Record<string, AIAgent>> {
-    console.warn('getAIAgents not supported by Group API');
-    return {};
-  }
-
-  async getAIAgentsByStatus(status: 'active' | 'inactive' | 'training'): Promise<AIAgent[]> {
-    console.warn('getAIAgentsByStatus not supported by Group API');
-    return [];
-  }
-
-  async createAIAgent(data: Omit<AIAgent, 'id'>): Promise<AIAgent> {
-    console.warn('createAIAgent not supported by Group API');
-    return {
-      ...data as any,
-      id: `agent_${Date.now()}`,
-    };
-  }
-
-  async updateAIAgent(id: string, data: Partial<AIAgent>): Promise<AIAgent | null> {
-    console.warn('updateAIAgent not supported by Group API');
-    return null;
-  }
-
-  async deleteAIAgent(id: string): Promise<boolean> {
-    console.warn('deleteAIAgent not supported by Group API');
-    return false;
-  }
-
-  // #endregion
-
-  // #region User Methods - Not Supported
-
-  async getUserById(id: string): Promise<User | null> {
-    console.warn('getUserById not supported by Group API');
-    return null;
-  }
-
-  async getUsers(ids?: string[]): Promise<Record<string, User>> {
-    console.warn('getUsers not supported by Group API');
-    return {};
-  }
-
-  async getUsersByRole(role: string): Promise<User[]> {
-    console.warn('getUsersByRole not supported by Group API');
-    return [];
-  }
-
-  async createUser(data: Omit<User, 'id'>): Promise<User> {
-    console.warn('createUser not supported by Group API');
-    return {
-      ...data as any,
-      id: `user_${Date.now()}`,
-    };
-  }
-
-  async updateUser(id: string, data: Partial<User>): Promise<User | null> {
-    console.warn('updateUser not supported by Group API');
-    return null;
-  }
-
-  async deleteUser(id: string): Promise<boolean> {
-    console.warn('deleteUser not supported by Group API');
-    return false;
-  }
-
-  async getCurrentUser(): Promise<User | null> {
-    console.warn('getCurrentUser not supported by Group API');
-    return null;
-  }
-
-  // #endregion
-
-  // #region Query Methods - Not Supported
-
-  async filterConversations(filterCriteria: any): Promise<string[]> {
-    console.warn('filterConversations not supported by Group API');
-    return [];
-  }
-
-  // #endregion
-
-  // #region Data Maintenance Methods
-
-  async saveData(): Promise<void> {
-    console.warn('saveData not implemented for Group API');
-  }
-
-  async clearCache(): Promise<void> {
-    console.warn('clearCache not implemented for Group API');
   }
 
   // #endregion

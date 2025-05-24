@@ -1,20 +1,18 @@
 import {
-  AIAgent,
   Collection,
   Conversation,
-  FilterElement,
-  Group,
   Message,
-  User
+  FilterElement
 } from '../types';
-import { IDataSource } from './IDataSource';
+import { ICollectionDataSource } from './interfaces/ICollectionDataSource';
 import { ApiClient } from '../api/ApiClient';
 
 /**
- * Dedicated API client implementation for Collections.
- * This implementation communicates with a dedicated Collections API server.
+ * API client implementation of the ICollectionDataSource interface.
+ * This implementation is dedicated to Collection operations and can be configured
+ * independently from other API data sources.
  */
-export class CollectionsApiDataSource implements IDataSource {
+export class CollectionsApiDataSource implements ICollectionDataSource {
   private apiClient: ApiClient;
 
   /**
@@ -33,6 +31,21 @@ export class CollectionsApiDataSource implements IDataSource {
     noAuth: boolean = false
   ) {
     this.apiClient = new ApiClient(baseUrl, authToken, clientSecret, clientId, noAuth);
+  }
+
+  /**
+   * Sets the authentication token for API requests
+   * @param token JWT token for authentication
+   */
+  public setAuthToken(token: string): void {
+    this.apiClient.setAuthToken(token);
+  }
+
+  /**
+   * Clears the authentication token
+   */
+  public clearAuthToken(): void {
+    this.apiClient.clearAuthToken();
   }
 
   /**
@@ -56,25 +69,21 @@ export class CollectionsApiDataSource implements IDataSource {
     }
   }
 
-  // #region Message Methods - Not Supported
-
   /**
-   * Get a specific message by ID
-   * @param id Message ID
+   * Save all data to persistent storage
    */
-  async getMessageById(id: string): Promise<Message | null> {
-    console.warn('getMessageById not supported by Collections API, messages are stored in conversations');
-    return null;
+  async saveData(): Promise<void> {
+    await this.apiClient.saveData();
   }
 
   /**
-   * Get multiple messages by their IDs
-   * @param ids Optional array of message IDs. If not provided, returns all messages
+   * Clear all cached data
    */
-  async getMessages(ids?: string[]): Promise<Record<string, Message>> {
-    console.warn('getMessages not supported by Collections API, messages are stored in conversations');
-    return {};
+  async clearCache(): Promise<void> {
+    await this.apiClient.clearCache();
   }
+
+  // #region Message Methods
 
   /**
    * Get all messages for a specific conversation
@@ -164,37 +173,6 @@ export class CollectionsApiDataSource implements IDataSource {
       console.error(`Failed to get messages for conversation ${conversationId}:`, error);
       return [];
     }
-  }
-
-  /**
-   * Create a new message
-   * @param data Message data without the ID
-   */
-  async createMessage(data: Omit<Message, 'id'>): Promise<Message> {
-    console.warn('createMessage not supported by Collections API, messages are stored in conversations');
-    return {
-      ...data as any,
-      id: `msg_${Date.now()}`,
-    };
-  }
-
-  /**
-   * Update an existing message
-   * @param id Message ID
-   * @param data Updated message data
-   */
-  async updateMessage(id: string, data: Partial<Message>): Promise<Message | null> {
-    console.warn('updateMessage not supported by Collections API, messages are stored in conversations');
-    return null;
-  }
-
-  /**
-   * Delete a message
-   * @param id Message ID
-   */
-  async deleteMessage(id: string): Promise<boolean> {
-    console.warn('deleteMessage not supported by Collections API, messages are stored in conversations');
-    return false;
   }
 
   // #endregion
@@ -360,37 +338,6 @@ export class CollectionsApiDataSource implements IDataSource {
     }
   }
 
-  /**
-   * Create a new conversation
-   * @param data Conversation data without the ID
-   */
-  async createConversation(data: Omit<Conversation, 'thread_id'>): Promise<Conversation> {
-    console.warn('createConversation not supported by Collections API');
-    return {
-      ...data as any,
-      thread_id: `thread_${Date.now()}`,
-    };
-  }
-
-  /**
-   * Update an existing conversation
-   * @param id Conversation ID
-   * @param data Updated conversation data
-   */
-  async updateConversation(id: string, data: Partial<Conversation>): Promise<Conversation | null> {
-    console.warn('updateConversation not supported by Collections API');
-    return null;
-  }
-
-  /**
-   * Delete a conversation
-   * @param id Conversation ID
-   */
-  async deleteConversation(id: string): Promise<boolean> {
-    console.warn('deleteConversation not supported by Collections API');
-    return false;
-  }
-
   // #endregion
 
   // #region Collection Methods
@@ -547,200 +494,6 @@ export class CollectionsApiDataSource implements IDataSource {
 
   // #endregion
 
-  // #region Group Methods - Not Supported
-
-  /**
-   * Get a specific group by ID
-   * @param id Group ID
-   */
-  async getGroupById(id: string): Promise<Group | null> {
-    console.warn('getGroupById not supported by Collections API');
-    return null;
-  }
-
-  /**
-   * Get multiple groups by their IDs
-   * @param ids Optional array of group IDs. If not provided, returns all groups
-   */
-  async getGroups(ids?: string[]): Promise<Record<string, Group>> {
-    console.warn('getGroups not supported by Collections API');
-    return {};
-  }
-
-  /**
-   * Get all groups administered by a specific user
-   * @param userId User ID
-   */
-  async getGroupsByAdminUserId(userId: string): Promise<Group[]> {
-    console.warn('getGroupsByAdminUserId not supported by Collections API');
-    return [];
-  }
-
-  /**
-   * Create a new group
-   * @param data Group data without the ID
-   */
-  async createGroup(data: Omit<Group, 'id'>): Promise<Group> {
-    console.warn('createGroup not supported by Collections API');
-    return {
-      ...data as any,
-      id: `group_${Date.now()}`,
-    };
-  }
-
-  /**
-   * Update an existing group
-   * @param id Group ID
-   * @param data Updated group data
-   */
-  async updateGroup(id: string, data: Partial<Group>): Promise<Group | null> {
-    console.warn('updateGroup not supported by Collections API');
-    return null;
-  }
-
-  /**
-   * Delete a group
-   * @param id Group ID
-   */
-  async deleteGroup(id: string): Promise<boolean> {
-    console.warn('deleteGroup not supported by Collections API');
-    return false;
-  }
-
-  // #endregion
-
-  // #region AI Agent Methods - Not Supported
-
-  /**
-   * Get a specific AI agent by ID
-   * @param id AI agent ID
-   */
-  async getAIAgentById(id: string): Promise<AIAgent | null> {
-    console.warn('getAIAgentById not supported by Collections API');
-    return null;
-  }
-
-  /**
-   * Get multiple AI agents by their IDs
-   * @param ids Optional array of AI agent IDs. If not provided, returns all AI agents
-   */
-  async getAIAgents(ids?: string[]): Promise<Record<string, AIAgent>> {
-    console.warn('getAIAgents not supported by Collections API');
-    return {};
-  }
-
-  /**
-   * Get all AI agents with a specific status
-   * @param status AI agent status
-   */
-  async getAIAgentsByStatus(status: 'active' | 'inactive' | 'training'): Promise<AIAgent[]> {
-    console.warn('getAIAgentsByStatus not supported by Collections API');
-    return [];
-  }
-
-  /**
-   * Create a new AI agent
-   * @param data AI agent data without the ID
-   */
-  async createAIAgent(data: Omit<AIAgent, 'id'>): Promise<AIAgent> {
-    console.warn('createAIAgent not supported by Collections API');
-    return {
-      ...data as any,
-      id: `agent_${Date.now()}`,
-    };
-  }
-
-  /**
-   * Update an existing AI agent
-   * @param id AI agent ID
-   * @param data Updated AI agent data
-   */
-  async updateAIAgent(id: string, data: Partial<AIAgent>): Promise<AIAgent | null> {
-    console.warn('updateAIAgent not supported by Collections API');
-    return null;
-  }
-
-  /**
-   * Delete an AI agent
-   * @param id AI agent ID
-   */
-  async deleteAIAgent(id: string): Promise<boolean> {
-    console.warn('deleteAIAgent not supported by Collections API');
-    return false;
-  }
-
-  // #endregion
-
-  // #region User Methods - Not Supported
-
-  /**
-   * Get a specific user by ID
-   * @param id User ID
-   */
-  async getUserById(id: string): Promise<User | null> {
-    console.warn('getUserById not supported by Collections API');
-    return null;
-  }
-
-  /**
-   * Get multiple users by their IDs
-   * @param ids Optional array of user IDs. If not provided, returns all users
-   */
-  async getUsers(ids?: string[]): Promise<Record<string, User>> {
-    console.warn('getUsers not supported by Collections API');
-    return {};
-  }
-
-  /**
-   * Get all users with a specific role
-   * @param role User role
-   */
-  async getUsersByRole(role: string): Promise<User[]> {
-    console.warn('getUsersByRole not supported by Collections API');
-    return [];
-  }
-
-  /**
-   * Create a new user
-   * @param data User data without the ID
-   */
-  async createUser(data: Omit<User, 'id'>): Promise<User> {
-    console.warn('createUser not supported by Collections API');
-    return {
-      ...data as any,
-      id: `user_${Date.now()}`,
-    };
-  }
-
-  /**
-   * Update an existing user
-   * @param id User ID
-   * @param data Updated user data
-   */
-  async updateUser(id: string, data: Partial<User>): Promise<User | null> {
-    console.warn('updateUser not supported by Collections API');
-    return null;
-  }
-
-  /**
-   * Delete a user
-   * @param id User ID
-   */
-  async deleteUser(id: string): Promise<boolean> {
-    console.warn('deleteUser not supported by Collections API');
-    return false;
-  }
-
-  /**
-   * Get the current user
-   */
-  async getCurrentUser(): Promise<User | null> {
-    console.warn('getCurrentUser not supported by Collections API');
-    return null;
-  }
-
-  // #endregion
-
   // #region Query Methods
 
   /**
@@ -789,24 +542,6 @@ export class CollectionsApiDataSource implements IDataSource {
       console.error('Failed to filter conversations:', error);
       return [];
     }
-  }
-
-  // #endregion
-
-  // #region Data Maintenance Methods
-
-  /**
-   * Save all data to persistent storage
-   */
-  async saveData(): Promise<void> {
-    console.warn('saveData not implemented for Collections API');
-  }
-
-  /**
-   * Clear all cached data
-   */
-  async clearCache(): Promise<void> {
-    console.warn('clearCache not implemented for Collections API');
   }
 
   // #endregion
