@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Bot, Filter, Plus, Search, RefreshCw } from 'lucide-react';
 import AIAgentsList from '../components/AIAgentsList';
 import AIAgentDetail from '../components/AIAgentDetail';
@@ -15,31 +15,56 @@ const AIAgentsView: React.FC = () => {
   const [isNewAgentModalOpen, setIsNewAgentModalOpen] = useState(false);
   const [isFiltersOpen, setIsFiltersOpen] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [forceUpdateKey, setForceUpdateKey] = useState(0);
 
-  // Sync selectedAgent with updated agent data from context
+  // Force update function to trigger re-renders
+  const forceUpdate = useCallback(() => {
+    console.log('[AIAgentsView] Forcing UI update...');
+    setForceUpdateKey(prev => prev + 1);
+  }, []);
+
+  // Sync selectedAgent with updated agent data from context (simplified)
   useEffect(() => {
     if (selectedAgent && aiAgents[selectedAgent.id]) {
-      // Update selectedAgent with the latest data from context
       const updatedAgent = aiAgents[selectedAgent.id];
-      // Only update if the agent data has actually changed to avoid infinite loops
-      if (JSON.stringify(updatedAgent) !== JSON.stringify(selectedAgent)) {
+      // Only update if the agent data has actually changed
+      if (JSON.stringify(selectedAgent) !== JSON.stringify(updatedAgent)) {
+        console.log(`[AIAgentsView] Updating selectedAgent ${updatedAgent.id} with fresh data`);
         setSelectedAgent(updatedAgent);
       }
+    } else if (selectedAgent && !aiAgents[selectedAgent.id]) {
+      console.log('[AIAgentsView] Selected agent no longer exists, clearing selection');
+      setSelectedAgent(null);
     }
-  }, [aiAgents, selectedAgent]); // Watch for changes in aiAgents and selectedAgent
+  }, [aiAgents, selectedAgent]); // Removed forceUpdate dependency
+  
+  // Log agents data changes without forcing updates (prevent infinite loop)
+  useEffect(() => {
+    console.log(`[AIAgentsView] Agents data changed - ${Object.keys(aiAgents).length} agents available`);
+    // Removed forceUpdate() to prevent infinite loop
+  }, [aiAgents]);
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
+    console.log('[AIAgentsView] Manual refresh triggered');
     try {
       // Clean up invalid agents and refresh data
-      cleanupInvalidAgents();
-      console.log('AI Agents data refreshed successfully');
+      const cleanedCount = cleanupInvalidAgents();
+      console.log(`[AIAgentsView] Refresh completed - cleaned ${cleanedCount} agents`);
+      forceUpdate(); // Force UI update after cleanup
     } catch (error) {
-      console.error('Failed to refresh AI agents data:', error);
+      console.error('[AIAgentsView] Failed to refresh AI agents data:', error);
     } finally {
       setIsRefreshing(false);
     }
   };
+  
+  // Enhanced agent selection handler with minimal logging
+  const handleAgentSelection = useCallback((agent: AIAgent) => {
+    console.log(`[AIAgentsView] Agent selected: ${agent.name} (${agent.id})`);
+    setSelectedAgent(agent);
+    // Removed forceUpdate to prevent unnecessary re-renders
+  }, []);
 
   return (
     <div className="flex flex-1 h-screen">
@@ -88,21 +113,24 @@ const AIAgentsView: React.FC = () => {
         </div>
 
         {/* B1 area - Scrollable sidebar content */}
-        <div className="flex-1 overflow-y-auto">
+        <div className="flex-1 overflow-y-auto" key={`agents-list-${forceUpdateKey}`}>
           <AIAgentsList
             aiAgents={aiAgents}
             selectedAgent={selectedAgent}
-            setSelectedAgent={setSelectedAgent}
+            setSelectedAgent={handleAgentSelection}
           />
         </div>
       </div>
 
       {selectedAgent ? (
-        <div className={`flex-1 ${theme === 'dark' ? 'bg-gray-800' : 'bg-gray-50'} flex flex-col`} style={{ height: 'calc(100vh - 64px)' }}>
+        <div className={`flex-1 ${theme === 'dark' ? 'bg-gray-800' : 'bg-gray-50'} flex flex-col`} style={{ height: 'calc(100vh - 64px)' }} key={`agent-detail-${selectedAgent.id}-${forceUpdateKey}`}>
           {/* A3 area - Fixed content header and B2 area - Scrollable content are handled in AIAgentDetail */}
           <AIAgentDetail
             agent={selectedAgent}
-            onAgentDeleted={() => setSelectedAgent(null)}
+            onAgentDeleted={() => {
+              console.log('[AIAgentsView] Agent deleted, clearing selection');
+              setSelectedAgent(null);
+            }}
           />
         </div>
       ) : (

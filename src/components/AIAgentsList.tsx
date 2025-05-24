@@ -27,10 +27,16 @@ const AIAgentsList: React.FC<AIAgentsListProps> = ({
 
   // Get agents array safely - use useMemo to ensure proper re-computation
   const agentsArray = useMemo(() => {
-    if (!aiAgents) return [];
+    if (!aiAgents) {
+      console.log('[AIAgentsList] No aiAgents data available');
+      return [];
+    }
 
-    // Process and migrate agents, filtering out truly invalid ones
-    return Object.values(aiAgents).map(agent => {
+    console.log(`[AIAgentsList] Processing ${Object.keys(aiAgents).length} agents from API`);
+
+    // Process and migrate agents with looser validation for API data
+    return Object.values(aiAgents).map((agent, index) => {
+
       // Handle migration from old field structure
       if (agent && typeof agent === 'object') {
         const migratedAgent = { ...agent };
@@ -40,7 +46,7 @@ const AIAgentsList: React.FC<AIAgentsListProps> = ({
           migratedAgent.model = (agent as any).modelName;
         }
 
-        // Provide default values for missing fields
+        // Provide default values for missing fields (API data can have missing fields)
         if (!migratedAgent.model || migratedAgent.model.trim() === '') {
           migratedAgent.model = 'Unknown Model';
         }
@@ -53,31 +59,54 @@ const AIAgentsList: React.FC<AIAgentsListProps> = ({
           migratedAgent.status = 'inactive';
         }
 
+        // Add default statistics if missing (common for API responses)
+        if (typeof migratedAgent.conversationsProcessed !== 'number') {
+          migratedAgent.conversationsProcessed = 0;
+        }
+        if (!migratedAgent.successRate) {
+          migratedAgent.successRate = '0%';
+        }
+        if (!migratedAgent.avgResponseTime) {
+          migratedAgent.avgResponseTime = '0ms';
+        }
+        if (!migratedAgent.lastActive) {
+          migratedAgent.lastActive = 'N/A';
+        }
+
         return migratedAgent;
       }
 
+      console.warn('[AIAgentsList] Invalid agent object:', agent);
       return agent;
     }).filter(agent => {
-      // Only filter out agents that are completely invalid
-      const isValid = agent &&
-        typeof agent === 'object' &&
-        agent.id &&
-        agent.name &&
-        agent.model &&
-        agent.status;
-
-      if (!isValid) {
-        console.warn('Invalid agent found and filtered out:', agent);
+      // Loosened validation - only require ID for API agents
+      const hasId = agent && typeof agent === 'object' && agent.id;
+      
+      if (!hasId) {
+        console.warn('[AIAgentsList] Filtering out agent without ID:', {
+          agent,
+          hasValidStructure: agent && typeof agent === 'object',
+          hasId: !!(agent && agent.id)
+        });
+        return false;
       }
 
-      return isValid;
+      // Simplified logging for missing fields
+      const missingFields = [];
+      if (!agent.name || agent.name.trim() === '') missingFields.push('name');
+      if (!agent.model || agent.model.trim() === '') missingFields.push('model');
+      if (!agent.status) missingFields.push('status');
+      
+      if (missingFields.length > 0) {
+        console.info(`[AIAgentsList] Agent ${agent.id}: applied defaults for ${missingFields.join(', ')}`);
+      }
+
+      return true;
     });
   }, [aiAgents]);
 
-  // Clean up invalid agents on mount
-  useEffect(() => {
-    cleanupInvalidAgents();
-  }, []); // Run once on mount
+  // Removed automatic cleanup on mount to prevent infinite loops
+  // Cleanup is now only triggered manually via refresh button
 
   // Extract unique models with improved error handling
   useEffect(() => {

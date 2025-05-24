@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
 import { AIAgent, User } from '../data/types';
 import { useAIAgentsRepositories } from './AIAgentsRepositoryContext';
 
@@ -48,33 +48,74 @@ export const AIAgentsDataProvider: React.FC<AIAgentsDataProviderProps> = ({ chil
   // Load initial data
   useEffect(() => {
     const loadData = async () => {
-      if (!repositories || repoLoading) return;
+      if (!repositories || repoLoading) {
+        console.log('[AIAgentsDataContext] Waiting for repositories to initialize...');
+        return;
+      }
 
       try {
         setIsLoading(true);
         setError(null);
+        console.log('[AIAgentsDataContext] Starting data load...');
 
         // Load AI agents
+        console.log('[AIAgentsDataContext] Loading AI agents from API...');
         const agentsResult = await repositories.aiAgents.getAll();
-        const agentsMap = agentsResult.data.reduce((acc: Record<string, AIAgent>, agent: AIAgent) => {
-          acc[agent.id] = agent;
+        console.log('[AIAgentsDataContext] Raw API response for agents:', {
+          hasData: !!agentsResult.data,
+          dataLength: agentsResult.data?.length || 0,
+          sampleAgent: agentsResult.data?.[0] || null
+        });
+
+        const agentsMap = agentsResult.data.reduce((acc: Record<string, AIAgent>, agent: AIAgent, index: number) => {
+          console.log(`[AIAgentsDataContext] Processing agent ${index + 1}/${agentsResult.data.length}:`, {
+            id: agent?.id,
+            name: agent?.name,
+            model: agent?.model,
+            modelName: (agent as any)?.modelName,
+            status: agent?.status,
+            allFields: Object.keys(agent || {})
+          });
+
+          if (agent && agent.id) {
+            acc[agent.id] = agent;
+          } else {
+            console.warn('[AIAgentsDataContext] Skipping agent without ID:', agent);
+          }
           return acc;
         }, {} as Record<string, AIAgent>);
+        
+        console.log(`[AIAgentsDataContext] Loaded ${Object.keys(agentsMap).length} valid agents into state`);
         setAIAgents(agentsMap);
 
         // Load users (limited data)
+        console.log('[AIAgentsDataContext] Loading users from API...');
         const usersResult = await repositories.users.getAll();
+        console.log('[AIAgentsDataContext] Raw API response for users:', {
+          hasData: !!usersResult.data,
+          dataLength: usersResult.data?.length || 0
+        });
+
         const usersMap = usersResult.data.reduce((acc: Record<string, User>, user: User) => {
-          acc[user.id] = user;
+          if (user && user.id) {
+            acc[user.id] = user;
+          }
           return acc;
         }, {} as Record<string, User>);
+        
+        console.log(`[AIAgentsDataContext] Loaded ${Object.keys(usersMap).length} users into state`);
         setUsers(usersMap);
 
       } catch (err) {
-        console.error('AIAgentsDataContext: Failed to load data:', err);
+        console.error('[AIAgentsDataContext] Failed to load data:', {
+          error: err,
+          message: (err as Error)?.message,
+          stack: (err as Error)?.stack
+        });
         setError(err as Error);
       } finally {
         setIsLoading(false);
+        console.log('[AIAgentsDataContext] Data loading completed');
       }
     };
 
@@ -118,11 +159,36 @@ export const AIAgentsDataProvider: React.FC<AIAgentsDataProviderProps> = ({ chil
     if (!repositories) throw new Error('Repositories not initialized');
 
     try {
+      console.log('[AIAgentsDataContext] Creating new agent:', {
+        name: data.name,
+        model: data.model,
+        status: data.status,
+        allFields: Object.keys(data)
+      });
+      
       const newAgent = await repositories.aiAgents.create(data);
-      setAIAgents(prev => ({ ...prev, [newAgent.id]: newAgent }));
+      
+      console.log('[AIAgentsDataContext] Agent created successfully:', {
+        id: newAgent.id,
+        name: newAgent.name,
+        model: newAgent.model,
+        status: newAgent.status,
+        allReturnedFields: Object.keys(newAgent)
+      });
+      
+      setAIAgents(prev => {
+        const updated = { ...prev, [newAgent.id]: newAgent };
+        console.log(`[AIAgentsDataContext] Updated agents state: now ${Object.keys(updated).length} agents`);
+        return updated;
+      });
+      
       return newAgent;
     } catch (err) {
-      console.error('Failed to create AI agent:', err);
+      console.error('[AIAgentsDataContext] Failed to create AI agent:', {
+        error: err,
+        message: (err as Error)?.message,
+        inputData: data
+      });
       throw err;
     }
   };
@@ -131,13 +197,42 @@ export const AIAgentsDataProvider: React.FC<AIAgentsDataProviderProps> = ({ chil
     if (!repositories) throw new Error('Repositories not initialized');
 
     try {
+      console.log(`[AIAgentsDataContext] Updating agent ${id}:`, {
+        updateData: data,
+        currentAgent: aiAgents[id] ? {
+          name: aiAgents[id].name,
+          model: aiAgents[id].model,
+          status: aiAgents[id].status
+        } : 'not found in local state'
+      });
+      
       const updatedAgent = await repositories.aiAgents.update(id, data);
+      
       if (updatedAgent) {
-        setAIAgents(prev => ({ ...prev, [updatedAgent.id]: updatedAgent }));
+        console.log(`[AIAgentsDataContext] Agent ${id} updated successfully:`, {
+          id: updatedAgent.id,
+          name: updatedAgent.name,
+          model: updatedAgent.model,
+          status: updatedAgent.status,
+          allReturnedFields: Object.keys(updatedAgent)
+        });
+        
+        setAIAgents(prev => {
+          const updated = { ...prev, [updatedAgent.id]: updatedAgent };
+          console.log(`[AIAgentsDataContext] Force updating agent ${id} in state - agents count: ${Object.keys(updated).length}`);
+          return updated;
+        });
+      } else {
+        console.warn(`[AIAgentsDataContext] Update returned null for agent ${id}`);
       }
+      
       return updatedAgent;
     } catch (err) {
-      console.error(`Failed to update AI agent ${id}:`, err);
+      console.error(`[AIAgentsDataContext] Failed to update AI agent ${id}:`, {
+        error: err,
+        message: (err as Error)?.message,
+        updateData: data
+      });
       throw err;
     }
   };
@@ -161,15 +256,28 @@ export const AIAgentsDataProvider: React.FC<AIAgentsDataProviderProps> = ({ chil
     }
   };
 
-  const cleanupInvalidAgents = (): number => {
+  const cleanupInvalidAgents = useCallback((): number => {
     let cleanedCount = 0;
     let migratedCount = 0;
+    let normalizedCount = 0;
 
+    console.log('[AIAgentsDataContext] Starting cleanup of invalid agents...');
+    
     setAIAgents(prev => {
       const newAgents = { ...prev };
+      const totalAgents = Object.keys(newAgents).length;
+      console.log(`[AIAgentsDataContext] Processing ${totalAgents} agents for cleanup`);
 
       for (const id of Object.keys(newAgents)) {
         const agent = newAgents[id];
+        console.log(`[AIAgentsDataContext] Cleaning agent ${id}:`, {
+          hasValidStructure: agent && typeof agent === 'object',
+          hasId: !!(agent && agent.id),
+          name: agent?.name,
+          model: agent?.model,
+          modelName: (agent as any)?.modelName,
+          status: agent?.status
+        });
 
         if (agent && typeof agent === 'object') {
           let needsUpdate = false;
@@ -177,28 +285,35 @@ export const AIAgentsDataProvider: React.FC<AIAgentsDataProviderProps> = ({ chil
 
           // Migrate modelName to model if needed
           if (!updatedAgent.model && (agent as any).modelName) {
+            console.log(`[AIAgentsDataContext] Migrating modelName to model for agent ${id}: ${(agent as any).modelName}`);
             updatedAgent.model = (agent as any).modelName;
             needsUpdate = true;
             migratedCount++;
           }
 
-          // Provide default values for missing fields
+          // Provide default values for missing fields (more lenient for API data)
           if (!updatedAgent.model || updatedAgent.model.trim() === '') {
+            console.log(`[AIAgentsDataContext] Setting default model for agent ${id}`);
             updatedAgent.model = 'Unknown Model';
             needsUpdate = true;
+            normalizedCount++;
           }
 
           if (!updatedAgent.name || updatedAgent.name.trim() === '') {
+            console.log(`[AIAgentsDataContext] Setting default name for agent ${id}`);
             updatedAgent.name = 'Unnamed Agent';
             needsUpdate = true;
+            normalizedCount++;
           }
 
           if (!updatedAgent.status) {
+            console.log(`[AIAgentsDataContext] Setting default status for agent ${id}`);
             updatedAgent.status = 'inactive';
             needsUpdate = true;
+            normalizedCount++;
           }
 
-          // Ensure required numeric fields exist
+          // Ensure optional fields exist with defaults (don't count as normalization)
           if (typeof updatedAgent.conversationsProcessed !== 'number') {
             updatedAgent.conversationsProcessed = 0;
             needsUpdate = true;
@@ -210,45 +325,59 @@ export const AIAgentsDataProvider: React.FC<AIAgentsDataProviderProps> = ({ chil
           }
 
           if (!updatedAgent.avgResponseTime) {
-            updatedAgent.avgResponseTime = '0m';
+            updatedAgent.avgResponseTime = '0ms';
             needsUpdate = true;
           }
 
           if (!updatedAgent.lastActive) {
-            updatedAgent.lastActive = new Date().toISOString();
+            updatedAgent.lastActive = 'N/A';
             needsUpdate = true;
           }
 
           if (needsUpdate) {
+            console.log(`[AIAgentsDataContext] Updated agent ${id} with missing fields`);
             newAgents[id] = updatedAgent;
           }
 
           // Only remove agents that are completely invalid (missing ID)
           if (!updatedAgent.id) {
-            console.warn('Removing agent with no ID:', agent);
+            console.warn(`[AIAgentsDataContext] Removing agent with no ID:`, {
+              originalAgent: agent,
+              agentKeys: Object.keys(agent || {})
+            });
             delete newAgents[id];
             cleanedCount++;
           }
         } else {
-          console.warn('Removing completely invalid agent:', agent);
+          console.warn(`[AIAgentsDataContext] Removing completely invalid agent:`, {
+            agent,
+            type: typeof agent,
+            isNull: agent === null,
+            isUndefined: agent === undefined
+          });
           delete newAgents[id];
           cleanedCount++;
         }
       }
 
+      console.log(`[AIAgentsDataContext] Cleanup completed: ${Object.keys(newAgents).length} agents remaining`);
       return newAgents;
     });
 
     if (migratedCount > 0) {
-      console.log(`Migrated ${migratedCount} agents from old field structure`);
+      console.log(`[AIAgentsDataContext] Migrated ${migratedCount} agents from old field structure`);
+    }
+
+    if (normalizedCount > 0) {
+      console.log(`[AIAgentsDataContext] Normalized ${normalizedCount} agents with missing core fields`);
     }
 
     if (cleanedCount > 0) {
-      console.log(`Cleaned up ${cleanedCount} invalid agents`);
+      console.log(`[AIAgentsDataContext] Cleaned up ${cleanedCount} invalid agents`);
     }
 
     return cleanedCount;
-  };
+  }, []); // Empty deps - function doesn't depend on external state
 
   const getCurrentUser = async (): Promise<User | null> => {
     if (!repositories) throw new Error('Repositories not initialized');

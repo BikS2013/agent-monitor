@@ -198,11 +198,30 @@ export class AIAgentsApiDataSource implements IDataSource {
   async updateAIAgent(id: string, data: Partial<AIAgent>): Promise<AIAgent | null> {
     try {
       const apiData = this.prepareAIAgentForApi(data as AIAgent);
+      console.log(`[AIAgentsApiDataSource] Sending update request for agent ${id}:`, apiData);
+      
       const result = await this.apiClient.updateAIAgent(id, apiData);
-      if (!result) return null;
-      return this.transformApiAIAgent(result);
+      console.log(`[AIAgentsApiDataSource] Raw API response for agent ${id}:`, {
+        hasResult: !!result,
+        resultType: typeof result,
+        resultKeys: result ? Object.keys(result) : [],
+        result: result
+      });
+      
+      if (!result) {
+        console.warn(`[AIAgentsApiDataSource] API returned null/undefined for agent ${id}`);
+        return null;
+      }
+      
+      const transformed = this.transformApiAIAgent(result);
+      console.log(`[AIAgentsApiDataSource] Final transformed agent ${id}:`, transformed);
+      return transformed;
     } catch (error) {
-      console.error(`Failed to update AI agent ${id}:`, error);
+      console.error(`[AIAgentsApiDataSource] Failed to update AI agent ${id}:`, {
+        error,
+        message: (error as Error)?.message,
+        stack: (error as Error)?.stack
+      });
       return null;
     }
   }
@@ -454,16 +473,36 @@ export class AIAgentsApiDataSource implements IDataSource {
    * Transform API AI agent format to app format
    */
   private transformApiAIAgent(apiAgent: any): AIAgent {
+    console.log('[AIAgentsApiDataSource] Transforming API agent:', {
+      id: apiAgent.id,
+      name: apiAgent.name,
+      model: apiAgent.model,
+      model_name: apiAgent.model_name,
+      modelName: apiAgent.modelName,
+      status: apiAgent.status,
+      allFields: Object.keys(apiAgent || {})
+    });
+
+    // Determine the model value from various possible fields
+    const modelValue = apiAgent.model || apiAgent.model_name || apiAgent.modelName || 'Unknown Model';
+    
     // Create the AI agent object in our app format
-    return {
+    const transformedAgent = {
       id: apiAgent.id,
       name: apiAgent.name || '',
-      modelName: apiAgent.modelName || apiAgent.model_name || '',
+      model: modelValue, // Use 'model' field that our app expects
+      modelName: modelValue, // Keep legacy field for compatibility
       version: apiAgent.version || '',
       createdAt: apiAgent.createdAt || apiAgent.created_at || new Date().toISOString(),
       updatedAt: apiAgent.updatedAt || apiAgent.updated_at || new Date().toISOString(),
       status: apiAgent.status || 'active',
       capabilities: Array.isArray(apiAgent.capabilities) ? apiAgent.capabilities : [],
+      specializations: Array.isArray(apiAgent.specializations) ? apiAgent.specializations : [],
+      // Add missing statistics fields that our app expects
+      conversationsProcessed: apiAgent.conversationsProcessed || apiAgent.statistics?.totalConversations || 0,
+      successRate: apiAgent.successRate || '0%',
+      avgResponseTime: apiAgent.avgResponseTime || apiAgent.statistics?.averageResponseTime || '0ms',
+      lastActive: apiAgent.lastActive || apiAgent.updated_at || apiAgent.updatedAt || 'N/A',
       statistics: apiAgent.statistics || {
         activeUsers: 0,
         totalConversations: 0,
@@ -475,6 +514,16 @@ export class AIAgentsApiDataSource implements IDataSource {
       isPublic: apiAgent.isPublic || apiAgent.is_public || false,
       managedBy: apiAgent.managedBy || apiAgent.managed_by || []
     };
+    
+    console.log('[AIAgentsApiDataSource] Transformed agent result:', {
+      id: transformedAgent.id,
+      name: transformedAgent.name,
+      model: transformedAgent.model,
+      status: transformedAgent.status,
+      hasAllRequiredFields: !!(transformedAgent.id && transformedAgent.name && transformedAgent.model)
+    });
+    
+    return transformedAgent;
   }
 
   /**
@@ -506,10 +555,27 @@ export class AIAgentsApiDataSource implements IDataSource {
     // Create a copy to avoid modifying the original
     const apiData: any = { ...agent };
 
-    // Convert snake_case to camelCase if needed
+    console.log('[AIAgentsApiDataSource] Preparing data for API:', {
+      originalData: agent,
+      hasModel: 'model' in agent,
+      hasModelName: 'modelName' in agent,
+      modelValue: agent.model,
+      modelNameValue: (agent as any).modelName
+    });
+
+    // Handle model field mapping
+    // If we have 'model' field, ensure it's properly mapped
+    if (apiData.model !== undefined) {
+      // Keep the model field as is for now, but also set model_name if API expects it
+      apiData.model_name = apiData.model;
+      console.log('[AIAgentsApiDataSource] Setting model_name from model field:', apiData.model);
+    }
+
+    // Convert snake_case to camelCase if needed (legacy support)
     if (apiData.model_name === undefined && apiData.modelName !== undefined) {
       apiData.model_name = apiData.modelName;
       delete apiData.modelName;
+      console.log('[AIAgentsApiDataSource] Migrated modelName to model_name:', apiData.model_name);
     }
 
     if (apiData.is_public === undefined && apiData.isPublic !== undefined) {
@@ -522,6 +588,7 @@ export class AIAgentsApiDataSource implements IDataSource {
       delete apiData.managedBy;
     }
 
+    console.log('[AIAgentsApiDataSource] Final API data:', apiData);
     return apiData;
   }
 

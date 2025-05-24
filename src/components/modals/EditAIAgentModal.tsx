@@ -15,9 +15,46 @@ const EditAIAgentModal: React.FC<EditAIAgentModalProps> = ({ isOpen, onClose, ag
   const { updateAIAgent } = useAIAgentsData();
   const { theme } = useTheme();
 
-  // Form state
-  const [name, setName] = useState(agent.name || '');
-  const [model, setModel] = useState(agent.model || '');
+  // Form state with debug logging
+  const [name, setName] = useState(() => {
+    console.log('[EditAIAgentModal] Initial name:', agent.name);
+    return agent.name || '';
+  });
+  const [model, setModel] = useState(() => {
+    // Normalize model value to ensure it matches dropdown options
+    let initialModel = agent.model;
+    if (!initialModel || initialModel.trim() === '' || initialModel === 'Unknown Model') {
+      initialModel = 'GPT-4-Turbo';
+    } else {
+      initialModel = initialModel.trim();
+      // Map common variations to standard names
+      const modelMappings: Record<string, string> = {
+        'gpt-4-turbo': 'GPT-4-Turbo',
+        'gpt4-turbo': 'GPT-4-Turbo',
+        'gpt-4': 'GPT-4-Turbo',
+        'claude-3-opus': 'Claude-3-Opus',
+        'claude3-opus': 'Claude-3-Opus',
+        'claude-3-sonnet': 'Claude-3-Sonnet',
+        'claude3-sonnet': 'Claude-3-Sonnet',
+        'gpt-3.5-turbo': 'GPT-3.5-Turbo',
+        'gpt3.5-turbo': 'GPT-3.5-Turbo',
+        'llama-3-70b': 'Llama-3-70B',
+        'llama3-70b': 'Llama-3-70B'
+      };
+      
+      const normalizedModel = modelMappings[initialModel.toLowerCase()];
+      if (normalizedModel) {
+        initialModel = normalizedModel;
+      }
+    }
+    
+    console.log('[EditAIAgentModal] Initial model setup:', { 
+      original: agent.model, 
+      final: initialModel,
+      agentId: agent.id 
+    });
+    return initialModel;
+  });
   const [status, setStatus] = useState(agent.status || 'active');
   const [capabilities, setCapabilities] = useState<string[]>(agent.capabilities || []);
   const [specializations, setSpecializations] = useState<string[]>(agent.specializations || []);
@@ -27,35 +64,101 @@ const EditAIAgentModal: React.FC<EditAIAgentModalProps> = ({ isOpen, onClose, ag
   // Reset form when agent changes
   useEffect(() => {
     if (isOpen) {
+      console.log('[EditAIAgentModal] Initializing form with agent data:', {
+        agentId: agent.id,
+        agentName: agent.name,
+        agentModel: agent.model,
+        agentStatus: agent.status,
+        modelAfterSet: agent.model || 'GPT-4-Turbo' // default fallback
+      });
+      
       setName(agent.name || '');
-      setModel(agent.model || '');
+      // Ensure model has a valid value, normalize and default if needed
+      let modelValue = agent.model;
+      if (!modelValue || modelValue.trim() === '' || modelValue === 'Unknown Model') {
+        modelValue = 'GPT-4-Turbo';
+      } else {
+        // Trim and validate the model value
+        modelValue = modelValue.trim();
+        
+        // Map common variations to standard names
+        const modelMappings: Record<string, string> = {
+          'gpt-4-turbo': 'GPT-4-Turbo',
+          'gpt4-turbo': 'GPT-4-Turbo',
+          'gpt-4': 'GPT-4-Turbo',
+          'claude-3-opus': 'Claude-3-Opus',
+          'claude3-opus': 'Claude-3-Opus',
+          'claude-3-sonnet': 'Claude-3-Sonnet',
+          'claude3-sonnet': 'Claude-3-Sonnet',
+          'gpt-3.5-turbo': 'GPT-3.5-Turbo',
+          'gpt3.5-turbo': 'GPT-3.5-Turbo',
+          'llama-3-70b': 'Llama-3-70B',
+          'llama3-70b': 'Llama-3-70B'
+        };
+        
+        const normalizedModel = modelMappings[modelValue.toLowerCase()];
+        if (normalizedModel) {
+          modelValue = normalizedModel;
+        }
+      }
+      
+      setModel(modelValue);
       setStatus(agent.status || 'active');
       setCapabilities(agent.capabilities || []);
       setSpecializations(agent.specializations || []);
       setNewCapability('');
       setNewSpecialization('');
+      
+      console.log('[EditAIAgentModal] Form initialized with model:', modelValue);
     }
   }, [isOpen, agent]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    // Debug logging
+    console.log('[EditAIAgentModal] Form submission:', {
+      name: name,
+      model: model,
+      status: status,
+      originalAgent: {
+        id: agent.id,
+        name: agent.name,
+        model: agent.model,
+        status: agent.status
+      }
+    });
+
     // Validate required fields
     if (!name.trim()) {
+      console.error('[EditAIAgentModal] Validation failed: name is empty');
       alert('Agent name is required.');
       return;
     }
 
-    if (!model) {
-      alert('AI model is required.');
+    if (!model || model.trim() === '' || model === 'Select a model...') {
+      console.error('[EditAIAgentModal] Validation failed: model is empty or invalid:', { 
+        model, 
+        trimmed: model?.trim(), 
+        length: model?.length,
+        isSelectPrompt: model === 'Select a model...'
+      });
+      alert('Please select a valid AI model.');
       return;
+    }
+    
+    // Additional validation for valid model options
+    const validModels = ['GPT-4-Turbo', 'Claude-3-Opus', 'Claude-3-Sonnet', 'GPT-3.5-Turbo', 'Llama-3-70B', 'Unknown Model'];
+    if (!validModels.includes(model.trim())) {
+      console.warn('[EditAIAgentModal] Model not in predefined list but allowing:', model);
+      // Allow it but log it for debugging
     }
 
     try {
       // Preserve all existing agent data and only update the changed fields
       const updatedData: Partial<AIAgent> = {
         name: name.trim(),
-        model,
+        model: model.trim(), // Ensure model is trimmed
         status,
         capabilities,
         specializations,
@@ -66,13 +169,31 @@ const EditAIAgentModal: React.FC<EditAIAgentModalProps> = ({ isOpen, onClose, ag
         lastActive: agent.lastActive || new Date().toISOString(),
       };
 
-      console.log('Updating agent with data:', updatedData);
+      console.log('[EditAIAgentModal] Updating agent with data:', {
+        agentId: agent.id,
+        updatedData,
+        modelValidation: {
+          modelValue: model,
+          modelTrimmed: model.trim(),
+          modelLength: model.length,
+          isEmpty: model.trim() === ''
+        }
+      });
+      
       await updateAIAgent(agent.id, updatedData);
-      console.log('Agent updated successfully');
+      console.log('[EditAIAgentModal] Agent updated successfully');
       onClose();
     } catch (error) {
-      console.error('Failed to update AI agent:', error);
-      alert('Failed to update agent. Please try again.');
+      console.error('[EditAIAgentModal] Failed to update AI agent:', {
+        error,
+        message: (error as Error)?.message,
+        agentId: agent.id,
+        formData: { name, model, status }
+      });
+      
+      // More specific error message
+      const errorMessage = (error as Error)?.message || 'Unknown error occurred';
+      alert(`Failed to update agent: ${errorMessage}`);
     }
   };
 
@@ -134,18 +255,27 @@ const EditAIAgentModal: React.FC<EditAIAgentModalProps> = ({ isOpen, onClose, ag
           <select
             id="model"
             value={model}
-            onChange={(e) => setModel(e.target.value)}
+            onChange={(e) => {
+              console.log('[EditAIAgentModal] Model changed from', model, 'to:', e.target.value);
+              setModel(e.target.value);
+            }}
             className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
               theme === 'dark'
                 ? 'bg-gray-600 border-gray-500 text-white'
                 : 'bg-white border-gray-300 text-gray-900'
             }`}
+            required
           >
             <option value="GPT-4-Turbo">GPT-4-Turbo</option>
             <option value="Claude-3-Opus">Claude-3-Opus</option>
             <option value="Claude-3-Sonnet">Claude-3-Sonnet</option>
             <option value="GPT-3.5-Turbo">GPT-3.5-Turbo</option>
             <option value="Llama-3-70B">Llama-3-70B</option>
+            <option value="Unknown Model">Unknown Model</option>
+            {/* Add current model if it's not in the list */}
+            {model && !['GPT-4-Turbo', 'Claude-3-Opus', 'Claude-3-Sonnet', 'GPT-3.5-Turbo', 'Llama-3-70B', 'Unknown Model'].includes(model) && (
+              <option value={model}>{model} (Current)</option>
+            )}
           </select>
         </div>
 

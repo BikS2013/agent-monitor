@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Edit Agent Form</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .form-group { margin: 10px 0; }
+        label { display: block; margin-bottom: 5px; }
+        input, select { width: 300px; padding: 8px; }
+        button { padding: 10px 20px; margin: 10px 5px; }
+        .debug { background: #f0f0f0; padding: 10px; margin: 10px 0; }
+    </style>
+</head>
+<body>
+    <h2>Test Edit Agent Form Validation</h2>
+    
+    <form id="testForm">
+        <div class="form-group">
+            <label for="name">Agent Name:</label>
+            <input type="text" id="name" value="Test Support Bot - GPT-4-Turbo" />
+        </div>
+        
+        <div class="form-group">
+            <label for="model">AI Model:</label>
+            <select id="model">
+                <option value="GPT-4-Turbo">GPT-4-Turbo</option>
+                <option value="Claude-3-Opus">Claude-3-Opus</option>
+                <option value="Claude-3-Sonnet">Claude-3-Sonnet</option>
+                <option value="GPT-3.5-Turbo">GPT-3.5-Turbo</option>
+                <option value="Llama-3-70B">Llama-3-70B</option>
+                <option value="Unknown Model">Unknown Model</option>
+            </select>
+        </div>
+        
+        <div class="form-group">
+            <label for="status">Status:</label>
+            <select id="status">
+                <option value="active">Active</option>
+                <option value="inactive">Inactive</option>
+                <option value="training">Training</option>
+            </select>
+        </div>
+        
+        <button type="button" onclick="validateForm()">Test Validation</button>
+        <button type="button" onclick="simulateAPICall()">Simulate API Call</button>
+    </form>
+    
+    <div class="debug" id="debug"></div>
+    
+    <script>
+        // Set initial values to match your screenshot
+        document.getElementById('model').value = 'GPT-4-Turbo';
+        document.getElementById('status').value = 'active';
+        
+        function validateForm() {
+            const name = document.getElementById('name').value;
+            const model = document.getElementById('model').value;
+            const status = document.getElementById('status').value;
+            
+            const debug = document.getElementById('debug');
+            debug.innerHTML = `
+                <h3>Form Validation Test</h3>
+                <p><strong>Name:</strong> "${name}" (length: ${name.length}, trimmed: "${name.trim()}", empty: ${!name.trim()})</p>
+                <p><strong>Model:</strong> "${model}" (length: ${model.length}, trimmed: "${model.trim()}", empty: ${!model.trim()})</p>
+                <p><strong>Status:</strong> "${status}" (length: ${status.length})</p>
+                
+                <h4>Validation Results:</h4>
+                <p>Name valid: ${name.trim() ? '✅' : '❌'}</p>
+                <p>Model valid: ${model && model.trim() ? '✅' : '❌'}</p>
+                <p>Status valid: ${status ? '✅' : '❌'}</p>
+                
+                <h4>Form Data for API:</h4>
+                <pre>${JSON.stringify({
+                    name: name.trim(),
+                    model: model.trim(),
+                    status: status
+                }, null, 2)}</pre>
+            `;
+            
+            // Client-side validation like the React component
+            if (!name.trim()) {
+                alert('Agent name is required.');
+                return false;
+            }
+            
+            if (!model || model.trim() === '') {
+                alert('AI model is required.');
+                return false;
+            }
+            
+            alert('✅ Validation passed!');
+            return true;
+        }
+        
+        function simulateAPICall() {
+            if (!validateForm()) return;
+            
+            const formData = {
+                name: document.getElementById('name').value.trim(),
+                model: document.getElementById('model').value.trim(),
+                status: document.getElementById('status').value,
+                capabilities: ['general-inquiries', 'troubleshooting'],
+                specializations: []
+            };
+            
+            // Simulate the API call with fetch
+            console.log('Simulating API call with data:', formData);
+            
+            // Test against your actual API if it's running
+            fetch('http://localhost:8000/ai-agents/test-agent-id', {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(formData)
+            })
+            .then(response => {
+                console.log('API Response status:', response.status);
+                return response.text();
+            })
+            .then(data => {
+                console.log('API Response:', data);
+                document.getElementById('debug').innerHTML += `
+                    <h4>API Test Result:</h4>
+                    <pre>Status: ${response.status}\nResponse: ${data}</pre>
+                `;
+            })
+            .catch(error => {
+                console.error('API Error:', error);
+                document.getElementById('debug').innerHTML += `
+                    <h4>API Test Error:</h4>
+                    <pre>${error.message}</pre>
+                `;
+            });
+        }
+        
+        // Auto-run validation on load
+        validateForm();
+    </script>
+</body>
+</html>
