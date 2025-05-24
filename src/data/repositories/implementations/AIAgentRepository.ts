@@ -3,13 +3,15 @@ import { QueryOptions, FilterOptions, QueryResult } from '../interfaces/IReposit
 import { AIAgent, Conversation } from '../../types';
 import { BaseRepository } from './BaseRepository';
 import { IDataSource } from '../../sources/IDataSource';
+import { IAIAgentDataSource } from '../../sources/interfaces/IAIAgentDataSource';
 
 /**
  * Repository implementation for AIAgent entities
+ * Accepts both full IDataSource and specialized IAIAgentDataSource
  */
 export class AIAgentRepository extends BaseRepository<AIAgent> implements IAIAgentRepository {
-  constructor(dataSource: IDataSource) {
-    super(dataSource);
+  constructor(dataSource: IDataSource | IAIAgentDataSource) {
+    super(dataSource as IDataSource);
   }
   
   /**
@@ -84,6 +86,11 @@ export class AIAgentRepository extends BaseRepository<AIAgent> implements IAIAge
    * Get conversations handled by an AI agent (lazy loading)
    */
   async getConversations(aiAgentId: string, options?: QueryOptions): Promise<QueryResult<Conversation>> {
+    // Check if the data source supports conversation queries
+    if (!this.dataSource.getConversationsByAIAgentId) {
+      return this.formatQueryResult([], 0, options);
+    }
+    
     const conversations = await this.dataSource.getConversationsByAIAgentId(aiAgentId);
     
     // Apply filtering if provided
@@ -128,7 +135,12 @@ export class AIAgentRepository extends BaseRepository<AIAgent> implements IAIAge
       return null;
     }
     
-    // Get all conversations for this AI agent
+    // Get all conversations for this AI agent (if supported)
+    if (!this.dataSource.getConversationsByAIAgentId) {
+      // If conversation data is not available, return the agent without updating statistics
+      return aiAgent;
+    }
+    
     const conversations = await this.dataSource.getConversationsByAIAgentId(aiAgentId);
     
     // Update statistics

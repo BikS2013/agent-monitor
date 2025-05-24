@@ -3,13 +3,15 @@ import { QueryOptions, FilterOptions, QueryResult } from '../interfaces/IReposit
 import { User, Conversation, Collection, Group } from '../../types';
 import { BaseRepository } from './BaseRepository';
 import { IDataSource } from '../../sources/IDataSource';
+import { IAIAgentDataSource } from '../../sources/interfaces/IAIAgentDataSource';
 
 /**
  * Repository implementation for User entities
+ * Accepts both full IDataSource and specialized IAIAgentDataSource
  */
 export class UserRepository extends BaseRepository<User> implements IUserRepository {
-  constructor(dataSource: IDataSource) {
-    super(dataSource);
+  constructor(dataSource: IDataSource | IAIAgentDataSource) {
+    super(dataSource as IDataSource);
   }
   
   /**
@@ -48,6 +50,9 @@ export class UserRepository extends BaseRepository<User> implements IUserReposit
    * Create a new user
    */
   async create(data: Omit<User, 'id'>): Promise<User> {
+    if (!this.dataSource.createUser) {
+      throw new Error('User creation is not supported by this data source');
+    }
     return this.dataSource.createUser(data);
   }
   
@@ -55,6 +60,9 @@ export class UserRepository extends BaseRepository<User> implements IUserReposit
    * Update an existing user
    */
   async update(id: string, data: Partial<User>): Promise<User | null> {
+    if (!this.dataSource.updateUser) {
+      throw new Error('User updates are not supported by this data source');
+    }
     return this.dataSource.updateUser(id, data);
   }
   
@@ -62,6 +70,9 @@ export class UserRepository extends BaseRepository<User> implements IUserReposit
    * Delete a user
    */
   async delete(id: string): Promise<boolean> {
+    if (!this.dataSource.deleteUser) {
+      throw new Error('User deletion is not supported by this data source');
+    }
     return this.dataSource.deleteUser(id);
   }
   
@@ -84,6 +95,10 @@ export class UserRepository extends BaseRepository<User> implements IUserReposit
    * Get conversations for a user (lazy loading)
    */
   async getConversations(userId: string, options?: QueryOptions): Promise<QueryResult<Conversation>> {
+    if (!this.dataSource.getConversationsByUserId) {
+      return this.formatQueryResult([], 0, options);
+    }
+    
     const conversations = await this.dataSource.getConversationsByUserId(userId);
     
     // Apply filtering if provided
@@ -106,6 +121,10 @@ export class UserRepository extends BaseRepository<User> implements IUserReposit
    * Get collections created by a user (lazy loading)
    */
   async getCollections(userId: string, options?: QueryOptions): Promise<QueryResult<Collection>> {
+    if (!this.dataSource.getCollectionsByCreatorId) {
+      return this.formatQueryResult([], 0, options);
+    }
+    
     const collections = await this.dataSource.getCollectionsByCreatorId(userId);
     
     // Apply filtering if provided
@@ -128,6 +147,10 @@ export class UserRepository extends BaseRepository<User> implements IUserReposit
    * Get groups administered by a user (lazy loading)
    */
   async getGroups(userId: string, options?: QueryOptions): Promise<QueryResult<Group>> {
+    if (!this.dataSource.getGroupsByAdminUserId) {
+      return this.formatQueryResult([], 0, options);
+    }
+    
     const groups = await this.dataSource.getGroupsByAdminUserId(userId);
     
     // Apply filtering if provided

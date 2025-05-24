@@ -1,21 +1,17 @@
 import axios, { AxiosError, AxiosInstance, AxiosRequestConfig } from 'axios';
 import {
   AIAgent,
-  Collection,
-  Conversation,
-  Group,
-  Message,
   User
 } from '../types';
-import { IDataSource } from './IDataSource';
+import { IAIAgentDataSource } from './interfaces/IAIAgentDataSource';
 import { ApiClient } from '../api/ApiClient';
 
 /**
- * AI Agents API client implementation of the IDataSource interface.
+ * AI Agents API client implementation of the IAIAgentDataSource interface.
  * This implementation is dedicated to AI Agents operations and can be configured
  * independently from other API data sources.
  */
-export class AIAgentsApiDataSource implements IDataSource {
+export class AIAgentsApiDataSource implements IAIAgentDataSource {
   private apiClient: ApiClient;
 
   /**
@@ -330,139 +326,6 @@ export class AIAgentsApiDataSource implements IDataSource {
       console.error('AI Agents API: Failed to get current user:', error);
       return null;
     }
-  }
-
-  // User modification operations are not supported by AI Agents API
-  async createUser(data: Omit<User, 'id'>): Promise<User> {
-    throw new Error('User creation is not supported by the AI Agents API');
-  }
-
-  async updateUser(id: string, data: Partial<User>): Promise<User | null> {
-    throw new Error('User updates are not supported by the AI Agents API');
-  }
-
-  async deleteUser(id: string): Promise<boolean> {
-    throw new Error('User deletion is not supported by the AI Agents API');
-  }
-
-  // #endregion
-
-  // #region Non-AI Agent Methods (Not supported by AI Agents API)
-
-  // Messages
-  async getMessageById(id: string): Promise<Message | null> {
-    throw new Error('Message operations are not supported by the AI Agents API');
-  }
-
-  async getMessages(ids?: string[]): Promise<Record<string, Message>> {
-    throw new Error('Message operations are not supported by the AI Agents API');
-  }
-
-  async getMessagesByConversationId(conversationId: string): Promise<Message[]> {
-    throw new Error('Message operations are not supported by the AI Agents API');
-  }
-
-  async createMessage(data: Omit<Message, 'id'>): Promise<Message> {
-    throw new Error('Message operations are not supported by the AI Agents API');
-  }
-
-  async updateMessage(id: string, data: Partial<Message>): Promise<Message | null> {
-    throw new Error('Message operations are not supported by the AI Agents API');
-  }
-
-  async deleteMessage(id: string): Promise<boolean> {
-    throw new Error('Message operations are not supported by the AI Agents API');
-  }
-
-  // Conversations
-  async getConversationById(id: string): Promise<Conversation | null> {
-    throw new Error('Conversation operations are not supported by the AI Agents API');
-  }
-
-  async getConversations(ids?: string[]): Promise<Record<string, Conversation>> {
-    throw new Error('Conversation operations are not supported by the AI Agents API');
-  }
-
-  async getConversationsByCollectionId(collectionId: string): Promise<Conversation[]> {
-    throw new Error('Conversation operations are not supported by the AI Agents API');
-  }
-
-  async getConversationsByAIAgentId(aiAgentId: string): Promise<Conversation[]> {
-    throw new Error('Conversation operations are not supported by the AI Agents API');
-  }
-
-  async getConversationsByUserId(userId: string): Promise<Conversation[]> {
-    throw new Error('Conversation operations are not supported by the AI Agents API');
-  }
-
-  async createConversation(data: Omit<Conversation, 'id'>): Promise<Conversation> {
-    throw new Error('Conversation operations are not supported by the AI Agents API');
-  }
-
-  async updateConversation(id: string, data: Partial<Conversation>): Promise<Conversation | null> {
-    throw new Error('Conversation operations are not supported by the AI Agents API');
-  }
-
-  async deleteConversation(id: string): Promise<boolean> {
-    throw new Error('Conversation operations are not supported by the AI Agents API');
-  }
-
-  async filterConversations(filterCriteria: any): Promise<string[]> {
-    throw new Error('Conversation operations are not supported by the AI Agents API');
-  }
-
-  // Collections
-  async getCollectionById(id: string): Promise<Collection | null> {
-    throw new Error('Collection operations are not supported by the AI Agents API');
-  }
-
-  async getCollections(ids?: string[]): Promise<Record<string, Collection>> {
-    throw new Error('Collection operations are not supported by the AI Agents API');
-  }
-
-  async getCollectionsByGroupId(groupId: string): Promise<Collection[]> {
-    throw new Error('Collection operations are not supported by the AI Agents API');
-  }
-
-  async getCollectionsByCreatorId(creatorId: string): Promise<Collection[]> {
-    throw new Error('Collection operations are not supported by the AI Agents API');
-  }
-
-  async createCollection(data: Omit<Collection, 'id'>): Promise<Collection> {
-    throw new Error('Collection operations are not supported by the AI Agents API');
-  }
-
-  async updateCollection(id: string, data: Partial<Collection>): Promise<Collection | null> {
-    throw new Error('Collection operations are not supported by the AI Agents API');
-  }
-
-  async deleteCollection(id: string): Promise<boolean> {
-    throw new Error('Collection operations are not supported by the AI Agents API');
-  }
-
-  // Groups
-  async getGroupById(id: string): Promise<Group | null> {
-    throw new Error('Group operations are not supported by the AI Agents API');
-  }
-
-  async getGroups(ids?: string[]): Promise<Record<string, Group>> {
-    throw new Error('Group operations are not supported by the AI Agents API');
-  }
-
-  async getGroupsByAdminUserId(userId: string): Promise<Group[]> {
-    throw new Error('Group operations are not supported by the AI Agents API');
-  }
-
-  async createGroup(data: Omit<Group, 'id'>): Promise<Group> {
-    throw new Error('Group operations are not supported by the AI Agents API');
-  }
-
-  async updateGroup(id: string, data: Partial<Group>): Promise<Group | null> {
-    throw new Error('Group operations are not supported by the AI Agents API');
-  }
-
-  async deleteGroup(id: string): Promise<boolean> {
-    throw new Error('Group operations are not supported by the AI Agents API');
   }
 
   // #endregion

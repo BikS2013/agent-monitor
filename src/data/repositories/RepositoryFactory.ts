@@ -3,6 +3,7 @@ import { JsonDataSource } from '../sources/JsonDataSource';
 import { DynamicDataSource } from '../sources/DynamicDataSource';
 import { GroupApiDataSource } from '../sources/GroupApiDataSource';
 import { CollectionsApiDataSource } from '../sources/CollectionsApiDataSource';
+import { AIAgentsApiDataSource } from '../sources/AIAgentsApiDataSource';
 import { JsonDataSource as ExternalJsonDataSource, DataSize } from '../jsonDataSource';
 
 import {

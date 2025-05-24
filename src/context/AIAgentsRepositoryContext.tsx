@@ -63,10 +63,12 @@ export const AIAgentsRepositoryProvider: React.FC<AIAgentsRepositoryProviderProp
 
           await aiAgentsApiDataSource.initialize();
 
-          await RepositoryFactory.initialize(aiAgentsApiDataSource);
+          // Use the specialized AI Agents data source directly with repositories
+          const { AIAgentRepository, UserRepository } = await import('../data/repositories/implementations');
+          
           setRepositories({
-            aiAgents: RepositoryFactory.getAIAgentRepository(),
-            users: RepositoryFactory.getUserRepository()
+            aiAgents: new AIAgentRepository(aiAgentsApiDataSource),
+            users: new UserRepository(aiAgentsApiDataSource)
           });
           setDataSourceType('api');
           console.log('AIAgentsRepositoryContext: Successfully connected to AI Agents API');
