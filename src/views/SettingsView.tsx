@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Settings, User, Bell, Shield, Database, Bot, Save, HardDrive, AlertCircle, Globe, MessageCircle, Brain, Users } from 'lucide-react';
+import { Settings, User, Bell, Shield, Database, Bot, Save, HardDrive, AlertCircle, Globe, MessageCircle, Brain, Users, FolderOpen } from 'lucide-react';
 import { useData } from '../context/DataContext';
 import { useTheme } from '../context/ThemeContext';
 import { useRepositories } from '../context/RepositoryContext';
@@ -8,6 +8,7 @@ import { User as UserType } from '../data/types';
 import config from '../config';
 import ApiSettings from '../components/settings/ApiSettings';
 import ConversationsApiSettings from '../components/settings/ConversationsApiSettings';
+import { CollectionsApiSettings } from '../components/settings/CollectionsApiSettings';
 import { AIAgentsApiSettings } from '../components/settings/AIAgentsApiSettings';
 import { GroupsApiSettings, GroupsApiSettings as GroupsApiSettingsType } from '../components/settings/GroupsApiSettings';
 
@@ -351,6 +352,18 @@ const SettingsView: React.FC = () => {
                   </h3>
 
                   <ConversationsApiSettings />
+                </div>
+
+                {/* Collections API Settings Section */}
+                <div className={`p-4 rounded-md ${
+                  theme === 'dark' ? 'bg-gray-600' : 'bg-gray-50'
+                }`}>
+                  <h3 className={`font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'} mb-4 flex items-center`}>
+                    <FolderOpen size={16} className="text-blue-500 mr-2" />
+                    Collections API Connection
+                  </h3>
+
+                  <CollectionsApiSettings />
                 </div>
 
                 {/* AI Agents API Settings Section */}

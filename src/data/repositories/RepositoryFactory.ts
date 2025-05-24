@@ -2,6 +2,7 @@ import { IDataSource } from '../sources/IDataSource';
 import { JsonDataSource } from '../sources/JsonDataSource';
 import { DynamicDataSource } from '../sources/DynamicDataSource';
 import { GroupApiDataSource } from '../sources/GroupApiDataSource';
+import { CollectionsApiDataSource } from '../sources/CollectionsApiDataSource';
 import { JsonDataSource as ExternalJsonDataSource, DataSize } from '../jsonDataSource';
 
 import {
@@ -29,13 +30,15 @@ import {
 export class RepositoryFactory {
   private static dataSource: IDataSource | null = null;
   private static groupDataSource: IDataSource | null = null;
+  private static collectionsDataSource: IDataSource | null = null;
 
   /**
    * Initialize the factory with a data source
    * @param dataSource Data source to use for repositories (defaults to JsonDataSource)
    * @param groupDataSource Optional separate data source for groups
+   * @param collectionsDataSource Optional separate data source for collections
    */
-  static async initialize(dataSource?: IDataSource, dataSize?: DataSize | 'dynamic', groupDataSource?: IDataSource): Promise<void> {
+  static async initialize(dataSource?: IDataSource, dataSize?: DataSize | 'dynamic', groupDataSource?: IDataSource, collectionsDataSource?: IDataSource): Promise<void> {
     if (!dataSource) {
       if (dataSize === 'dynamic') {
         // Use dynamically generated data
@@ -64,6 +67,40 @@ export class RepositoryFactory {
       console.log('RepositoryFactory: Using main data source for groups');
     }
 
+    // Set up collections data source
+    if (collectionsDataSource) {
+      this.collectionsDataSource = collectionsDataSource;
+      console.log('RepositoryFactory: Using separate collections data source:', collectionsDataSource.constructor.name);
+    } else {
+      // Check if Collections API is enabled
+      const collectionsApiEnabled = localStorage.getItem('collectionsApiEnabled') === 'true';
+      if (collectionsApiEnabled) {
+        console.log('RepositoryFactory: Collections API is enabled, creating Collections API data source');
+        const baseUrl = localStorage.getItem('collectionsApiBaseUrl') || 'http://localhost:8002';
+        const authToken = localStorage.getItem('collectionsApiToken');
+        const clientSecret = localStorage.getItem('collectionsApiClientSecret');
+        const clientId = localStorage.getItem('collectionsApiClientId');
+        const noAuth = localStorage.getItem('collectionsApiAuthMethod') === 'none';
+        
+        this.collectionsDataSource = new CollectionsApiDataSource(
+          baseUrl,
+          authToken,
+          clientSecret,
+          clientId,
+          noAuth
+        );
+        console.log('RepositoryFactory: Created Collections API data source with settings:', {
+          baseUrl,
+          hasToken: !!authToken,
+          hasClientSecret: !!clientSecret,
+          noAuth
+        });
+      } else {
+        this.collectionsDataSource = this.dataSource;
+        console.log('RepositoryFactory: Using main data source for collections');
+      }
+    }
+
     try {
       // Determine if we're using an API data source
       const isApiDataSource = this.dataSource.constructor.name === 'ApiDataSource';
@@ -90,6 +127,19 @@ export class RepositoryFactory {
           console.error('RepositoryFactory: Group data source initialization failed:', groupInitError);
           console.log('RepositoryFactory: Falling back to main data source for groups');
           this.groupDataSource = this.dataSource;
+        }
+      }
+
+      // Initialize the collections data source if it's different from the main data source
+      if (this.collectionsDataSource !== this.dataSource) {
+        console.log('RepositoryFactory: Initializing separate collections data source...');
+        try {
+          await this.collectionsDataSource.initialize();
+          console.log('RepositoryFactory: Collections data source initialized successfully');
+        } catch (collectionsInitError) {
+          console.error('RepositoryFactory: Collections data source initialization failed:', collectionsInitError);
+          console.log('RepositoryFactory: Falling back to main data source for collections');
+          this.collectionsDataSource = this.dataSource;
         }
       }
 
@@ -181,11 +231,11 @@ export class RepositoryFactory {
    * Get the collection repository
    */
   static getCollectionRepository(): ICollectionRepository {
-    if (!this.dataSource) {
+    if (!this.collectionsDataSource) {
       throw new Error('RepositoryFactory not initialized');
     }
 
-    return new CollectionRepository(this.dataSource);
+    return new CollectionRepository(this.collectionsDataSource);
   }
 
   /**
@@ -233,6 +283,22 @@ export class RepositoryFactory {
       console.log('RepositoryFactory: Group data source set successfully');
     } catch (error) {
       console.error('RepositoryFactory: Failed to set group data source:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Set the collections data source independently
+   * @param collectionsDataSource Data source specifically for collections
+   */
+  static async setCollectionsDataSource(collectionsDataSource: IDataSource): Promise<void> {
+    try {
+      console.log('RepositoryFactory: Setting independent collections data source:', collectionsDataSource.constructor.name);
+      await collectionsDataSource.initialize();
+      this.collectionsDataSource = collectionsDataSource;
+      console.log('RepositoryFactory: Collections data source set successfully');
+    } catch (error) {
+      console.error('RepositoryFactory: Failed to set collections data source:', error);
       throw error;
     }
   }

@@ -2,6 +2,7 @@ export * from './IDataSource';
 export * from './JsonDataSource';
 export * from './ApiDataSource';
 export * from './ConversationsApiDataSource';
+export * from './CollectionsApiDataSource';
 export * from './GroupApiDataSource';
 export * from './AIAgentsApiDataSource';
 export * from './DynamicDataSource';
