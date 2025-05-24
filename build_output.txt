@@ -1,0 +1,135 @@
+
+> ai-contact-center@0.1.0 build
+> tsc && vite build
+
+src/components/ConversationsList.tsx(21,11): error TS2339: Property 'aiAgents' does not exist on type 'ConversationsDataContextType'.
+src/components/ConversationsList.tsx(128,34): error TS18046: 'agent' is of type 'unknown'.
+src/components/ConversationsList.tsx(128,51): error TS18046: 'agent' is of type 'unknown'.
+src/components/ConversationsList.tsx(129,24): error TS18046: 'agent' is of type 'unknown'.
+src/components/GroupDetail.tsx(47,37): error TS2339: Property 'creationTimestamp' does not exist on type 'Collection'.
+src/components/GroupDetail.tsx(48,41): error TS2339: Property 'creationTimestamp' does not exist on type 'Collection'.
+src/components/GroupsList.tsx(136,24): error TS2339: Property 'adminUsers' does not exist on type 'Group'.
+src/components/GroupsList.tsx(136,58): error TS2339: Property 'adminUsers' does not exist on type 'Group'.
+src/components/GroupsList.tsx(137,30): error TS2339: Property 'adminUsers' does not exist on type 'Group'.
+src/components/modals/NewCollectionModal.tsx(95,26): error TS2345: Argument of type '"successful" | "unsuccessful" | "uncertain" | "all"' is not assignable to parameter of type 'SetStateAction<"successful" | "unsuccessful" | "all">'.
+  Type '"uncertain"' is not assignable to type 'SetStateAction<"successful" | "unsuccessful" | "all">'.
+src/components/modals/NewCollectionModal.tsx(170,26): error TS2345: Argument of type '"successful" | "unsuccessful" | "uncertain"' is not assignable to parameter of type 'SetStateAction<"successful" | "unsuccessful" | "all">'.
+  Type '"uncertain"' is not assignable to type 'SetStateAction<"successful" | "unsuccessful" | "all">'.
+src/components/modals/NewGroupModal.tsx(3,10): error TS2300: Duplicate identifier 'useData'.
+src/components/modals/NewGroupModal.tsx(4,10): error TS2300: Duplicate identifier 'useData'.
+src/components/modals/NewGroupModal.tsx(56,9): error TS2353: Object literal may only specify known properties, and 'adminUsers' does not exist in type 'Omit<Group, "id">'.
+src/context/ConversationsDataContext.tsx(195,34): error TS2339: Property 'timestamp' does not exist on type 'Message'.
+src/context/ConversationsDataContext.tsx(195,68): error TS2339: Property 'timestamp' does not exist on type 'Message'.
+src/context/DataContext.tsx(282,34): error TS2339: Property 'timestamp' does not exist on type 'Message'.
+src/context/DataContext.tsx(282,68): error TS2339: Property 'timestamp' does not exist on type 'Message'.
+src/data/api.ts(45,5): error TS2322: Type 'Conversation | undefined' is not assignable to type 'Conversation'.
+  Type 'undefined' is not assignable to type 'Conversation'.
+src/data/api.ts(53,32): error TS2339: Property 'timestamp' does not exist on type 'Message'.
+src/data/api.ts(53,66): error TS2339: Property 'timestamp' does not exist on type 'Message'.
+src/data/api.ts(65,17): error TS2339: Property 'timestamp' does not exist on type 'Message'.
+src/data/api.ts(83,5): error TS2322: Type 'Conversation | undefined' is not assignable to type 'Conversation'.
+  Type 'undefined' is not assignable to type 'Conversation'.
+src/data/api.ts(91,17): error TS2339: Property 'timestamp' does not exist on type 'Message'.
+src/data/api.ts(106,10): error TS18048: 'collection.conversations' is possibly 'undefined'.
+src/data/api.ts(113,9): error TS2322: Type 'Conversation | undefined' is not assignable to type 'Conversation'.
+  Type 'undefined' is not assignable to type 'Conversation'.
+src/data/api.ts(121,21): error TS2339: Property 'timestamp' does not exist on type 'Message'.
+src/data/api.ts(345,7): error TS2322: Type 'Conversation | undefined' is not assignable to type 'Conversation'.
+  Type 'undefined' is not assignable to type 'Conversation'.
+src/data/api/ApiClient.ts(56,7): error TS2345: Argument of type '(config: AxiosRequestConfig) => AxiosRequestConfig<any>' is not assignable to parameter of type '(value: InternalAxiosRequestConfig<any>) => InternalAxiosRequestConfig<any> | Promise<InternalAxiosRequestConfig<any>>'.
+  Type 'AxiosRequestConfig<any>' is not assignable to type 'InternalAxiosRequestConfig<any> | Promise<InternalAxiosRequestConfig<any>>'.
+    Type 'AxiosRequestConfig<any>' is not assignable to type 'InternalAxiosRequestConfig<any>'.
+      Types of property 'headers' are incompatible.
+        Type 'AxiosHeaders | (Partial<RawAxiosHeaders & { Accept: AxiosHeaderValue; "Content-Length": AxiosHeaderValue; "User-Agent": AxiosHeaderValue; "Content-Encoding": AxiosHeaderValue; Authorization: AxiosHeaderValue; } & { ...; }> & Partial<...>) | undefined' is not assignable to type 'AxiosRequestHeaders'.
+          Type 'undefined' is not assignable to type 'AxiosRequestHeaders'.
+            Type 'undefined' is not assignable to type 'Partial<RawAxiosHeaders & { Accept: AxiosHeaderValue; "Content-Length": AxiosHeaderValue; "User-Agent": AxiosHeaderValue; "Content-Encoding": AxiosHeaderValue; Authorization: AxiosHeaderValue; } & { ...; }>'.
+src/data/api/ApiClient.ts(226,20): error TS18046: 'healthError' is of type 'unknown'.
+src/data/api/ApiClient.ts(227,17): error TS18046: 'healthError' is of type 'unknown'.
+src/data/api/ApiClient.ts(228,25): error TS18046: 'healthError' is of type 'unknown'.
+src/data/api/ApiClient.ts(229,18): error TS18046: 'healthError' is of type 'unknown'.
+src/data/api/ApiClient.ts(231,49): error TS18046: 'healthError' is of type 'unknown'.
+src/data/api/ApiClient.ts(241,51): error TS18046: 'initError' is of type 'unknown'.
+src/data/api/ApiClient.ts(246,11): error TS18046: 'error' is of type 'unknown'.
+src/data/api/ApiClient.ts(246,44): error TS18046: 'error' is of type 'unknown'.
+src/data/api/ApiClient.ts(246,77): error TS18046: 'error' is of type 'unknown'.
+src/data/api/ApiClient.ts(598,9): error TS2393: Duplicate function implementation.
+src/data/api/ApiClient.ts(684,9): error TS2393: Duplicate function implementation.
+src/data/filterUtils.ts(184,24): error TS2339: Property 'priority' does not exist on type 'Conversation'.
+src/data/jsonDataSource.ts(197,12): error TS18048: 'collection.conversations' is possibly 'undefined'.
+src/data/jsonDataSource.ts(258,5): error TS2531: Object is possibly 'null'.
+src/data/jsonDataSource.ts(263,12): error TS2531: Object is possibly 'null'.
+src/data/jsonDataSource.ts(394,30): error TS2339: Property 'adminUsers' does not exist on type 'Group'.
+src/data/largeSampleData.ts(90,3): error TS2740: Type '{ id: string; name: string; role: "admin"; permissions: string[]; }' is missing the following properties from type 'User': username, email, fullName, createdAt, and 2 more.
+src/data/largeSampleData.ts(96,3): error TS2740: Type '{ id: string; name: string; role: "admin"; permissions: string[]; }' is missing the following properties from type 'User': username, email, fullName, createdAt, and 2 more.
+src/data/largeSampleData.ts(102,3): error TS2740: Type '{ id: string; name: string; role: "supervisor"; permissions: string[]; }' is missing the following properties from type 'User': username, email, fullName, createdAt, and 2 more.
+src/data/largeSampleData.ts(108,3): error TS2740: Type '{ id: string; name: string; role: "supervisor"; permissions: string[]; }' is missing the following properties from type 'User': username, email, fullName, createdAt, and 2 more.
+src/data/largeSampleData.ts(114,3): error TS2740: Type '{ id: string; name: string; role: "supervisor"; permissions: string[]; }' is missing the following properties from type 'User': username, email, fullName, createdAt, and 2 more.
+src/data/largeSampleData.ts(120,3): error TS2740: Type '{ id: string; name: string; role: "executive"; permissions: string[]; }' is missing the following properties from type 'User': username, email, fullName, createdAt, and 2 more.
+src/data/largeSampleData.ts(126,3): error TS2740: Type '{ id: string; name: string; role: "executive"; permissions: string[]; }' is missing the following properties from type 'User': username, email, fullName, createdAt, and 2 more.
+src/data/largeSampleData.ts(344,5): error TS2353: Object literal may only specify known properties, and 'timestamp' does not exist in type 'Message'.
+src/data/largeSampleData.ts(549,7): error TS2367: This comparison appears to be unintentional because the types '"successful" | "unsuccessful" | "uncertain"' and '"pending"' have no overlap.
+src/data/largeSampleData.ts(669,5): error TS2353: Object literal may only specify known properties, and 'creationTimestamp' does not exist in type 'Collection'.
+src/data/largeSampleData.ts(721,5): error TS2353: Object literal may only specify known properties, and 'adminUsers' does not exist in type 'Group'.
+src/data/mockData.ts(141,5): error TS2353: Object literal may only specify known properties, and 'creationTimestamp' does not exist in type 'Collection'.
+src/data/mockData.ts(157,5): error TS2353: Object literal may only specify known properties, and 'creationTimestamp' does not exist in type 'Collection'.
+src/data/mockData.ts(175,5): error TS2353: Object literal may only specify known properties, and 'creationTimestamp' does not exist in type 'Collection'.
+src/data/mockData.ts(194,5): error TS2353: Object literal may only specify known properties, and 'adminUsers' does not exist in type 'Group'.
+src/data/mockData.ts(206,5): error TS2353: Object literal may only specify known properties, and 'adminUsers' does not exist in type 'Group'.
+src/data/mockData.ts(256,3): error TS2740: Type '{ id: string; name: string; role: "admin"; permissions: string[]; }' is missing the following properties from type 'User': username, email, fullName, createdAt, and 2 more.
+src/data/mockData.ts(262,3): error TS2740: Type '{ id: string; name: string; role: "supervisor"; permissions: string[]; }' is missing the following properties from type 'User': username, email, fullName, createdAt, and 2 more.
+src/data/mockData.ts(268,3): error TS2740: Type '{ id: string; name: string; role: "supervisor"; permissions: string[]; }' is missing the following properties from type 'User': username, email, fullName, createdAt, and 2 more.
+src/data/mockData.ts(274,3): error TS2740: Type '{ id: string; name: string; role: "executive"; permissions: string[]; }' is missing the following properties from type 'User': username, email, fullName, createdAt, and 2 more.
+src/data/repositories/implementations/ConversationRepository.ts(29,7): error TS2322: Type 'Conversation | null' is not assignable to type 'Conversation'.
+  Type 'null' is not assignable to type 'Conversation'.
+src/data/repositories/implementations/ConversationRepository.ts(58,9): error TS2353: Object literal may only specify known properties, and 'messagesLoaded' does not exist in type 'Conversation'.
+src/data/repositories/implementations/ConversationRepository.ts(146,9): error TS2393: Duplicate function implementation.
+src/data/repositories/implementations/ConversationRepository.ts(259,38): error TS2339: Property 'priority' does not exist on type 'Conversation'.
+src/data/repositories/implementations/ConversationRepository.ts(302,40): error TS2339: Property 'timestamp' does not exist on type 'Message'.
+src/data/repositories/implementations/ConversationRepository.ts(310,9): error TS2393: Duplicate function implementation.
+src/data/repositories/implementations/ConversationRepository.ts(336,9): error TS2353: Object literal may only specify known properties, and 'page' does not exist in type 'QueryResult<Message>'.
+src/data/repositories/implementations/ConversationRepository.ts(336,24): error TS2339: Property 'page' does not exist on type 'QueryOptions'.
+src/data/repositories/implementations/ConversationRepository.ts(337,28): error TS2339: Property 'pageSize' does not exist on type 'QueryOptions'.
+src/data/repositories/implementations/ConversationRepository.ts(353,42): error TS2339: Property 'timestamp' does not exist on type 'Message'.
+src/data/sampleData.ts(39,3): error TS2740: Type '{ id: string; name: string; role: "admin"; permissions: string[]; }' is missing the following properties from type 'User': username, email, fullName, createdAt, and 2 more.
+src/data/sampleData.ts(45,3): error TS2740: Type '{ id: string; name: string; role: "admin"; permissions: string[]; }' is missing the following properties from type 'User': username, email, fullName, createdAt, and 2 more.
+src/data/sampleData.ts(51,3): error TS2740: Type '{ id: string; name: string; role: "supervisor"; permissions: string[]; }' is missing the following properties from type 'User': username, email, fullName, createdAt, and 2 more.
+src/data/sampleData.ts(57,3): error TS2740: Type '{ id: string; name: string; role: "supervisor"; permissions: string[]; }' is missing the following properties from type 'User': username, email, fullName, createdAt, and 2 more.
+src/data/sampleData.ts(63,3): error TS2740: Type '{ id: string; name: string; role: "supervisor"; permissions: string[]; }' is missing the following properties from type 'User': username, email, fullName, createdAt, and 2 more.
+src/data/sampleData.ts(69,3): error TS2740: Type '{ id: string; name: string; role: "executive"; permissions: string[]; }' is missing the following properties from type 'User': username, email, fullName, createdAt, and 2 more.
+src/data/sampleData.ts(75,3): error TS2740: Type '{ id: string; name: string; role: "executive"; permissions: string[]; }' is missing the following properties from type 'User': username, email, fullName, createdAt, and 2 more.
+src/data/sampleData.ts(582,7): error TS2353: Object literal may only specify known properties, and 'creationTimestamp' does not exist in type 'Collection'.
+src/data/sampleData.ts(703,7): error TS2353: Object literal may only specify known properties, and 'adminUsers' does not exist in type 'Group'.
+src/data/sampleData.ts(707,24): error TS2532: Object is possibly 'undefined'.
+src/data/sources/AIAgentsApiDataSource.ts(542,7): error TS2353: Object literal may only specify known properties, and 'metadata' does not exist in type 'User'.
+src/data/sources/ApiDataSource.ts(70,54): error TS18046: 'error' is of type 'unknown'.
+src/data/sources/ApiDataSource.ts(416,7): error TS2353: Object literal may only specify known properties, and 'settings' does not exist in type 'User'.
+src/data/sources/ConversationsApiDataSource.ts(54,67): error TS18046: 'error' is of type 'unknown'.
+src/data/sources/ConversationsApiDataSource.ts(813,33): error TS7006: Parameter 'conv' implicitly has an 'any' type.
+src/data/sources/DynamicDataSource.ts(73,5): error TS2740: Type '{ id: string; name: string; role: "admin"; permissions: string[]; }' is missing the following properties from type 'User': username, email, fullName, createdAt, and 2 more.
+src/data/sources/DynamicDataSource.ts(83,7): error TS2740: Type '{ id: string; name: string; role: "supervisor"; permissions: string[]; }' is missing the following properties from type 'User': username, email, fullName, createdAt, and 2 more.
+src/data/sources/DynamicDataSource.ts(94,7): error TS2740: Type '{ id: string; name: string; role: "executive"; permissions: string[]; }' is missing the following properties from type 'User': username, email, fullName, createdAt, and 2 more.
+src/data/sources/DynamicDataSource.ts(227,9): error TS2322: Type '"successful" | "unsuccessful" | "pending"' is not assignable to type '"successful" | "unsuccessful" | "uncertain"'.
+  Type '"pending"' is not assignable to type '"successful" | "unsuccessful" | "uncertain"'.
+src/data/sources/DynamicDataSource.ts(303,9): error TS2353: Object literal may only specify known properties, and 'creationTimestamp' does not exist in type 'Collection'.
+src/data/sources/DynamicDataSource.ts(377,9): error TS2353: Object literal may only specify known properties, and 'adminUsers' does not exist in type 'Group'.
+src/data/sources/DynamicDataSource.ts(419,7): error TS2322: Type 'Conversation | null' is not assignable to type 'Conversation'.
+  Type 'null' is not assignable to type 'Conversation'.
+src/data/sources/DynamicDataSource.ts(503,12): error TS18048: 'collection.conversations' is possibly 'undefined'.
+src/data/sources/DynamicDataSource.ts(683,30): error TS2339: Property 'adminUsers' does not exist on type 'Group'.
+src/data/sources/GroupApiDataSource.ts(230,47): error TS18046: 'group' is of type 'unknown'.
+src/data/sources/JsonDataSource.ts(171,7): error TS2322: Type 'Conversation | null' is not assignable to type 'Conversation'.
+  Type 'null' is not assignable to type 'Conversation'.
+src/data/sources/JsonDataSource.ts(180,34): error TS2339: Property 'timestamp' does not exist on type 'Message'.
+src/data/sources/JsonDataSource.ts(180,68): error TS2339: Property 'timestamp' does not exist on type 'Message'.
+src/data/sources/JsonDataSource.ts(197,8): error TS2339: Property 'id' does not exist on type 'Conversation'.
+src/data/sources/JsonDataSource.ts(280,5): error TS2322: Type '(Conversation | undefined)[]' is not assignable to type 'Conversation[]'.
+  Type 'Conversation | undefined' is not assignable to type 'Conversation'.
+    Type 'undefined' is not assignable to type 'Conversation'.
+src/data/sources/JsonDataSource.ts(280,12): error TS18048: 'collection.conversations' is possibly 'undefined'.
+src/data/sources/JsonDataSource.ts(365,26): error TS18048: 'collection.conversations' is possibly 'undefined'.
+src/data/sources/JsonDataSource.ts(367,9): error TS18048: 'collection.conversations' is possibly 'undefined'.
+src/data/sources/JsonDataSource.ts(370,31): error TS18048: 'collection.conversations' is possibly 'undefined'.
+src/data/sources/JsonDataSource.ts(372,9): error TS18048: 'collection.conversations' is possibly 'undefined'.
+src/data/sources/JsonDataSource.ts(504,30): error TS2339: Property 'adminUsers' does not exist on type 'Group'.
+src/tests/api-no-auth-test.ts(31,50): error TS18046: 'error' is of type 'unknown'.
+src/tests/storage-test.ts(11,7): error TS2451: Cannot redeclare block-scoped variable 'localStorage'.

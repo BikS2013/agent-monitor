@@ -132,12 +132,14 @@ export class ConversationsRepositoryFactory {
 
   /**
    * Get the group repository
+   * Note: Groups are not supported by ConversationsApiDataSource, this will return a repository with limited functionality
    */
   static getGroupRepository(): IGroupRepository {
     if (!this.dataSource) {
       throw new Error('ConversationsRepositoryFactory not initialized');
     }
 
+    console.warn('ConversationsRepositoryFactory: Groups are not supported by ConversationsApiDataSource, group operations will have limited functionality');
     return new GroupRepository(this.dataSource);
   }
 }

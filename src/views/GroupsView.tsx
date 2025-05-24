@@ -3,7 +3,7 @@ import GroupsList from '../components/GroupsList';
 import GroupDetail from '../components/GroupDetail';
 import NewGroupModal from '../components/modals/NewGroupModal';
 import EditGroupModal from '../components/modals/EditGroupModal';
-import { useConversationsData } from '../context/ConversationsDataContext';
+import { useData } from '../context/DataContext';
 import { Group, Collection, Conversation } from '../data/types';
 import { useTheme } from '../context/ThemeContext';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -31,7 +31,7 @@ const GroupsView: React.FC<GroupsViewProps> = ({
   selectedGroup,
   setSelectedGroup
 }) => {
-  const { groups, loading, collections, refreshData } = useConversationsData();
+  const { groups, loading, collections, refreshData } = useData();
   const { theme } = useTheme();
   const [isNewGroupModalOpen, setIsNewGroupModalOpen] = React.useState(false);
   const [isEditGroupModalOpen, setIsEditGroupModalOpen] = React.useState(false);

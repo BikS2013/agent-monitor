@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Groups API Debug - Agent Monitor</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+            margin: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1 { color: #333; margin-bottom: 20px; }
+        .section {
+            margin-bottom: 20px;
+            padding: 15px;
+            background: #f9f9f9;
+            border-radius: 4px;
+            border: 1px solid #e0e0e0;
+        }
+        .key { font-weight: bold; color: #0066cc; }
+        .value {
+            font-family: 'Courier New', monospace;
+            white-space: pre-wrap;
+            background: #f5f5f5;
+            padding: 8px;
+            border-radius: 4px;
+            margin-top: 5px;
+        }
+        .success { color: #388e3c; background: #e8f5e9; padding: 8px; border-radius: 4px; }
+        .warning { color: #f57c00; background: #fff3e0; padding: 8px; border-radius: 4px; }
+        .error { color: #d32f2f; background: #ffebee; padding: 8px; border-radius: 4px; }
+        button {
+            background: #0066cc;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-right: 10px;
+        }
+        button:hover { background: #0052a3; }
+        button.danger { background: #d32f2f; }
+        button.danger:hover { background: #b71c1c; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Groups API Debug - Agent Monitor</h1>
+        
+        <div class="actions">
+            <button onclick="refreshData()">Refresh</button>
+            <button onclick="enableGroupsApi()">Enable Groups API</button>
+            <button onclick="enableGroupsApiOnly()">Enable Groups API Only (Independent)</button>
+            <button class="danger" onclick="clearGroupsApi()">Clear Groups API Settings</button>
+            <button class="danger" onclick="clearAllApiSettings()">Clear All API Settings</button>
+        </div>
+
+        <div class="section">
+            <h2>Groups API Configuration Status</h2>
+            <div id="groups-api-status"></div>
+        </div>
+
+        <div class="section">
+            <h2>Main API Configuration</h2>
+            <div id="main-api-status"></div>
+        </div>
+
+        <div class="section">
+            <h2>Repository Context Debug Info</h2>
+            <div id="debug-info"></div>
+        </div>
+    </div>
+
+    <script>
+        function checkGroupsApiStatus() {
+            const statusEl = document.getElementById('groups-api-status');
+            let html = '';
+
+            // Check Groups API settings
+            const groupsApiSettings = localStorage.getItem('groupsApiSettings');
+            
+            html += '<div>';
+            html += '<div class="key">groupsApiSettings in localStorage:</div>';
+            
+            if (groupsApiSettings) {
+                html += '<div class="value">' + groupsApiSettings + '</div>';
+                
+                try {
+                    const settings = JSON.parse(groupsApiSettings);
+                    html += '<div class="section">';
+                    html += '<strong>Parsed Settings:</strong><br>';
+                    html += 'Enabled: ' + (settings.enabled ? 'Yes' : 'No') + '<br>';
+                    html += 'Base URL: ' + (settings.baseUrl || 'Not set') + '<br>';
+                    html += 'Auth Method: ' + (settings.authMethod || 'Not set') + '<br>';
+                    
+                    if (settings.enabled) {
+                        html += '<div class="success">✅ Groups API is enabled in settings</div>';
+                    } else {
+                        html += '<div class="warning">⚠️ Groups API is disabled in settings</div>';
+                    }
+                    html += '</div>';
+                } catch (e) {
+                    html += '<div class="error">❌ Error parsing JSON: ' + e.message + '</div>';
+                }
+            } else {
+                html += '<div class="warning">⚠️ No groupsApiSettings found in localStorage</div>';
+                html += '<div class="value">null</div>';
+            }
+            
+            html += '</div>';
+            statusEl.innerHTML = html;
+        }
+
+        function checkMainApiStatus() {
+            const statusEl = document.getElementById('main-api-status');
+            let html = '';
+
+            const apiEnabled = localStorage.getItem('apiEnabled');
+            const authMethod = localStorage.getItem('apiAuthMethod');
+
+            html += '<div>';
+            html += '<div class="key">Main API Status:</div>';
+            html += 'apiEnabled: ' + (apiEnabled || 'Not set') + '<br>';
+            html += 'apiAuthMethod: ' + (authMethod || 'Not set') + '<br>';
+            
+            if (apiEnabled === 'true') {
+                html += '<div class="success">✅ Main API is enabled</div>';
+            } else {
+                html += '<div class="warning">⚠️ Main API is disabled or not configured</div>';
+            }
+            html += '</div>';
+
+            statusEl.innerHTML = html;
+        }
+
+        function showDebugInfo() {
+            const debugEl = document.getElementById('debug-info');
+            let html = '';
+
+            html += '<div>';
+            html += '<div class="key">NEW: Independent Groups API Data Flow (After Code Changes):</div>';
+            html += '<div class="value">';
+            html += '✅ FIXED: Groups API now works independently of Main API!\n\n';
+            html += '1. RepositoryContext checks localStorage.getItem("groupsApiSettings") FIRST\n';
+            html += '2. If found and settings.enabled === true:\n';
+            html += '   - Creates GroupApiDataSource with settings.baseUrl\n';
+            html += '   - Uses settings.authMethod for authentication\n';
+            html += '3. Then checks Main API separately\n';
+            html += '4. GroupRepository uses GroupApiDataSource for groups\n';
+            html += '5. Other repositories use main data source or local data\n';
+            html += '6. GroupsView gets data from Groups API\n\n';
+            html += 'Configuration Status:\n';
+            
+            const groupsApiSettings = localStorage.getItem('groupsApiSettings');
+            const mainApiEnabled = localStorage.getItem('apiEnabled');
+            
+            html += '- Groups API: ' + (groupsApiSettings ? 'Configured' : 'Not configured') + '\n';
+            html += '- Main API: ' + (mainApiEnabled === 'true' ? 'Enabled' : 'Disabled') + '\n';
+            html += '- Independent Groups API: ' + (groupsApiSettings && !mainApiEnabled ? 'YES ✅' : 'No') + '\n\n';
+            
+            html += 'All API-related localStorage keys:\n';
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                if (key && (key.includes('api') || key.includes('Api') || key.includes('group') || key.includes('Group'))) {
+                    html += '- ' + key + ': ' + localStorage.getItem(key) + '\n';
+                }
+            }
+            html += '</div>';
+            html += '</div>';
+
+            debugEl.innerHTML = html;
+        }
+
+        function enableGroupsApi() {
+            const settings = {
+                enabled: true,
+                baseUrl: 'http://localhost:8000',
+                authMethod: 'none',
+                authToken: undefined,
+                clientSecret: undefined,
+                clientId: undefined
+            };
+            
+            localStorage.setItem('groupsApiSettings', JSON.stringify(settings));
+            alert('Groups API enabled! Refresh the main application to apply changes.');
+            refreshData();
+        }
+
+        function enableGroupsApiOnly() {
+            // Enable Groups API independently
+            const groupsSettings = {
+                enabled: true,
+                baseUrl: 'http://localhost:8000',
+                authMethod: 'none',
+                authToken: undefined,
+                clientSecret: undefined,
+                clientId: undefined
+            };
+            localStorage.setItem('groupsApiSettings', JSON.stringify(groupsSettings));
+            
+            // Ensure main API is disabled
+            localStorage.setItem('apiEnabled', 'false');
+            localStorage.removeItem('apiAuthMethod');
+            
+            alert('Groups API enabled independently! Main API disabled. Refresh the main application to apply changes.');
+            refreshData();
+        }
+
+        function clearGroupsApi() {
+            localStorage.removeItem('groupsApiSettings');
+            alert('Groups API settings cleared!');
+            refreshData();
+        }
+
+        function clearAllApiSettings() {
+            // Clear all API-related settings
+            const apiKeys = [
+                'groupsApiSettings', 'apiEnabled', 'apiAuthMethod',
+                'agent_monitor_api_token', 'apiClientSecret', 'apiClientId',
+                'agentMonitor_apiSettings', 'agentMonitor_conversationsApiSettings',
+                'aiAgentsApiSettings', 'conversationsApiSettings'
+            ];
+            
+            apiKeys.forEach(key => localStorage.removeItem(key));
+            
+            alert('All API settings cleared! Application will use local data.');
+            refreshData();
+        }
+
+        function refreshData() {
+            checkGroupsApiStatus();
+            checkMainApiStatus();
+            showDebugInfo();
+        }
+
+        // Initial load
+        refreshData();
+    </script>
+</body>
+</html>

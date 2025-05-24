@@ -1,6 +1,7 @@
 import { IDataSource } from '../sources/IDataSource';
 import { JsonDataSource } from '../sources/JsonDataSource';
 import { DynamicDataSource } from '../sources/DynamicDataSource';
+import { GroupApiDataSource } from '../sources/GroupApiDataSource';
 import { JsonDataSource as ExternalJsonDataSource, DataSize } from '../jsonDataSource';
 
 import {
@@ -27,12 +28,14 @@ import {
  */
 export class RepositoryFactory {
   private static dataSource: IDataSource | null = null;
+  private static groupDataSource: IDataSource | null = null;
 
   /**
    * Initialize the factory with a data source
    * @param dataSource Data source to use for repositories (defaults to JsonDataSource)
+   * @param groupDataSource Optional separate data source for groups
    */
-  static async initialize(dataSource?: IDataSource, dataSize?: DataSize | 'dynamic'): Promise<void> {
+  static async initialize(dataSource?: IDataSource, dataSize?: DataSize | 'dynamic', groupDataSource?: IDataSource): Promise<void> {
     if (!dataSource) {
       if (dataSize === 'dynamic') {
         // Use dynamically generated data
@@ -52,20 +55,42 @@ export class RepositoryFactory {
       console.log('RepositoryFactory: Using provided data source:', dataSource.constructor.name);
     }
 
+    // Set up group data source
+    if (groupDataSource) {
+      this.groupDataSource = groupDataSource;
+      console.log('RepositoryFactory: Using separate group data source:', groupDataSource.constructor.name);
+    } else {
+      this.groupDataSource = this.dataSource;
+      console.log('RepositoryFactory: Using main data source for groups');
+    }
+
     try {
       // Determine if we're using an API data source
       const isApiDataSource = this.dataSource.constructor.name === 'ApiDataSource';
       console.log(`RepositoryFactory: Using ${isApiDataSource ? 'API' : 'Local'} data source (${this.dataSource.constructor.name})`);
 
-      // Initialize the data source
-      console.log('RepositoryFactory: Initializing data source...');
+      // Initialize the main data source
+      console.log('RepositoryFactory: Initializing main data source...');
       try {
         await this.dataSource.initialize();
-        console.log('RepositoryFactory: Data source initialized successfully');
+        console.log('RepositoryFactory: Main data source initialized successfully');
       } catch (initError) {
-        console.error('RepositoryFactory: Data source initialization failed:', initError);
+        console.error('RepositoryFactory: Main data source initialization failed:', initError);
         // We need to re-throw this to properly propagate API errors
         throw initError;
+      }
+
+      // Initialize the group data source if it's different from the main data source
+      if (this.groupDataSource !== this.dataSource) {
+        console.log('RepositoryFactory: Initializing separate group data source...');
+        try {
+          await this.groupDataSource.initialize();
+          console.log('RepositoryFactory: Group data source initialized successfully');
+        } catch (groupInitError) {
+          console.error('RepositoryFactory: Group data source initialization failed:', groupInitError);
+          console.log('RepositoryFactory: Falling back to main data source for groups');
+          this.groupDataSource = this.dataSource;
+        }
       }
 
       // Test data access
@@ -120,7 +145,8 @@ export class RepositoryFactory {
         const groups = await groupRepo.getAll();
         console.log('RepositoryFactory: Group test -', {
           count: groups.data.length,
-          success: groups.data.length > 0
+          success: groups.data.length > 0,
+          usingDedicatedSource: this.groupDataSource !== this.dataSource
         });
       }
     } catch (error) {
@@ -166,11 +192,11 @@ export class RepositoryFactory {
    * Get the group repository
    */
   static getGroupRepository(): IGroupRepository {
-    if (!this.dataSource) {
+    if (!this.groupDataSource) {
       throw new Error('RepositoryFactory not initialized');
     }
 
-    return new GroupRepository(this.dataSource);
+    return new GroupRepository(this.groupDataSource);
   }
 
   /**
@@ -193,5 +219,21 @@ export class RepositoryFactory {
     }
 
     return new UserRepository(this.dataSource);
+  }
+
+  /**
+   * Set the group data source independently
+   * @param groupDataSource Data source specifically for groups
+   */
+  static async setGroupDataSource(groupDataSource: IDataSource): Promise<void> {
+    try {
+      console.log('RepositoryFactory: Setting independent group data source:', groupDataSource.constructor.name);
+      await groupDataSource.initialize();
+      this.groupDataSource = groupDataSource;
+      console.log('RepositoryFactory: Group data source set successfully');
+    } catch (error) {
+      console.error('RepositoryFactory: Failed to set group data source:', error);
+      throw error;
+    }
   }
 }

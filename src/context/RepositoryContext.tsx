@@ -12,6 +12,7 @@ import {
 import { RepositoryFactory } from '../data/repositories/RepositoryFactory';
 import { IDataSource } from '../data/sources/IDataSource';
 import { ApiDataSource } from '../data/sources/ApiDataSource';
+import { GroupApiDataSource } from '../data/sources/GroupApiDataSource';
 import { DataSize } from '../data/jsonDataSource';
 import config from '../config';
 import { ApiClient } from '../data/api/ApiClient';
@@ -43,19 +44,69 @@ export const RepositoryProvider: React.FC<{ children: ReactNode }> = ({ children
   /**
    * Initialize all repositories
    */
-  const initialize = async (dataSource?: IDataSource, dataSize?: DataSize): Promise<void> => {
+  const initialize = async (dataSource?: IDataSource, dataSize?: DataSize | 'dynamic'): Promise<void> => {
     try {
       // Use the provided data source, or create one based on configuration
       let effectiveDataSource = dataSource;
+      let groupDataSource: IDataSource | undefined;
 
       if (!effectiveDataSource) {
-        // Check if API should be enabled (from localStorage or config)
+        // Check if Groups API is enabled separately (independent of main API)
+        const groupsApiSettings = localStorage.getItem('groupsApiSettings');
+        
+        console.log('RepositoryContext: Checking Groups API settings (independent check):', {
+          hasSettings: !!groupsApiSettings,
+          settingsRaw: groupsApiSettings
+        });
+        
+        if (groupsApiSettings) {
+          try {
+            const settings = JSON.parse(groupsApiSettings);
+            console.log('RepositoryContext: Parsed Groups API settings:', settings);
+            
+            if (settings.enabled) {
+              console.log('RepositoryContext: Groups API is enabled, creating GroupApiDataSource');
+              
+              const groupsUseNoAuth = settings.authMethod === 'none';
+              const groupsAuthToken = settings.authMethod === 'token' ? settings.authToken : undefined;
+              const groupsClientSecret = settings.authMethod === 'api-key' ? settings.clientSecret : undefined;
+              const groupsClientId = settings.authMethod === 'api-key' ? settings.clientId : undefined;
+              
+              console.log('RepositoryContext: GroupApiDataSource config:', {
+                baseUrl: settings.baseUrl,
+                authMethod: settings.authMethod,
+                useNoAuth: groupsUseNoAuth,
+                hasToken: !!groupsAuthToken,
+                hasClientSecret: !!groupsClientSecret,
+                hasClientId: !!groupsClientId
+              });
+              
+              groupDataSource = new GroupApiDataSource(
+                settings.baseUrl,
+                groupsAuthToken,
+                groupsClientSecret,
+                groupsClientId,
+                groupsUseNoAuth
+              );
+              
+              console.log('RepositoryContext: GroupApiDataSource created successfully');
+            } else {
+              console.log('RepositoryContext: Groups API is disabled in settings');
+            }
+          } catch (error) {
+            console.error('RepositoryContext: Failed to parse Groups API settings:', error);
+          }
+        } else {
+          console.log('RepositoryContext: No Groups API settings found in localStorage');
+        }
+
+        // Check if main API should be enabled (from localStorage or config)
         const savedApiEnabled = localStorage.getItem('apiEnabled');
         const useApi = config.preferLocalStorage && savedApiEnabled !== null
           ? savedApiEnabled === 'true'
           : config.api.enabled;
 
-        console.log('RepositoryContext.initialize: Determining data source type.', {
+        console.log('RepositoryContext.initialize: Determining main data source type.', {
           savedApiEnabled,
           configApiEnabled: config.api.enabled,
           preferLocalStorage: config.preferLocalStorage,
@@ -125,7 +176,7 @@ export const RepositoryProvider: React.FC<{ children: ReactNode }> = ({ children
       }
 
       // Initialize the repository factory with the data source and dataset size
-      await RepositoryFactory.initialize(effectiveDataSource, dataSize);
+      await RepositoryFactory.initialize(effectiveDataSource, dataSize, groupDataSource);
 
       // Create repositories
       setMessageRepository(RepositoryFactory.getMessageRepository());

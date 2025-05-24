@@ -19,29 +19,24 @@ interface ConversationsDataContextType {
   messages: Record<string, Message>;
   conversations: Record<string, Conversation>;
   collections: Record<string, Collection>;
-  groups: Record<string, Group>;
 
   // Loading states
   loading: {
     messages: boolean;
     conversations: boolean;
     collections: boolean;
-    groups: boolean;
   };
 
   // Data access methods
   getMessagesByConversationId: (thread_id: string) => Promise<Message[]>;
   getConversationsByCollectionId: (collectionId: string, options?: QueryOptions) => Promise<Conversation[]>;
-  getCollectionsByGroupId: (groupId: string, options?: QueryOptions) => Promise<Collection[]>;
   
   // Data creation methods
   addCollection: (collectionData: Omit<Collection, 'id'> & { id?: string }) => Promise<Collection>;
-  addGroup: (groupData: Omit<Group, 'id'>) => Promise<Group>;
   
   // Data modification methods
   updateCollection: (collectionId: string, collectionData: Partial<Collection>) => Promise<Collection>;
   deleteCollection: (collectionId: string) => Promise<boolean>;
-  updateGroup: (group: Group) => Promise<Group>;
   
   // Refresh methods
   refreshData: () => Promise<void>;
@@ -64,14 +59,12 @@ export const ConversationsDataProvider: React.FC<{ children: ReactNode }> = ({ c
   const [messages, setMessages] = useState<Record<string, Message>>({});
   const [conversations, setConversations] = useState<Record<string, Conversation>>({});
   const [collections, setCollections] = useState<Record<string, Collection>>({});
-  const [groups, setGroups] = useState<Record<string, Group>>({});
 
   // Loading states
   const [loading, setLoading] = useState({
     messages: false,
     conversations: false,
     collections: false,
-    groups: false,
   });
 
   // Load essential data on initialization
@@ -161,28 +154,6 @@ export const ConversationsDataProvider: React.FC<{ children: ReactNode }> = ({ c
         console.warn("ConversationsDataContext: No collection repository available");
       }
 
-      // Load groups
-      if (groupRepository) {
-        console.log("ConversationsDataContext: Loading groups from Conversations API...");
-        setLoading(prev => ({ ...prev, groups: true }));
-        const groupsResult = await groupRepository.getAll();
-        console.log(`ConversationsDataContext: Received ${groupsResult.data.length} groups from Conversations API`);
-
-        if (groupsResult.data.length === 0) {
-          console.warn("ConversationsDataContext: No groups found in Conversations API repository");
-        }
-
-        const groupsRecord = groupsResult.data.reduce((record, group) => {
-          record[group.id] = group;
-          return record;
-        }, {} as Record<string, Group>);
-
-        console.log(`ConversationsDataContext: Processed ${Object.keys(groupsRecord).length} groups from Conversations API`);
-        setGroups(groupsRecord);
-        setLoading(prev => ({ ...prev, groups: false }));
-      } else {
-        console.warn("ConversationsDataContext: No group repository available");
-      }
     } catch (error) {
       console.error('Failed to load initial data:', error);
       // Reset loading states
@@ -190,7 +161,6 @@ export const ConversationsDataProvider: React.FC<{ children: ReactNode }> = ({ c
         messages: false,
         conversations: false,
         collections: false,
-        groups: false,
       });
     }
   };
@@ -497,103 +467,8 @@ export const ConversationsDataProvider: React.FC<{ children: ReactNode }> = ({ c
     }
   };
 
-  /**
-   * Get collections in a group (lazy loading)
-   */
-  const getCollectionsByGroupId = async (groupId: string, options?: QueryOptions): Promise<Collection[]> => {
-    if (!initialized || !groupRepository) {
-      return [];
-    }
 
-    try {
-      setLoading(prev => ({ ...prev, collections: true }));
 
-      // Check if group exists
-      const group = groups[groupId];
-      if (!group) {
-        const groupResult = await groupRepository.getById(groupId);
-        if (!groupResult) {
-          return [];
-        }
-        // Update groups state with the fetched group
-        setGroups(prev => ({
-          ...prev,
-          [groupResult.id]: groupResult
-        }));
-      }
-
-      // Get collections for the group
-      const collectionsResult = await groupRepository.getCollections(groupId, options);
-
-      // Update collections state with new collections
-      const newCollections = { ...collections };
-      collectionsResult.data.forEach(collection => {
-        newCollections[collection.id] = collection;
-      });
-      setCollections(newCollections);
-
-      setLoading(prev => ({ ...prev, collections: false }));
-      return collectionsResult.data;
-    } catch (error) {
-      console.error(`Failed to get collections for group ${groupId}:`, error);
-      setLoading(prev => ({ ...prev, collections: false }));
-      return [];
-    }
-  };
-
-  /**
-   * Add a new group
-   */
-  const addGroup = async (groupData: Omit<Group, 'id'>): Promise<Group> => {
-    if (!initialized || !groupRepository) {
-      throw new Error('Group repository not initialized');
-    }
-
-    try {
-      // Create the group
-      const group = await groupRepository.create(groupData);
-
-      // Update groups state
-      setGroups(prev => ({
-        ...prev,
-        [group.id]: group
-      }));
-
-      return group;
-    } catch (error) {
-      console.error('Failed to create group:', error);
-      throw error;
-    }
-  };
-
-  /**
-   * Update an existing group
-   */
-  const updateGroup = async (group: Group): Promise<Group> => {
-    if (!initialized || !groupRepository) {
-      throw new Error('Group repository not initialized');
-    }
-
-    try {
-      // Update the group
-      const updatedGroup = await groupRepository.update(group.id, group);
-      
-      if (!updatedGroup) {
-        throw new Error('Failed to update group');
-      }
-
-      // Update groups state
-      setGroups(prev => ({
-        ...prev,
-        [updatedGroup.id]: updatedGroup
-      }));
-
-      return updatedGroup;
-    } catch (error) {
-      console.error('Failed to update group:', error);
-      throw error;
-    }
-  };
 
   /**
    * Refresh all data
@@ -611,7 +486,6 @@ export const ConversationsDataProvider: React.FC<{ children: ReactNode }> = ({ c
     messages,
     conversations,
     collections,
-    groups,
 
     // Loading states
     loading,
@@ -619,16 +493,13 @@ export const ConversationsDataProvider: React.FC<{ children: ReactNode }> = ({ c
     // Data access methods
     getMessagesByConversationId,
     getConversationsByCollectionId,
-    getCollectionsByGroupId,
 
     // Data creation methods
     addCollection,
-    addGroup,
 
     // Data modification methods
     updateCollection,
     deleteCollection,
-    updateGroup,
 
     // Refresh methods
     refreshData,

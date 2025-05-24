@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import Modal from '../common/Modal';
-import { useUnifiedData } from '../../hooks/useUnifiedData';
+import { useData } from '../../context/DataContext';
 import { Group, Collection } from '../../data/types';
 import { Activity, Shield, Zap } from 'lucide-react';
 import { useTheme } from '../../context/ThemeContext';
@@ -12,7 +12,7 @@ interface EditGroupModalProps {
 }
 
 const EditGroupModal: React.FC<EditGroupModalProps> = ({ isOpen, onClose, group }) => {
-  const { updateGroup, collections } = useUnifiedData();
+  const { updateGroup, collections } = useData();
   const { theme } = useTheme();
   
   // Form state

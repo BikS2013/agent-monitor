@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Settings, User, Bell, Shield, Database, Bot, Save, HardDrive, AlertCircle, Globe, MessageCircle, Brain } from 'lucide-react';
+import { Settings, User, Bell, Shield, Database, Bot, Save, HardDrive, AlertCircle, Globe, MessageCircle, Brain, Users } from 'lucide-react';
 import { useData } from '../context/DataContext';
 import { useTheme } from '../context/ThemeContext';
 import { useRepositories } from '../context/RepositoryContext';
@@ -9,6 +9,7 @@ import config from '../config';
 import ApiSettings from '../components/settings/ApiSettings';
 import ConversationsApiSettings from '../components/settings/ConversationsApiSettings';
 import { AIAgentsApiSettings } from '../components/settings/AIAgentsApiSettings';
+import { GroupsApiSettings, GroupsApiSettings as GroupsApiSettingsType } from '../components/settings/GroupsApiSettings';
 
 const SettingsView: React.FC = () => {
   const { getCurrentUser } = useData();
@@ -31,6 +32,13 @@ const SettingsView: React.FC = () => {
     enabled: false
   });
 
+  const [showGroupsApiSettings, setShowGroupsApiSettings] = useState(false);
+  const [groupsApiSettings, setGroupsApiSettings] = useState<GroupsApiSettingsType>({
+    baseUrl: 'http://localhost:8000',
+    authMethod: 'none',
+    enabled: false
+  });
+
   // Load saved data settings
   useEffect(() => {
     const savedSetting = localStorage.getItem('dataSize');
@@ -45,6 +53,16 @@ const SettingsView: React.FC = () => {
         setAIAgentsApiSettings(JSON.parse(savedAIAgentsSettings));
       } catch (error) {
         console.error('Failed to parse AI Agents API settings:', error);
+      }
+    }
+
+    // Load Groups API settings
+    const savedGroupsSettings = localStorage.getItem('groupsApiSettings');
+    if (savedGroupsSettings) {
+      try {
+        setGroupsApiSettings(JSON.parse(savedGroupsSettings));
+      } catch (error) {
+        console.error('Failed to parse Groups API settings:', error);
       }
     }
 
@@ -88,6 +106,17 @@ const SettingsView: React.FC = () => {
     
     // If API was enabled/disabled, reload to apply changes
     if (settings.enabled !== aiAgentsApiSettings.enabled) {
+      window.location.reload();
+    }
+  };
+
+  // Handle Groups API settings save
+  const handleGroupsApiSave = (settings: GroupsApiSettingsType) => {
+    setGroupsApiSettings(settings);
+    localStorage.setItem('groupsApiSettings', JSON.stringify(settings));
+    
+    // If API was enabled/disabled, reload to apply changes
+    if (settings.enabled !== groupsApiSettings.enabled) {
       window.location.reload();
     }
   };
@@ -363,6 +392,45 @@ const SettingsView: React.FC = () => {
                   </div>
                 </div>
 
+                {/* Groups API Settings Section */}
+                <div className={`p-4 rounded-md ${
+                  theme === 'dark' ? 'bg-gray-600' : 'bg-gray-50'
+                }`}>
+                  <h3 className={`font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'} mb-4 flex items-center`}>
+                    <Users size={16} className="text-blue-500 mr-2" />
+                    Groups API Connection
+                  </h3>
+
+                  <div className="space-y-3">
+                    <p className={`text-sm ${theme === 'dark' ? 'text-gray-300' : 'text-gray-500'}`}>
+                      Configure a dedicated API connection for Groups data, independent from other APIs.
+                    </p>
+                    
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className={`text-sm font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+                          Status: {groupsApiSettings.enabled ? 'Enabled' : 'Disabled'}
+                        </p>
+                        {groupsApiSettings.enabled && (
+                          <p className={`text-xs ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
+                            {groupsApiSettings.baseUrl}
+                          </p>
+                        )}
+                      </div>
+                      <button
+                        onClick={() => setShowGroupsApiSettings(true)}
+                        className={`px-4 py-2 rounded-md ${
+                          theme === 'dark'
+                            ? 'bg-gray-700 hover:bg-gray-600 text-white'
+                            : 'bg-gray-200 hover:bg-gray-300 text-gray-800'
+                        } transition-colors`}
+                      >
+                        Configure
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
                 {/* Local Dataset Settings */}
                 <div className={`p-4 rounded-md ${
                   theme === 'dark' ? 'bg-gray-600' : 'bg-gray-50'
@@ -606,6 +674,15 @@ const SettingsView: React.FC = () => {
           onClose={() => setShowAIAgentsApiSettings(false)}
           onSave={handleAIAgentsApiSave}
           settings={aiAgentsApiSettings}
+        />
+      )}
+
+      {/* Groups API Settings Modal */}
+      {showGroupsApiSettings && (
+        <GroupsApiSettings
+          onClose={() => setShowGroupsApiSettings(false)}
+          onSave={handleGroupsApiSave}
+          settings={groupsApiSettings}
         />
       )}
     </div>
