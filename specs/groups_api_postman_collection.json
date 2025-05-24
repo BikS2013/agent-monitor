@@ -1,0 +1,1248 @@
+{
+	"info": {
+		"_postman_id": "groups-api-tests",
+		"name": "Groups API Tests",
+		"description": "Comprehensive test collection for Groups API endpoints including CRUD operations, permissions, and collection management.",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"auth": {
+		"type": "bearer",
+		"bearer": [
+			{
+				"key": "token",
+				"value": "{{authToken}}",
+				"type": "string"
+			}
+		]
+	},
+	"variable": [
+		{
+			"key": "baseUrl",
+			"value": "http://localhost:8001",
+			"type": "string"
+		},
+		{
+			"key": "createdGroupId",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "testCollectionId",
+			"value": "",
+			"type": "string"
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					"// Set default environment variables if not exists",
+					"if (!pm.environment.has('baseUrl')) {",
+					"    pm.environment.set('baseUrl', 'http://localhost:8001');",
+					"}",
+					"// Set dynamic timestamp for unique values",
+					"pm.globals.set('timestamp', Date.now());"
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					"// Global test to ensure response is JSON",
+					"pm.test('Response is valid JSON', function () {",
+					"    try {",
+					"        pm.response.json();",
+					"    } catch (e) {",
+					"        pm.expect.fail('Response is not valid JSON');",
+					"    }",
+					"});",
+					"",
+					"// Global test for response time",
+					"pm.test('Response time is reasonable', function () {",
+					"    pm.expect(pm.response.responseTime).to.be.below(5000);",
+					"});"
+				]
+			}
+		}
+	],
+	"item": [
+		{
+			"name": "Authentication",
+			"item": [
+				{
+					"name": "Admin Login",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('Admin login successful', function () {",
+									"    pm.response.to.have.status(200);",
+									"    ",
+									"    const responseJson = pm.response.json();",
+									"    pm.expect(responseJson).to.have.property('access_token');",
+									"    pm.expect(responseJson).to.have.property('token_type', 'bearer');",
+									"    pm.expect(responseJson).to.have.property('user');",
+									"    ",
+									"    // Store token for subsequent requests",
+									"    pm.environment.set('authToken', responseJson.access_token);",
+									"    ",
+									"    // Verify user object structure",
+									"    pm.expect(responseJson.user).to.have.property('user_id');",
+									"    pm.expect(responseJson.user).to.have.property('email');",
+									"    pm.expect(responseJson.user).to.have.property('full_name');",
+									"    pm.expect(responseJson.user).to.have.property('role');",
+									"    pm.expect(responseJson.user.is_active).to.be.true;",
+									"});",
+									"",
+									"pm.test('Response time is acceptable', function () {",
+									"    pm.expect(pm.response.responseTime).to.be.below(2000);",
+									"});"
+								]
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"admin@example.com\",\n    \"password\": \"admin123\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/auth/login",
+							"host": ["{{baseUrl}}"],
+							"path": ["auth", "login"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Setup",
+			"item": [
+				{
+					"name": "Get Test Collection ID",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// Check if the request was successful",
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"// Parse the response body as JSON",
+									"var jsonData = pm.response.json();",
+									"",
+									"// Verify response structure",
+									"pm.test(\"Response has items array\", function () {",
+									"    pm.expect(jsonData).to.have.property('items');",
+									"    pm.expect(jsonData.items).to.be.an('array');",
+									"});",
+									"",
+									"// If collections exist, store the first collection ID for testing",
+									"if (jsonData.items && jsonData.items.length > 0) {",
+									"    pm.collectionVariables.set('testCollectionId', jsonData.items[0].id);",
+									"    console.log('Test Collection ID: ' + jsonData.items[0].id);",
+									"    ",
+									"    pm.test(\"Collection ID stored for testing\", function () {",
+									"        pm.expect(pm.collectionVariables.get('testCollectionId')).to.not.be.empty;",
+									"    });",
+									"} else {",
+									"    console.log('No collections found for testing. Some tests may fail.');",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/collection",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"collection"
+							]
+						},
+						"description": "Get all collections to find a test collection ID for group tests"
+					},
+					"response": []
+				}
+			],
+			"description": "Setup requests to prepare for testing"
+		},
+		{
+			"name": "1. Group Creation",
+			"item": [
+				{
+					"name": "Create Group",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// Check if the request was successful",
+									"pm.test(\"Status code is 201\", function () {",
+									"    pm.response.to.have.status(201);",
+									"});",
+									"",
+									"// Parse the response body as JSON",
+									"var jsonData = pm.response.json();",
+									"",
+									"// Verify group was created with correct data",
+									"pm.test(\"Group created with correct data\", function () {",
+									"    pm.expect(jsonData).to.have.property('id');",
+									"    pm.expect(jsonData.name).to.eql(\"Test Group for API Testing\");",
+									"    pm.expect(jsonData.description).to.eql(\"This is a test group created by Postman tests\");",
+									"    pm.expect(jsonData.purpose).to.eql(\"evaluation\");",
+									"    pm.expect(jsonData.is_private).to.be.true;",
+									"});",
+									"",
+									"// Verify permissions were set correctly",
+									"pm.test(\"Group permissions set correctly\", function () {",
+									"    pm.expect(jsonData).to.have.property('admin_ids');",
+									"    pm.expect(jsonData.admin_ids).to.include(pm.collectionVariables.get('testAdminUserId') || 'test-admin-user');",
+									"    pm.expect(jsonData).to.have.property('user_ids');",
+									"    pm.expect(jsonData.user_ids).to.include(pm.collectionVariables.get('testAdminUserId') || 'test-admin-user');",
+									"    pm.expect(jsonData.user_ids).to.include(pm.collectionVariables.get('testRegularUserId') || 'test-regular-user');",
+									"    pm.expect(jsonData).to.have.property('permission_levels');",
+									"    const adminUserId = pm.collectionVariables.get('testAdminUserId') || 'test-admin-user';",
+									"    pm.expect(jsonData.permission_levels).to.have.property(adminUserId);",
+									"    pm.expect(jsonData.permission_levels[adminUserId]).to.eql(\"full\");",
+									"});",
+									"",
+									"// Store the created group ID for later tests",
+									"if (jsonData.id) {",
+									"    pm.collectionVariables.set('createdGroupId', jsonData.id);",
+									"    console.log('Created Group ID: ' + jsonData.id);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"Test Group for API Testing\",\n    \"description\": \"This is a test group created by Postman tests\",\n    \"purpose\": \"evaluation\",\n    \"collection_ids\": [],\n    \"admin_ids\": [\"{{testAdminUserId}}\"],\n    \"user_ids\": [\"{{testAdminUserId}}\", \"{{testRegularUserId}}\"],\n    \"is_private\": true\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/group",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"group"
+							]
+						},
+						"description": "Create a new group for testing purposes"
+					},
+					"response": []
+				},
+				{
+					"name": "Create Group with Invalid Purpose",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// Check if the request fails with appropriate status code",
+									"pm.test(\"Status code is 422 for invalid purpose\", function () {",
+									"    pm.response.to.have.status(422);",
+									"});",
+									"",
+									"// Check for validation error in response",
+									"pm.test(\"Response contains validation error\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('detail');",
+									"    // The exact structure may vary depending on your API's error format",
+									"    // but it should contain validation information",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"Invalid Group\",\n    \"description\": \"This group has an invalid purpose value\",\n    \"purpose\": \"invalid_purpose\",\n    \"admin_ids\": [\"{{testAdminUserId}}\"],\n    \"user_ids\": [\"{{testAdminUserId}}\"],\n    \"is_private\": true\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/group",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"group"
+							]
+						},
+						"description": "Attempt to create a group with an invalid purpose to test validation"
+					},
+					"response": []
+				}
+			],
+			"description": "Tests for group creation endpoints"
+		},
+		{
+			"name": "2. Group Retrieval",
+			"item": [
+				{
+					"name": "List All Groups",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// Check if the request was successful",
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"// Parse the response body as JSON",
+									"var jsonData = pm.response.json();",
+									"",
+									"// Verify response structure",
+									"pm.test(\"Response has items array\", function () {",
+									"    pm.expect(jsonData).to.have.property('items');",
+									"    pm.expect(jsonData.items).to.be.an('array');",
+									"});",
+									"",
+									"// Verify our created group is in the list",
+									"var createdGroupId = pm.collectionVariables.get('createdGroupId');",
+									"if (createdGroupId) {",
+									"    pm.test(\"Created group is in the list\", function () {",
+									"        var foundGroup = jsonData.items.find(function(group) {",
+									"            return group.id === createdGroupId;",
+									"        });",
+									"        pm.expect(foundGroup).to.not.be.undefined;",
+									"        pm.expect(foundGroup.name).to.eql(\"Test Group for API Testing\");",
+									"    });",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/group",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"group"
+							]
+						},
+						"description": "Get all groups"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Specific Group",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// Check if the request was successful",
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"// Parse the response body as JSON",
+									"var jsonData = pm.response.json();",
+									"",
+									"// Verify group data is correct",
+									"pm.test(\"Group data is correct\", function () {",
+									"    pm.expect(jsonData.id).to.eql(pm.collectionVariables.get('createdGroupId'));",
+									"    pm.expect(jsonData.name).to.eql(\"Test Group for API Testing\");",
+									"    pm.expect(jsonData.description).to.eql(\"This is a test group created by Postman tests\");",
+									"    pm.expect(jsonData.purpose).to.eql(\"evaluation\");",
+									"    pm.expect(jsonData.is_private).to.be.true;",
+									"});",
+									"",
+									"// Verify metadata is present",
+									"pm.test(\"Group has metadata\", function () {",
+									"    pm.expect(jsonData).to.have.property('metadata');",
+									"    pm.expect(jsonData.metadata).to.be.an('object');",
+									"    // Metadata should have some properties related to statistics",
+									"    pm.expect(jsonData.metadata).to.have.property('totalCollections');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/group/{{createdGroupId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"group",
+								"{{createdGroupId}}"
+							]
+						},
+						"description": "Get a specific group by ID"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Non-existent Group",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// Check if the request returns 404 for non-existent group",
+									"pm.test(\"Status code is 404 for non-existent group\", function () {",
+									"    pm.response.to.have.status(404);",
+									"});",
+									"",
+									"// Check for error message in response",
+									"pm.test(\"Response contains error message\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('detail');",
+									"    pm.expect(jsonData.detail).to.include('not found');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/group/00000000-0000-0000-0000-000000000000",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"group",
+								"00000000-0000-0000-0000-000000000000"
+							]
+						},
+						"description": "Attempt to get a group with a non-existent ID"
+					},
+					"response": []
+				}
+			],
+			"description": "Tests for group retrieval endpoints"
+		},
+		{
+			"name": "3. Group Updates",
+			"item": [
+				{
+					"name": "Update Group Name and Description",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// Check if the request was successful",
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"// Parse the response body as JSON",
+									"var jsonData = pm.response.json();",
+									"",
+									"// Verify the group was updated correctly",
+									"pm.test(\"Group updated correctly\", function () {",
+									"    pm.expect(jsonData.id).to.eql(pm.collectionVariables.get('createdGroupId'));",
+									"    pm.expect(jsonData.name).to.eql(\"Updated Test Group Name\");",
+									"    pm.expect(jsonData.description).to.eql(\"This is an updated description for testing\");",
+									"    ",
+									"    // These fields should not have changed",
+									"    pm.expect(jsonData.purpose).to.eql(\"evaluation\");",
+									"    pm.expect(jsonData.is_private).to.be.true;",
+									"});",
+									"",
+									"// Verify timestamps are present",
+									"pm.test(\"Updated timestamp exists\", function () {",
+									"    pm.expect(jsonData).to.have.property('created_at');",
+									"    pm.expect(jsonData).to.have.property('updated_at');",
+									"    ",
+									"    // created_at and updated_at should be different after an update",
+									"    const createdAt = new Date(jsonData.created_at).getTime();",
+									"    const updatedAt = new Date(jsonData.updated_at).getTime();",
+									"    ",
+									"    // Allow 1ms difference for database operations that may happen within same ms",
+									"    pm.expect(updatedAt).to.be.at.least(createdAt);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"Updated Test Group Name\",\n    \"description\": \"This is an updated description for testing\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/group/{{createdGroupId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"group",
+								"{{createdGroupId}}"
+							]
+						},
+						"description": "Update the name and description of the created group"
+					},
+					"response": []
+				},
+				{
+					"name": "Update Group Purpose",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// Check if the request was successful",
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"// Parse the response body as JSON",
+									"var jsonData = pm.response.json();",
+									"",
+									"// Verify the group purpose was updated correctly",
+									"pm.test(\"Group purpose updated correctly\", function () {",
+									"    pm.expect(jsonData.id).to.eql(pm.collectionVariables.get('createdGroupId'));",
+									"    pm.expect(jsonData.purpose).to.eql(\"security\");",
+									"    ",
+									"    // The name and description should be unchanged from previous update",
+									"    pm.expect(jsonData.name).to.eql(\"Updated Test Group Name\");",
+									"    pm.expect(jsonData.description).to.eql(\"This is an updated description for testing\");",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"purpose\": \"security\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/group/{{createdGroupId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"group",
+								"{{createdGroupId}}"
+							]
+						},
+						"description": "Update only the purpose of the group"
+					},
+					"response": []
+				},
+				{
+					"name": "Update Non-existent Group",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// Check if the request returns 404 for non-existent group",
+									"pm.test(\"Status code is 404 for non-existent group\", function () {",
+									"    pm.response.to.have.status(404);",
+									"});",
+									"",
+									"// Check for error message in response",
+									"pm.test(\"Response contains error message\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('detail');",
+									"    pm.expect(jsonData.detail).to.include('not found');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"Updated Name\",\n    \"description\": \"Updated Description\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/group/00000000-0000-0000-0000-000000000000",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"group",
+								"00000000-0000-0000-0000-000000000000"
+							]
+						},
+						"description": "Attempt to update a group with a non-existent ID"
+					},
+					"response": []
+				}
+			],
+			"description": "Tests for group update endpoints"
+		},
+		{
+			"name": "4. Group Collections Operations",
+			"item": [
+				{
+					"name": "Get Collections in Group (Empty)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// Check if the request was successful",
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"// Parse the response body as JSON",
+									"var jsonData = pm.response.json();",
+									"",
+									"// Verify response structure",
+									"pm.test(\"Response has items array\", function () {",
+									"    pm.expect(jsonData).to.have.property('items');",
+									"    pm.expect(jsonData.items).to.be.an('array');",
+									"});",
+									"",
+									"// The group should initially have no collections",
+									"pm.test(\"Group has no collections initially\", function () {",
+									"    pm.expect(jsonData.items.length).to.eql(0);",
+									"});",
+									"",
+									"// Check if pagination was included",
+									"pm.test(\"Response includes pagination information\", function () {",
+									"    pm.expect(jsonData).to.have.property('page_info');",
+									"    pm.expect(jsonData.page_info).to.have.property('total_items');",
+									"    pm.expect(jsonData.page_info).to.have.property('limit');",
+									"    pm.expect(jsonData.page_info).to.have.property('skip');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/group/{{createdGroupId}}/collection?includePagination=true",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"group",
+								"{{createdGroupId}}",
+								"collection"
+							],
+							"query": [
+								{
+									"key": "includePagination",
+									"value": "true"
+								}
+							]
+						},
+						"description": "Get collections in the created group (initially empty)"
+					},
+					"response": []
+				},
+				{
+					"name": "Add Collection to Group",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// Only run this test if a test collection ID is available",
+									"if (pm.collectionVariables.get('testCollectionId')) {",
+									"    // Check if the request was successful",
+									"    pm.test(\"Status code is 200\", function () {",
+									"        pm.response.to.have.status(200);",
+									"    });",
+									"    ",
+									"    // Parse the response body as JSON",
+									"    var jsonData = pm.response.json();",
+									"    ",
+									"    // Verify response structure and success",
+									"    pm.test(\"Response indicates success\", function () {",
+									"        pm.expect(jsonData).to.have.property('success');",
+									"        pm.expect(jsonData.success).to.be.true;",
+									"        pm.expect(jsonData).to.have.property('group');",
+									"    });",
+									"    ",
+									"    // Verify the collection was added to the group",
+									"    pm.test(\"Collection was added to the group\", function () {",
+									"        pm.expect(jsonData.group).to.have.property('collection_ids');",
+									"        pm.expect(jsonData.group.collection_ids).to.include(pm.collectionVariables.get('testCollectionId'));",
+									"    });",
+									"} else {",
+									"    console.log(\"Skipping test: No test collection ID available\");",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"collection_id\": \"{{testCollectionId}}\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/group/{{createdGroupId}}/collection",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"group",
+								"{{createdGroupId}}",
+								"collection"
+							]
+						},
+						"description": "Add a collection to the created group"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Collections in Group (After Add)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// Only test thoroughly if we have a test collection ID",
+									"if (pm.collectionVariables.get('testCollectionId')) {",
+									"    // Check if the request was successful",
+									"    pm.test(\"Status code is 200\", function () {",
+									"        pm.response.to.have.status(200);",
+									"    });",
+									"    ",
+									"    // Parse the response body as JSON",
+									"    var jsonData = pm.response.json();",
+									"    ",
+									"    // Verify response structure",
+									"    pm.test(\"Response has items array\", function () {",
+									"        pm.expect(jsonData).to.have.property('items');",
+									"        pm.expect(jsonData.items).to.be.an('array');",
+									"    });",
+									"    ",
+									"    // The group should now have one collection",
+									"    pm.test(\"Group has one collection\", function () {",
+									"        pm.expect(jsonData.items.length).to.be.at.least(1);",
+									"        ",
+									"        // Find our test collection in the list",
+									"        var testCollectionId = pm.collectionVariables.get('testCollectionId');",
+									"        var foundCollection = jsonData.items.find(function(collection) {",
+									"            return collection.id === testCollectionId;",
+									"        });",
+									"        ",
+									"        pm.expect(foundCollection).to.not.be.undefined;",
+									"    });",
+									"} else {",
+									"    // Just do basic response validation if we don't have a test collection",
+									"    pm.test(\"Status code is 200\", function () {",
+									"        pm.response.to.have.status(200);",
+									"    });",
+									"    ",
+									"    var jsonData = pm.response.json();",
+									"    ",
+									"    pm.test(\"Response has correct structure\", function () {",
+									"        pm.expect(jsonData).to.have.property('items');",
+									"    });",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/group/{{createdGroupId}}/collection",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"group",
+								"{{createdGroupId}}",
+								"collection"
+							]
+						},
+						"description": "Get collections in the group after adding a collection"
+					},
+					"response": []
+				},
+				{
+					"name": "Remove Collection from Group",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// Only run this test if a test collection ID is available",
+									"if (pm.collectionVariables.get('testCollectionId')) {",
+									"    // Check if the request was successful",
+									"    pm.test(\"Status code is 200\", function () {",
+									"        pm.response.to.have.status(200);",
+									"    });",
+									"    ",
+									"    // Parse the response body as JSON",
+									"    var jsonData = pm.response.json();",
+									"    ",
+									"    // Verify response structure and success",
+									"    pm.test(\"Response indicates success\", function () {",
+									"        pm.expect(jsonData).to.have.property('success');",
+									"        pm.expect(jsonData.success).to.be.true;",
+									"        pm.expect(jsonData).to.have.property('group');",
+									"    });",
+									"    ",
+									"    // Verify the collection was removed from the group",
+									"    pm.test(\"Collection was removed from the group\", function () {",
+									"        pm.expect(jsonData.group).to.have.property('collection_ids');",
+									"        var testCollectionId = pm.collectionVariables.get('testCollectionId');",
+									"        var containsCollection = jsonData.group.collection_ids.includes(testCollectionId);",
+									"        pm.expect(containsCollection).to.be.false;",
+									"    });",
+									"} else {",
+									"    console.log(\"Skipping test: No test collection ID available\");",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/group/{{createdGroupId}}/collection/{{testCollectionId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"group",
+								"{{createdGroupId}}",
+								"collection",
+								"{{testCollectionId}}"
+							]
+						},
+						"description": "Remove a collection from the group"
+					},
+					"response": []
+				}
+			],
+			"description": "Tests for group-collection operations"
+		},
+		{
+			"name": "5. User Permission Operations",
+			"item": [
+				{
+					"name": "Get Groups by Admin User",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// Check if the request was successful",
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"// Parse the response body as JSON",
+									"var jsonData = pm.response.json();",
+									"",
+									"// Verify response structure",
+									"pm.test(\"Response has items array\", function () {",
+									"    pm.expect(jsonData).to.have.property('items');",
+									"    pm.expect(jsonData.items).to.be.an('array');",
+									"});",
+									"",
+									"// Our created group should be in the list",
+									"var createdGroupId = pm.collectionVariables.get('createdGroupId');",
+									"if (createdGroupId) {",
+									"    pm.test(\"Created group is in admin's groups\", function () {",
+									"        var foundGroup = jsonData.items.find(function(group) {",
+									"            return group.id === createdGroupId;",
+									"        });",
+									"        pm.expect(foundGroup).to.not.be.undefined;",
+									"    });",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/user/{{testAdminUserId}}/admin-group",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"user",
+								"test-admin-user",
+								"admin-group"
+							]
+						},
+						"description": "Get groups where a user is an admin"
+					},
+					"response": []
+				},
+				{
+					"name": "Check Admin Permission",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// Check if the request was successful",
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"// Parse the response body as JSON",
+									"var jsonData = pm.response.json();",
+									"",
+									"// Verify admin user has full permission",
+									"pm.test(\"Admin user has full permission\", function () {",
+									"    pm.expect(jsonData).to.have.property('has_permission');",
+									"    pm.expect(jsonData.has_permission).to.be.true;",
+									"    pm.expect(jsonData).to.have.property('permission_level');",
+									"    pm.expect(jsonData.permission_level).to.eql('full');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/group/{{createdGroupId}}/user/{{testAdminUserId}}/permission?permission=full",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"group",
+								"{{createdGroupId}}",
+								"user",
+								"test-admin-user",
+								"permission"
+							],
+							"query": [
+								{
+									"key": "permission",
+									"value": "full"
+								}
+							]
+						},
+						"description": "Check if admin user has full permission"
+					},
+					"response": []
+				},
+				{
+					"name": "Check Regular User Permission",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// Check if the request was successful",
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"// Parse the response body as JSON",
+									"var jsonData = pm.response.json();",
+									"",
+									"// Verify regular user has read permission",
+									"pm.test(\"Regular user has read permission\", function () {",
+									"    pm.expect(jsonData).to.have.property('has_permission');",
+									"    pm.expect(jsonData.has_permission).to.be.true;",
+									"    pm.expect(jsonData).to.have.property('permission_level');",
+									"    pm.expect(jsonData.permission_level).to.eql('read');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/group/{{createdGroupId}}/user/test-regular-user/permission?permission=read",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"group",
+								"{{createdGroupId}}",
+								"user",
+								"test-regular-user",
+								"permission"
+							],
+							"query": [
+								{
+									"key": "permission",
+									"value": "read"
+								}
+							]
+						},
+						"description": "Check if regular user has read permission"
+					},
+					"response": []
+				},
+				{
+					"name": "Check Regular User Write Permission",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// Check if the request was successful",
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"// Parse the response body as JSON",
+									"var jsonData = pm.response.json();",
+									"",
+									"// Verify regular user does not have write permission",
+									"pm.test(\"Regular user does not have write permission\", function () {",
+									"    pm.expect(jsonData).to.have.property('has_permission');",
+									"    pm.expect(jsonData.has_permission).to.be.false;",
+									"    pm.expect(jsonData).to.have.property('permission_level');",
+									"    pm.expect(jsonData.permission_level).to.eql('read');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/group/{{createdGroupId}}/user/test-regular-user/permission?permission=write",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"group",
+								"{{createdGroupId}}",
+								"user",
+								"test-regular-user",
+								"permission"
+							],
+							"query": [
+								{
+									"key": "permission",
+									"value": "write"
+								}
+							]
+						},
+						"description": "Check if regular user has write permission (should fail)"
+					},
+					"response": []
+				}
+			],
+			"description": "Tests for user permission operations"
+		},
+		{
+			"name": "6. Cleanup",
+			"item": [
+				{
+					"name": "Delete Created Group",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// Check if the request was successful",
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"// Parse the response body as JSON",
+									"var jsonData = pm.response.json();",
+									"",
+									"// Verify the deletion was successful",
+									"pm.test(\"Group deletion was successful\", function () {",
+									"    pm.expect(jsonData).to.have.property('success');",
+									"    pm.expect(jsonData.success).to.be.true;",
+									"});",
+									"",
+									"// Verify the group is actually gone by trying to get it",
+									"pm.sendRequest({",
+									"    url: pm.variables.get('baseUrl') + '/group/' + pm.collectionVariables.get('createdGroupId'),",
+									"    method: 'GET'",
+									"}, function (err, res) {",
+									"    pm.test(\"Group no longer exists\", function () {",
+									"        pm.expect(res.code).to.eql(404);",
+									"    });",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/group/{{createdGroupId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"group",
+								"{{createdGroupId}}"
+							]
+						},
+						"description": "Delete the group created during the test"
+					},
+					"response": []
+				},
+				{
+					"name": "Logout",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('Logout successful', function () {",
+									"    pm.response.to.have.status(200);",
+									"    ",
+									"    const responseJson = pm.response.json();",
+									"    pm.expect(responseJson).to.have.property('message');",
+									"    ",
+									"    // Clear auth token",
+									"    pm.environment.unset('authToken');",
+									"});"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/auth/logout",
+							"host": ["{{baseUrl}}"],
+							"path": ["auth", "logout"]
+						}
+					},
+					"response": []
+				}
+			],
+			"description": "Cleanup operations to reset the test environment"
+		}
+	],
+	"variable": [
+		{
+			"key": "baseUrl",
+			"value": "http://localhost:8001",
+			"type": "string"
+		},
+		{
+			"key": "testAdminUserId",
+			"value": "test-admin-user",
+			"type": "string"
+		},
+		{
+			"key": "testRegularUserId",
+			"value": "test-regular-user",
+			"type": "string"
+		},
+		{
+			"key": "createdGroupId",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "testCollectionId",
+			"value": "",
+			"type": "string"
+		}
+	]
+}

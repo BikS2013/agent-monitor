@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LocalStorage Debug - Agent Monitor</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+            margin: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 20px;
+        }
+        .section {
+            margin-bottom: 30px;
+            padding: 15px;
+            background: #f9f9f9;
+            border-radius: 4px;
+            border: 1px solid #e0e0e0;
+        }
+        .section h2 {
+            color: #555;
+            margin-top: 0;
+            margin-bottom: 15px;
+        }
+        .item {
+            margin-bottom: 10px;
+            padding: 10px;
+            background: white;
+            border-radius: 4px;
+            border: 1px solid #ddd;
+        }
+        .key {
+            font-weight: bold;
+            color: #0066cc;
+            margin-bottom: 5px;
+        }
+        .value {
+            font-family: 'Courier New', monospace;
+            white-space: pre-wrap;
+            word-break: break-all;
+            color: #333;
+            background: #f5f5f5;
+            padding: 8px;
+            border-radius: 4px;
+            margin-top: 5px;
+        }
+        .parsed {
+            background: #e8f5e9;
+            padding: 8px;
+            border-radius: 4px;
+            margin-top: 5px;
+        }
+        .error {
+            color: #d32f2f;
+            background: #ffebee;
+            padding: 8px;
+            border-radius: 4px;
+            margin-top: 5px;
+        }
+        .warning {
+            color: #f57c00;
+            background: #fff3e0;
+            padding: 8px;
+            border-radius: 4px;
+            margin-top: 5px;
+        }
+        .success {
+            color: #388e3c;
+            background: #e8f5e9;
+            padding: 8px;
+            border-radius: 4px;
+            margin-top: 5px;
+        }
+        button {
+            background: #0066cc;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-right: 10px;
+        }
+        button:hover {
+            background: #0052a3;
+        }
+        button.danger {
+            background: #d32f2f;
+        }
+        button.danger:hover {
+            background: #b71c1c;
+        }
+        .status {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>LocalStorage Debug - Agent Monitor</h1>
+        
+        <div class="actions">
+            <button onclick="refreshData()">Refresh</button>
+            <button class="danger" onclick="clearAllSettings()">Clear All Settings</button>
+            <button onclick="resetToDefaults()">Reset to API Mode</button>
+        </div>
+
+        <div id="status" class="status"></div>
+
+        <div class="section">
+            <h2>API Configuration Status</h2>
+            <div id="api-status"></div>
+        </div>
+
+        <div class="section">
+            <h2>All LocalStorage Items</h2>
+            <div id="all-items"></div>
+        </div>
+
+        <div class="section">
+            <h2>API Related Settings</h2>
+            <div id="api-settings"></div>
+        </div>
+
+        <div class="section">
+            <h2>Data Source Configuration</h2>
+            <div id="data-source"></div>
+        </div>
+    </div>
+
+    <script>
+        const API_KEYS = [
+            'agentMonitor_apiSettings',
+            'agentMonitor_conversationsApiSettings',
+            'agentMonitor_dataSource',
+            'agentMonitor_apiBaseUrl',
+            'agentMonitor_apiToken',
+            'agentMonitor_apiKey',
+            'agentMonitor_authMethod',
+            'agentMonitor_noAuthMode'
+        ];
+
+        function formatJSON(obj) {
+            try {
+                return JSON.stringify(obj, null, 2);
+            } catch (e) {
+                return 'Error formatting: ' + e.message;
+            }
+        }
+
+        function checkApiStatus() {
+            const statusEl = document.getElementById('api-status');
+            let html = '';
+
+            // Check main API settings
+            const apiSettings = localStorage.getItem('agentMonitor_apiSettings');
+            if (apiSettings) {
+                try {
+                    const settings = JSON.parse(apiSettings);
+                    html += '<div class="item">';
+                    html += '<div class="key">Main API Configuration</div>';
+                    html += `<div class="success">Enabled: ${settings.enabled ? 'Yes' : 'No'}</div>`;
+                    html += `<div class="parsed">Base URL: ${settings.baseUrl || 'Not set'}</div>`;
+                    html += `<div class="parsed">Auth Method: ${settings.authMethod || 'Not set'}</div>`;
+                    if (settings.enabled && !settings.baseUrl) {
+                        html += '<div class="warning">⚠️ API is enabled but no base URL is set!</div>';
+                    }
+                    html += '</div>';
+                } catch (e) {
+                    html += '<div class="error">Error parsing main API settings: ' + e.message + '</div>';
+                }
+            } else {
+                html += '<div class="warning">No main API settings found</div>';
+            }
+
+            // Check conversations API settings
+            const convApiSettings = localStorage.getItem('agentMonitor_conversationsApiSettings');
+            if (convApiSettings) {
+                try {
+                    const settings = JSON.parse(convApiSettings);
+                    html += '<div class="item">';
+                    html += '<div class="key">Conversations API Configuration</div>';
+                    html += `<div class="success">Enabled: ${settings.enabled ? 'Yes' : 'No'}</div>`;
+                    html += `<div class="parsed">Base URL: ${settings.baseUrl || 'Not set'}</div>`;
+                    html += `<div class="parsed">Auth Method: ${settings.authMethod || 'Not set'}</div>`;
+                    html += '</div>';
+                } catch (e) {
+                    html += '<div class="error">Error parsing conversations API settings: ' + e.message + '</div>';
+                }
+            }
+
+            // Check data source
+            const dataSource = localStorage.getItem('agentMonitor_dataSource');
+            html += '<div class="item">';
+            html += '<div class="key">Current Data Source</div>';
+            html += `<div class="parsed">${dataSource || 'Not set (defaulting to in-memory)'}</div>`;
+            if (dataSource !== 'api') {
+                html += '<div class="warning">⚠️ Data source is not set to "api" - this will use local data!</div>';
+            }
+            html += '</div>';
+
+            statusEl.innerHTML = html;
+        }
+
+        function displayAllItems() {
+            const container = document.getElementById('all-items');
+            let html = '';
+
+            if (localStorage.length === 0) {
+                html = '<div class="warning">LocalStorage is empty</div>';
+            } else {
+                for (let i = 0; i < localStorage.length; i++) {
+                    const key = localStorage.key(i);
+                    const value = localStorage.getItem(key);
+                    
+                    html += '<div class="item">';
+                    html += `<div class="key">${key}</div>`;
+                    html += `<div class="value">${value}</div>`;
+                    
+                    // Try to parse JSON
+                    try {
+                        const parsed = JSON.parse(value);
+                        html += `<div class="parsed">Parsed: ${formatJSON(parsed)}</div>`;
+                    } catch (e) {
+                        // Not JSON, that's okay
+                    }
+                    html += '</div>';
+                }
+            }
+
+            container.innerHTML = html;
+        }
+
+        function displayApiSettings() {
+            const container = document.getElementById('api-settings');
+            let html = '';
+
+            API_KEYS.forEach(key => {
+                const value = localStorage.getItem(key);
+                if (value) {
+                    html += '<div class="item">';
+                    html += `<div class="key">${key}</div>`;
+                    html += `<div class="value">${value}</div>`;
+                    
+                    try {
+                        const parsed = JSON.parse(value);
+                        html += `<div class="parsed">Parsed: ${formatJSON(parsed)}</div>`;
+                    } catch (e) {
+                        // Not JSON
+                    }
+                    html += '</div>';
+                } else {
+                    html += '<div class="item">';
+                    html += `<div class="key">${key}</div>`;
+                    html += '<div class="warning">Not set</div>';
+                    html += '</div>';
+                }
+            });
+
+            container.innerHTML = html || '<div class="warning">No API settings found</div>';
+        }
+
+        function displayDataSource() {
+            const container = document.getElementById('data-source');
+            const dataSource = localStorage.getItem('agentMonitor_dataSource');
+            
+            let html = '<div class="item">';
+            html += '<div class="key">agentMonitor_dataSource</div>';
+            html += `<div class="value">${dataSource || 'Not set'}</div>`;
+            
+            if (!dataSource) {
+                html += '<div class="warning">No data source set - app will use default (in-memory sample data)</div>';
+            } else if (dataSource !== 'api') {
+                html += '<div class="warning">Data source is set to "' + dataSource + '" - to use API, it must be set to "api"</div>';
+            } else {
+                html += '<div class="success">Data source is correctly set to "api"</div>';
+            }
+            
+            html += '</div>';
+            container.innerHTML = html;
+        }
+
+        function showStatus(message, type = 'success') {
+            const statusEl = document.getElementById('status');
+            statusEl.className = 'status ' + type;
+            statusEl.textContent = message;
+            setTimeout(() => {
+                statusEl.textContent = '';
+                statusEl.className = 'status';
+            }, 3000);
+        }
+
+        function clearAllSettings() {
+            if (confirm('Are you sure you want to clear all localStorage settings?')) {
+                localStorage.clear();
+                showStatus('All settings cleared!', 'success');
+                refreshData();
+            }
+        }
+
+        function resetToDefaults() {
+            // Set to API mode with default settings
+            localStorage.setItem('agentMonitor_dataSource', 'api');
+            
+            // Set main API settings
+            const mainApiSettings = {
+                enabled: true,
+                baseUrl: 'http://localhost:8000',
+                authMethod: 'noAuth',
+                apiKey: '',
+                jwtToken: ''
+            };
+            localStorage.setItem('agentMonitor_apiSettings', JSON.stringify(mainApiSettings));
+            
+            // Set conversations API settings
+            const convApiSettings = {
+                enabled: true,
+                baseUrl: 'http://localhost:8001',
+                authMethod: 'noAuth',
+                apiKey: '',
+                jwtToken: ''
+            };
+            localStorage.setItem('agentMonitor_conversationsApiSettings', JSON.stringify(convApiSettings));
+            
+            showStatus('Reset to API mode with default settings!', 'success');
+            refreshData();
+        }
+
+        function refreshData() {
+            checkApiStatus();
+            displayAllItems();
+            displayApiSettings();
+            displayDataSource();
+        }
+
+        // Initial load
+        refreshData();
+    </script>
+</body>
+</html>

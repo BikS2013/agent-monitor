@@ -574,29 +574,48 @@ export class ApiDataSource implements IDataSource {
    * @param ids Optional array of group IDs. If not provided, returns all groups
    */
   async getGroups(ids?: string[]): Promise<Record<string, Group>> {
+    console.log('ApiDataSource.getGroups called with ids:', ids);
     try {
       const result = await this.apiClient.getGroups(ids);
+      console.log('ApiDataSource.getGroups API response:', result);
 
       // Handle different response formats
-      if (typeof result === 'object' && !Array.isArray(result)) {
-        // Object format with IDs as keys
-        return Object.entries(result).reduce((acc, [id, group]) => {
-          acc[id] = this.transformApiGroup(group);
-          return acc;
-        }, {} as Record<string, Group>);
+      let groups: any[] = [];
+      
+      if (result && result.items && Array.isArray(result.items)) {
+        // Standard API response format with items wrapper
+        groups = result.items;
+        console.log('ApiDataSource.getGroups: Using items wrapper format, found', groups.length, 'groups');
       } else if (Array.isArray(result)) {
-        // Array format
-        return result.reduce((acc, group) => {
+        // Direct array format (legacy)
+        groups = result;
+        console.log('ApiDataSource.getGroups: Using direct array format, found', groups.length, 'groups');
+      } else if (result && typeof result === 'object' && !Array.isArray(result) && !result.items) {
+        // Object format with IDs as keys (legacy)
+        console.log('ApiDataSource.getGroups: Using object format');
+        return Object.entries(result).reduce((acc, [key, group]) => {
+          // Skip if this is somehow an 'items' key without array value
+          if (key === 'items') return acc;
+          
           const transformed = this.transformApiGroup(group);
-          acc[transformed.id] = transformed;
+          // Use the group's actual ID if available, otherwise use the key
+          const groupId = transformed.id || group.id || key;
+          acc[groupId] = { ...transformed, id: groupId };
           return acc;
         }, {} as Record<string, Group>);
       }
 
-      // Fallback for unknown format
-      return {};
+      // Transform array to record with IDs as keys
+      const groupsRecord = groups.reduce((acc, group) => {
+        const transformed = this.transformApiGroup(group);
+        acc[transformed.id] = transformed;
+        return acc;
+      }, {} as Record<string, Group>);
+      
+      console.log('ApiDataSource.getGroups: Returning', Object.keys(groupsRecord).length, 'groups');
+      return groupsRecord;
     } catch (error) {
-      console.error('Failed to get groups:', error);
+      console.error('ApiDataSource.getGroups: Failed to get groups:', error);
       return {};
     }
   }
@@ -1037,7 +1056,8 @@ export class ApiDataSource implements IDataSource {
                : (apiGroup.user_ids || []),
       purpose: apiGroup.purpose || '',
       metadata: apiGroup.metadata || {},
-      isPrivate: apiGroup.isPrivate || apiGroup.is_private || false
+      isPrivate: apiGroup.isPrivate || apiGroup.is_private || false,
+      permissionLevels: apiGroup.permissionLevels || apiGroup.permission_levels || {}
     };
   }
 

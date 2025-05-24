@@ -7,12 +7,14 @@ import {
   IMessageRepository,
   IConversationRepository,
   ICollectionRepository,
+  IGroupRepository,
 } from './interfaces';
 
 import {
   MessageRepository,
   ConversationRepository,
   CollectionRepository,
+  GroupRepository,
 } from './implementations';
 
 /**
@@ -126,5 +128,16 @@ export class ConversationsRepositoryFactory {
     }
 
     return new CollectionRepository(this.dataSource);
+  }
+
+  /**
+   * Get the group repository
+   */
+  static getGroupRepository(): IGroupRepository {
+    if (!this.dataSource) {
+      throw new Error('ConversationsRepositoryFactory not initialized');
+    }
+
+    return new GroupRepository(this.dataSource);
   }
 }

@@ -4,6 +4,7 @@ import {
   IMessageRepository,
   IConversationRepository,
   ICollectionRepository,
+  IGroupRepository,
 } from '../data/repositories/interfaces';
 
 import { ConversationsRepositoryFactory } from '../data/repositories/ConversationsRepositoryFactory';
@@ -15,6 +16,7 @@ interface ConversationsRepositoryContextType {
   messageRepository: IMessageRepository | null;
   conversationRepository: IConversationRepository | null;
   collectionRepository: ICollectionRepository | null;
+  groupRepository: IGroupRepository | null;
   initialize: (fallbackToLocal?: boolean, dataSize?: DataSize) => Promise<void>;
   isUsingApi: boolean;
 }
@@ -26,6 +28,7 @@ export const ConversationsRepositoryProvider: React.FC<{ children: ReactNode }> 
   const [messageRepository, setMessageRepository] = useState<IMessageRepository | null>(null);
   const [conversationRepository, setConversationRepository] = useState<IConversationRepository | null>(null);
   const [collectionRepository, setCollectionRepository] = useState<ICollectionRepository | null>(null);
+  const [groupRepository, setGroupRepository] = useState<IGroupRepository | null>(null);
   const [isUsingApi, setIsUsingApi] = useState<boolean>(false);
 
   /**
@@ -104,6 +107,7 @@ export const ConversationsRepositoryProvider: React.FC<{ children: ReactNode }> 
       setMessageRepository(ConversationsRepositoryFactory.getMessageRepository());
       setConversationRepository(ConversationsRepositoryFactory.getConversationRepository());
       setCollectionRepository(ConversationsRepositoryFactory.getCollectionRepository());
+      setGroupRepository(ConversationsRepositoryFactory.getGroupRepository());
 
       setInitialized(true);
     } catch (error) {
@@ -186,6 +190,7 @@ export const ConversationsRepositoryProvider: React.FC<{ children: ReactNode }> 
     messageRepository,
     conversationRepository,
     collectionRepository,
+    groupRepository,
     initialize,
     isUsingApi
   };

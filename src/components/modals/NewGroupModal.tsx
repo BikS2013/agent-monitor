@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import Modal from '../common/Modal';
+import { useUnifiedData } from '../../hooks/useUnifiedData';
 import { useData } from '../../context/DataContext';
 import { Activity, Shield, Zap } from 'lucide-react';
 import { useTheme } from '../../context/ThemeContext';
@@ -11,7 +12,8 @@ interface NewGroupModalProps {
 }
 
 const NewGroupModal: React.FC<NewGroupModalProps> = ({ isOpen, onClose }) => {
-  const { addGroup, getCurrentUser, collections } = useData();
+  const { addGroup, collections } = useUnifiedData();
+  const { getCurrentUser } = useData();
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const { theme } = useTheme();
   

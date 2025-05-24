@@ -585,8 +585,15 @@ export class ConversationsApiDataSource implements IDataSource {
    * @param id Group ID
    */
   async getGroupById(id: string): Promise<Group | null> {
-    console.warn('getGroupById not implemented for Conversations API');
-    return null;
+    try {
+      const group = await this.apiClient.getGroup(id);
+      if (!group) return null;
+
+      return this.transformApiGroup(group);
+    } catch (error) {
+      console.error(`Failed to get group ${id}:`, error);
+      return null;
+    }
   }
 
   /**
@@ -594,8 +601,56 @@ export class ConversationsApiDataSource implements IDataSource {
    * @param ids Optional array of group IDs. If not provided, returns all groups
    */
   async getGroups(ids?: string[]): Promise<Record<string, Group>> {
-    console.warn('getGroups not implemented for Conversations API');
-    return {};
+    try {
+      const result = await this.apiClient.getGroups(ids);
+      console.log('ConversationsApiDataSource.getGroups: Raw API response:', result);
+
+      let groups: any[] = [];
+
+      // Handle different response formats
+      if (result && typeof result === 'object' && !Array.isArray(result)) {
+        // Check if response has items wrapper
+        if (result.items && Array.isArray(result.items)) {
+          console.log('ConversationsApiDataSource.getGroups: Found items wrapper with', result.items.length, 'groups');
+          groups = result.items;
+        } else {
+          // Object format with IDs as keys (legacy)
+          console.log('ConversationsApiDataSource.getGroups: Processing object format with keys:', Object.keys(result));
+          return Object.entries(result).reduce((acc, [key, group]) => {
+            // Skip if this is the 'items' key
+            if (key === 'items') return acc;
+            
+            console.log(`ConversationsApiDataSource.getGroups: Processing group with key ${key}:`, group);
+            const transformed = this.transformApiGroup(group);
+            // Use the group's actual ID if available, otherwise use the key
+            const groupId = transformed.id || group.id || key;
+            console.log(`ConversationsApiDataSource.getGroups: Transformed group ${groupId}:`, transformed);
+            acc[groupId] = { ...transformed, id: groupId };
+            return acc;
+          }, {} as Record<string, Group>);
+        }
+      } else if (Array.isArray(result)) {
+        // Direct array format
+        console.log('ConversationsApiDataSource.getGroups: Direct array format with', result.length, 'groups');
+        groups = result;
+      }
+
+      // Transform array to record with IDs as keys
+      const groupsRecord = groups.reduce((acc, group) => {
+        const transformed = this.transformApiGroup(group);
+        const groupId = transformed.id || group.id;
+        if (groupId) {
+          acc[groupId] = transformed;
+        }
+        return acc;
+      }, {} as Record<string, Group>);
+
+      console.log('ConversationsApiDataSource.getGroups: Returning', Object.keys(groupsRecord).length, 'groups');
+      return groupsRecord;
+    } catch (error) {
+      console.error('Failed to get groups:', error);
+      return {};
+    }
   }
 
   /**
@@ -603,8 +658,15 @@ export class ConversationsApiDataSource implements IDataSource {
    * @param userId User ID
    */
   async getGroupsByAdminUserId(userId: string): Promise<Group[]> {
-    console.warn('getGroupsByAdminUserId not implemented for Conversations API');
-    return [];
+    try {
+      const groups = await this.apiClient.getGroupsByAdminUser(userId);
+      return Array.isArray(groups)
+        ? groups.map(group => this.transformApiGroup(group))
+        : [];
+    } catch (error) {
+      console.error(`Failed to get admin groups for user ${userId}:`, error);
+      return [];
+    }
   }
 
   /**
@@ -612,11 +674,14 @@ export class ConversationsApiDataSource implements IDataSource {
    * @param data Group data without the ID
    */
   async createGroup(data: Omit<Group, 'id'>): Promise<Group> {
-    console.warn('createGroup not implemented for Conversations API');
-    return {
-      ...data as any,
-      id: `grp_${Date.now()}`,
-    };
+    try {
+      const apiData = this.prepareGroupForApi(data as Group);
+      const result = await this.apiClient.createGroup(apiData);
+      return this.transformApiGroup(result);
+    } catch (error) {
+      console.error('Failed to create group:', error);
+      throw error;
+    }
   }
 
   /**
@@ -625,8 +690,15 @@ export class ConversationsApiDataSource implements IDataSource {
    * @param data Updated group data
    */
   async updateGroup(id: string, data: Partial<Group>): Promise<Group | null> {
-    console.warn('updateGroup not implemented for Conversations API');
-    return null;
+    try {
+      const apiData = this.prepareGroupForApi(data as Group);
+      const result = await this.apiClient.updateGroup(id, apiData);
+      if (!result) return null;
+      return this.transformApiGroup(result);
+    } catch (error) {
+      console.error(`Failed to update group ${id}:`, error);
+      return null;
+    }
   }
 
   /**
@@ -634,8 +706,12 @@ export class ConversationsApiDataSource implements IDataSource {
    * @param id Group ID
    */
   async deleteGroup(id: string): Promise<boolean> {
-    console.warn('deleteGroup not implemented for Conversations API');
-    return false;
+    try {
+      return await this.apiClient.deleteGroup(id);
+    } catch (error) {
+      console.error(`Failed to delete group ${id}:`, error);
+      return false;
+    }
   }
 
   // #endregion
@@ -1000,6 +1076,69 @@ export class ConversationsApiDataSource implements IDataSource {
     // Keep most fields as-is since the API spec uses camelCase
     // Only convert fields that are truly snake_case in the API
     
+    return apiData;
+  }
+
+  /**
+   * Transform API group format to app format
+   */
+  private transformApiGroup(apiGroup: any): Group {
+    // Create the group object in our app format
+    return {
+      id: apiGroup.id,
+      name: apiGroup.name || '',
+      description: apiGroup.description || '',
+      createdAt: apiGroup.createdAt || apiGroup.created_at || new Date().toISOString(),
+      updatedAt: apiGroup.updatedAt || apiGroup.updated_at || new Date().toISOString(),
+      adminIds: Array.isArray(apiGroup.adminIds)
+                ? apiGroup.adminIds
+                : (apiGroup.admin_ids || []),
+      collectionIds: Array.isArray(apiGroup.collectionIds)
+                     ? apiGroup.collectionIds
+                     : (apiGroup.collection_ids || []),
+      userIds: Array.isArray(apiGroup.userIds)
+               ? apiGroup.userIds
+               : (apiGroup.user_ids || []),
+      purpose: apiGroup.purpose || '',
+      metadata: apiGroup.metadata || {},
+      isPrivate: apiGroup.isPrivate || apiGroup.is_private || false,
+      permissionLevels: apiGroup.permissionLevels || apiGroup.permission_levels || {}
+    };
+  }
+
+  /**
+   * Prepare group data for API
+   */
+  private prepareGroupForApi(group: Partial<Group>): any {
+    // Create a copy to avoid modifying the original
+    const apiData: any = { ...group };
+
+    // Convert snake_case to camelCase if needed
+    if (apiData.admin_ids === undefined && apiData.adminIds !== undefined) {
+      apiData.admin_ids = apiData.adminIds;
+      delete apiData.adminIds;
+    }
+
+    if (apiData.collection_ids === undefined && apiData.collectionIds !== undefined) {
+      apiData.collection_ids = apiData.collectionIds;
+      delete apiData.collectionIds;
+    }
+
+    if (apiData.user_ids === undefined && apiData.userIds !== undefined) {
+      apiData.user_ids = apiData.userIds;
+      delete apiData.userIds;
+    }
+
+    if (apiData.is_private === undefined && apiData.isPrivate !== undefined) {
+      apiData.is_private = apiData.isPrivate;
+      delete apiData.isPrivate;
+    }
+
+    if (apiData.permission_levels === undefined && apiData.permissionLevels !== undefined) {
+      apiData.permission_levels = apiData.permissionLevels;
+      delete apiData.permissionLevels;
+    }
+
     return apiData;
   }
 

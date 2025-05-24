@@ -135,12 +135,14 @@ const App: React.FC = () => {
         );
       case 'groups':
         return (
-          <GroupsView
-            onSelectCollection={setSelectedCollection}
-            onChangeView={handleViewChange}
-            selectedGroup={selectedGroup}
-            setSelectedGroup={setSelectedGroup}
-          />
+          <ConversationsDataProvider>
+            <GroupsView
+              onSelectCollection={setSelectedCollection}
+              onChangeView={handleViewChange}
+              selectedGroup={selectedGroup}
+              setSelectedGroup={setSelectedGroup}
+            />
+          </ConversationsDataProvider>
         );
       case 'agents':
         return <AIAgentsView />;

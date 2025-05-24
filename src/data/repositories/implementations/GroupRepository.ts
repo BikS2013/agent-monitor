@@ -227,12 +227,12 @@ export class GroupRepository extends BaseRepository<Group> implements IGroupRepo
     }
     
     // Check if the user is an admin
-    if (group.adminUsers.includes(userId)) {
+    if (group.adminIds && group.adminIds.includes(userId)) {
       return true;
     }
     
     // Check if the user has the specific permission
-    const userPermissions = group.permissionLevels[userId];
+    const userPermissions = group.permissionLevels && group.permissionLevels[userId];
     
     if (!userPermissions) {
       return false;
@@ -240,6 +240,6 @@ export class GroupRepository extends BaseRepository<Group> implements IGroupRepo
     
     // In a real implementation, we would have a more sophisticated permission system
     // For now, we'll just check if the permission string matches
-    return userPermissions === permission;
+    return userPermissions === permission || userPermissions === 'full';
   }
 }

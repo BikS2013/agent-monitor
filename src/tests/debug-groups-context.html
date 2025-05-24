@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug Groups Context</title>
+    <style>
+        body {
+            font-family: monospace;
+            padding: 20px;
+            background: #1a1a1a;
+            color: #e0e0e0;
+        }
+        .section {
+            margin: 20px 0;
+            padding: 15px;
+            background: #2a2a2a;
+            border-radius: 5px;
+        }
+        .warning {
+            background: #4a3030;
+            border-left: 4px solid #ff6b6b;
+        }
+        .success {
+            background: #304a30;
+            border-left: 4px solid #51cf66;
+        }
+        h2 {
+            margin-top: 0;
+            color: #60a5fa;
+        }
+        pre {
+            background: #3a3a3a;
+            padding: 10px;
+            border-radius: 3px;
+            overflow-x: auto;
+        }
+        button {
+            background: #60a5fa;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-right: 10px;
+        }
+        button:hover {
+            background: #3b82f6;
+        }
+        .api-key {
+            background: #4a4a4a;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: monospace;
+        }
+    </style>
+</head>
+<body>
+    <h1>Debug Groups Context & API Configuration</h1>
+
+    <div class="section">
+        <h2>Current Configuration</h2>
+        <div id="config-status"></div>
+    </div>
+
+    <div class="section">
+        <h2>API Configuration</h2>
+        <div id="api-config"></div>
+    </div>
+
+    <div class="section">
+        <h2>Data Source Status</h2>
+        <div id="data-source"></div>
+    </div>
+
+    <div class="section">
+        <h2>Actions</h2>
+        <button onclick="enableApiMode()">Enable API Mode</button>
+        <button onclick="setNoAuthMode()">Set No-Auth Mode</button>
+        <button onclick="clearApiSettings()">Clear API Settings</button>
+        <button onclick="window.location.reload()">Refresh</button>
+    </div>
+
+    <div class="section">
+        <h2>All localStorage Items</h2>
+        <pre id="all-items"></pre>
+    </div>
+
+    <script>
+        function checkConfiguration() {
+            const configDiv = document.getElementById('config-status');
+            const apiDiv = document.getElementById('api-config');
+            const dataSourceDiv = document.getElementById('data-source');
+            const allItemsDiv = document.getElementById('all-items');
+
+            // Check API enabled status
+            const apiEnabled = localStorage.getItem('apiEnabled');
+            const dataSourceType = localStorage.getItem('dataSourceType');
+            const authMethod = localStorage.getItem('authMethod');
+            
+            // Configuration status
+            let configHtml = '';
+            
+            if (apiEnabled === 'true') {
+                configHtml += '<div class="success">✓ API is ENABLED</div>';
+            } else {
+                configHtml += '<div class="warning">⚠ API is DISABLED (showing local data)</div>';
+            }
+
+            if (dataSourceType === 'api') {
+                configHtml += '<div class="success">✓ Data source is set to API</div>';
+            } else {
+                configHtml += '<div class="warning">⚠ Data source is: ' + (dataSourceType || 'not set') + '</div>';
+            }
+
+            configDiv.innerHTML = configHtml;
+
+            // API Configuration details
+            let apiHtml = '<table>';
+            apiHtml += '<tr><td>Auth Method:</td><td><span class="api-key">' + (authMethod || 'not set') + '</span></td></tr>';
+            apiHtml += '<tr><td>Base URL:</td><td><span class="api-key">' + (localStorage.getItem('apiBaseUrl') || 'not set') + '</span></td></tr>';
+            
+            if (authMethod === 'token') {
+                const token = localStorage.getItem('agent_monitor_api_token');
+                apiHtml += '<tr><td>Token:</td><td><span class="api-key">' + (token ? '***' + token.slice(-4) : 'not set') + '</span></td></tr>';
+            } else if (authMethod === 'api-key') {
+                const clientId = localStorage.getItem('apiClientId');
+                const clientSecret = localStorage.getItem('apiClientSecret');
+                apiHtml += '<tr><td>Client ID:</td><td><span class="api-key">' + (clientId || 'not set') + '</span></td></tr>';
+                apiHtml += '<tr><td>Client Secret:</td><td><span class="api-key">' + (clientSecret ? '***' + clientSecret.slice(-4) : 'not set') + '</span></td></tr>';
+            }
+            
+            apiHtml += '</table>';
+            apiDiv.innerHTML = apiHtml;
+
+            // Data source details
+            let dataHtml = '';
+            if (apiEnabled === 'true' && dataSourceType === 'api') {
+                dataHtml = '<div class="success">App should be using API data source</div>';
+                dataHtml += '<p>If you\'re still seeing local data, try:</p>';
+                dataHtml += '<ol><li>Clear cache and reload</li><li>Check browser console for errors</li><li>Verify API is returning data</li></ol>';
+            } else {
+                dataHtml = '<div class="warning">App is using local/mock data</div>';
+                dataHtml += '<p>To use API data, both apiEnabled and dataSourceType must be set correctly.</p>';
+            }
+            dataSourceDiv.innerHTML = dataHtml;
+
+            // All localStorage items
+            const items = {};
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                if (key) {
+                    items[key] = localStorage.getItem(key);
+                }
+            }
+            allItemsDiv.textContent = JSON.stringify(items, null, 2);
+        }
+
+        function enableApiMode() {
+            localStorage.setItem('apiEnabled', 'true');
+            localStorage.setItem('dataSourceType', 'api');
+            localStorage.setItem('apiBaseUrl', 'http://localhost:8000');
+            alert('API mode enabled. Refresh the app to apply changes.');
+            checkConfiguration();
+        }
+
+        function setNoAuthMode() {
+            localStorage.setItem('authMethod', 'none');
+            alert('No-auth mode set. Refresh the app to apply changes.');
+            checkConfiguration();
+        }
+
+        function clearApiSettings() {
+            const apiKeys = [
+                'apiEnabled',
+                'dataSourceType',
+                'authMethod',
+                'apiBaseUrl',
+                'agent_monitor_api_token',
+                'apiClientId',
+                'apiClientSecret'
+            ];
+            apiKeys.forEach(key => localStorage.removeItem(key));
+            alert('API settings cleared. Refresh the app to apply changes.');
+            checkConfiguration();
+        }
+
+        // Initial check
+        checkConfiguration();
+    </script>
+</body>
+</html>

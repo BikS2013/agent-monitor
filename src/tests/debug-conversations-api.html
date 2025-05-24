@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug Conversations API Settings</title>
+    <style>
+        body {
+            font-family: monospace;
+            padding: 20px;
+            background: #1a1a1a;
+            color: #e0e0e0;
+        }
+        .section {
+            margin: 20px 0;
+            padding: 15px;
+            background: #2a2a2a;
+            border-radius: 5px;
+        }
+        .warning {
+            background: #4a3030;
+            border-left: 4px solid #ff6b6b;
+        }
+        .success {
+            background: #304a30;
+            border-left: 4px solid #51cf66;
+        }
+        .info {
+            background: #303a4a;
+            border-left: 4px solid #60a5fa;
+        }
+        h2 {
+            margin-top: 0;
+            color: #60a5fa;
+        }
+        pre {
+            background: #3a3a3a;
+            padding: 10px;
+            border-radius: 3px;
+            overflow-x: auto;
+        }
+        button {
+            background: #60a5fa;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-right: 10px;
+        }
+        button:hover {
+            background: #3b82f6;
+        }
+        .api-key {
+            background: #4a4a4a;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: monospace;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        td {
+            padding: 5px;
+            border-bottom: 1px solid #3a3a3a;
+        }
+        td:first-child {
+            font-weight: bold;
+            width: 200px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Debug Conversations API Configuration</h1>
+
+    <div class="section info">
+        <h2>Dual API Architecture</h2>
+        <p>This application uses two separate APIs:</p>
+        <ul>
+            <li><strong>Main API (port 8000)</strong>: For Collections, Groups, AI Agents, Users</li>
+            <li><strong>Conversations API (port 8001)</strong>: For Conversations and Messages</li>
+        </ul>
+        <p>When Conversations API is enabled, the Groups page should use port 8001 to maintain consistency.</p>
+    </div>
+
+    <div class="section">
+        <h2>Main API Configuration</h2>
+        <div id="main-api-config"></div>
+    </div>
+
+    <div class="section">
+        <h2>Conversations API Configuration</h2>
+        <div id="conversations-api-config"></div>
+    </div>
+
+    <div class="section">
+        <h2>Expected Behavior</h2>
+        <div id="expected-behavior"></div>
+    </div>
+
+    <div class="section">
+        <h2>Actions</h2>
+        <button onclick="enableConversationsApi()">Enable Conversations API</button>
+        <button onclick="disableConversationsApi()">Disable Conversations API</button>
+        <button onclick="setNoAuthMode()">Set No-Auth Mode</button>
+        <button onclick="clearAllSettings()">Clear All Settings</button>
+        <button onclick="window.location.reload()">Refresh</button>
+    </div>
+
+    <div class="section">
+        <h2>All localStorage Items</h2>
+        <pre id="all-items"></pre>
+    </div>
+
+    <script>
+        function checkConfiguration() {
+            const mainApiDiv = document.getElementById('main-api-config');
+            const conversationsApiDiv = document.getElementById('conversations-api-config');
+            const behaviorDiv = document.getElementById('expected-behavior');
+            const allItemsDiv = document.getElementById('all-items');
+
+            // Main API Configuration
+            const apiEnabled = localStorage.getItem('apiEnabled');
+            const apiBaseUrl = localStorage.getItem('apiBaseUrl') || 'http://localhost:8000';
+            const authMethod = localStorage.getItem('authMethod');
+            
+            let mainHtml = '<table>';
+            mainHtml += '<tr><td>Enabled:</td><td>' + (apiEnabled === 'true' ? '<span class="success">✓ Yes</span>' : '<span class="warning">✗ No</span>') + '</td></tr>';
+            mainHtml += '<tr><td>Base URL:</td><td><span class="api-key">' + apiBaseUrl + '</span></td></tr>';
+            mainHtml += '<tr><td>Auth Method:</td><td><span class="api-key">' + (authMethod || 'not set') + '</span></td></tr>';
+            mainHtml += '</table>';
+            mainApiDiv.innerHTML = mainHtml;
+
+            // Conversations API Configuration
+            const conversationsApiEnabled = localStorage.getItem('conversationsApiEnabled');
+            const conversationsApiBaseUrl = localStorage.getItem('conversationsApiBaseUrl') || 'http://localhost:8001';
+            const conversationsApiAuthMethod = localStorage.getItem('conversationsApiAuthMethod');
+            
+            let convHtml = '<table>';
+            convHtml += '<tr><td>Enabled:</td><td>' + (conversationsApiEnabled === 'true' ? '<span class="success">✓ Yes</span>' : '<span class="warning">✗ No</span>') + '</td></tr>';
+            convHtml += '<tr><td>Base URL:</td><td><span class="api-key">' + conversationsApiBaseUrl + '</span></td></tr>';
+            convHtml += '<tr><td>Auth Method:</td><td><span class="api-key">' + (conversationsApiAuthMethod || 'not set') + '</span></td></tr>';
+            convHtml += '</table>';
+            conversationsApiDiv.innerHTML = convHtml;
+
+            // Expected Behavior
+            let behaviorHtml = '';
+            if (conversationsApiEnabled === 'true') {
+                behaviorHtml = '<div class="success">✓ Groups page should use Conversations API at ' + conversationsApiBaseUrl + '/group</div>';
+                behaviorHtml += '<p>The Groups, Collections, and Conversations pages will all use the Conversations API for consistency.</p>';
+            } else {
+                behaviorHtml = '<div class="info">Groups page will use ';
+                if (apiEnabled === 'true') {
+                    behaviorHtml += 'Main API at ' + apiBaseUrl + '/group</div>';
+                } else {
+                    behaviorHtml += 'local/mock data</div>';
+                }
+            }
+            behaviorDiv.innerHTML = behaviorHtml;
+
+            // All localStorage items
+            const items = {};
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                if (key) {
+                    items[key] = localStorage.getItem(key);
+                }
+            }
+            allItemsDiv.textContent = JSON.stringify(items, null, 2);
+        }
+
+        function enableConversationsApi() {
+            localStorage.setItem('conversationsApiEnabled', 'true');
+            localStorage.setItem('conversationsApiBaseUrl', 'http://localhost:8001');
+            if (!localStorage.getItem('conversationsApiAuthMethod')) {
+                localStorage.setItem('conversationsApiAuthMethod', 'none');
+            }
+            alert('Conversations API enabled. Refresh the app to apply changes.');
+            checkConfiguration();
+        }
+
+        function disableConversationsApi() {
+            localStorage.setItem('conversationsApiEnabled', 'false');
+            alert('Conversations API disabled. Refresh the app to apply changes.');
+            checkConfiguration();
+        }
+
+        function setNoAuthMode() {
+            localStorage.setItem('conversationsApiAuthMethod', 'none');
+            localStorage.setItem('authMethod', 'none');
+            alert('No-auth mode set for both APIs. Refresh the app to apply changes.');
+            checkConfiguration();
+        }
+
+        function clearAllSettings() {
+            if (confirm('This will clear all API settings. Continue?')) {
+                const apiKeys = [
+                    'apiEnabled',
+                    'apiBaseUrl',
+                    'authMethod',
+                    'agent_monitor_api_token',
+                    'apiClientId',
+                    'apiClientSecret',
+                    'conversationsApiEnabled',
+                    'conversationsApiBaseUrl',
+                    'conversationsApiAuthMethod',
+                    'conversationsApiToken',
+                    'conversationsApiClientId',
+                    'conversationsApiClientSecret'
+                ];
+                apiKeys.forEach(key => localStorage.removeItem(key));
+                alert('All API settings cleared. Refresh the app to apply changes.');
+                checkConfiguration();
+            }
+        }
+
+        // Initial check
+        checkConfiguration();
+    </script>
+</body>
+</html>

@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Groups API Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1, h2 {
+            color: #333;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            background: #f9f9f9;
+            border-radius: 4px;
+            border: 1px solid #ddd;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        .result {
+            margin: 10px 0;
+            padding: 10px;
+            background: #f0f0f0;
+            border-radius: 4px;
+            font-family: monospace;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+        .success {
+            background: #d4edda;
+            color: #155724;
+        }
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        input, select {
+            padding: 8px;
+            margin: 5px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .config-section {
+            background: #e9ecef;
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Groups API Test Suite</h1>
+        
+        <div class="config-section">
+            <h3>API Configuration</h3>
+            <label>Base URL: <input type="text" id="baseUrl" value="http://localhost:8000" /></label>
+            <label>Auth Mode: 
+                <select id="authMode">
+                    <option value="none">No Auth</option>
+                    <option value="token">JWT Token</option>
+                    <option value="apikey">API Key</option>
+                </select>
+            </label>
+            <div id="authFields" style="display: none;">
+                <label id="tokenField" style="display: none;">Token: <input type="text" id="authToken" /></label>
+                <label id="apiKeyField" style="display: none;">API Key: <input type="text" id="apiKey" /></label>
+                <label id="clientIdField" style="display: none;">Client ID: <input type="text" id="clientId" /></label>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h2>1. List All Groups</h2>
+            <button onclick="testListGroups()">Test GET /group</button>
+            <div id="listGroupsResult" class="result"></div>
+        </div>
+
+        <div class="test-section">
+            <h2>2. Get Group by ID</h2>
+            <input type="text" id="groupId" placeholder="Group ID" value="group-1" />
+            <button onclick="testGetGroup()">Test GET /group/{id}</button>
+            <div id="getGroupResult" class="result"></div>
+        </div>
+
+        <div class="test-section">
+            <h2>3. Create New Group</h2>
+            <input type="text" id="newGroupName" placeholder="Group Name" value="Test Group" />
+            <select id="newGroupPurpose">
+                <option value="evaluation">Evaluation</option>
+                <option value="security">Security</option>
+                <option value="efficiency">Efficiency</option>
+            </select>
+            <button onclick="testCreateGroup()">Test POST /group</button>
+            <div id="createGroupResult" class="result"></div>
+        </div>
+
+        <div class="test-section">
+            <h2>4. Update Group</h2>
+            <input type="text" id="updateGroupId" placeholder="Group ID" value="group-1" />
+            <input type="text" id="updateGroupName" placeholder="New Name" value="Updated Group" />
+            <button onclick="testUpdateGroup()">Test PUT /group/{id}</button>
+            <div id="updateGroupResult" class="result"></div>
+        </div>
+
+        <div class="test-section">
+            <h2>5. Delete Group</h2>
+            <input type="text" id="deleteGroupId" placeholder="Group ID" value="group-test" />
+            <button onclick="testDeleteGroup()">Test DELETE /group/{id}</button>
+            <div id="deleteGroupResult" class="result"></div>
+        </div>
+
+        <div class="test-section">
+            <h2>6. Get Group Collections</h2>
+            <input type="text" id="groupCollectionsId" placeholder="Group ID" value="group-1" />
+            <button onclick="testGetGroupCollections()">Test GET /group/{id}/collection</button>
+            <div id="getGroupCollectionsResult" class="result"></div>
+        </div>
+
+        <div class="test-section">
+            <h2>7. Add Collection to Group</h2>
+            <input type="text" id="addCollGroupId" placeholder="Group ID" value="group-1" />
+            <input type="text" id="addCollId" placeholder="Collection ID" value="coll-3" />
+            <button onclick="testAddCollection()">Test POST /group/{id}/collection</button>
+            <div id="addCollectionResult" class="result"></div>
+        </div>
+
+        <div class="test-section">
+            <h2>8. Remove Collection from Group</h2>
+            <input type="text" id="removeCollGroupId" placeholder="Group ID" value="group-1" />
+            <input type="text" id="removeCollId" placeholder="Collection ID" value="coll-3" />
+            <button onclick="testRemoveCollection()">Test DELETE /group/{id}/collection/{collId}</button>
+            <div id="removeCollectionResult" class="result"></div>
+        </div>
+
+        <div class="test-section">
+            <h2>9. Get Admin Groups for User</h2>
+            <input type="text" id="adminUserId" placeholder="User ID" value="user-123" />
+            <button onclick="testGetAdminGroups()">Test GET /user/{id}/admin-group</button>
+            <div id="getAdminGroupsResult" class="result"></div>
+        </div>
+
+        <div class="test-section">
+            <h2>10. Check User Permission</h2>
+            <input type="text" id="permGroupId" placeholder="Group ID" value="group-1" />
+            <input type="text" id="permUserId" placeholder="User ID" value="user-123" />
+            <input type="text" id="permission" placeholder="Permission" value="read" />
+            <button onclick="testCheckPermission()">Test GET /group/{id}/user/{userId}/permission</button>
+            <div id="checkPermissionResult" class="result"></div>
+        </div>
+    </div>
+
+    <script>
+        // Update auth fields visibility
+        document.getElementById('authMode').addEventListener('change', function(e) {
+            const authFields = document.getElementById('authFields');
+            const tokenField = document.getElementById('tokenField');
+            const apiKeyField = document.getElementById('apiKeyField');
+            const clientIdField = document.getElementById('clientIdField');
+            
+            if (e.target.value === 'none') {
+                authFields.style.display = 'none';
+            } else {
+                authFields.style.display = 'block';
+                tokenField.style.display = e.target.value === 'token' ? 'block' : 'none';
+                apiKeyField.style.display = e.target.value === 'apikey' ? 'block' : 'none';
+                clientIdField.style.display = e.target.value === 'apikey' ? 'block' : 'none';
+            }
+        });
+
+        function getHeaders() {
+            const authMode = document.getElementById('authMode').value;
+            const headers = {
+                'Content-Type': 'application/json'
+            };
+            
+            if (authMode === 'token') {
+                const token = document.getElementById('authToken').value;
+                if (token) headers['Authorization'] = `Bearer ${token}`;
+            } else if (authMode === 'apikey') {
+                const apiKey = document.getElementById('apiKey').value;
+                const clientId = document.getElementById('clientId').value;
+                if (apiKey) headers['X-API-KEY'] = apiKey;
+                if (clientId) headers['X-Client-ID'] = clientId;
+            }
+            
+            return headers;
+        }
+
+        async function makeRequest(method, endpoint, body = null) {
+            const baseUrl = document.getElementById('baseUrl').value;
+            const url = `${baseUrl}${endpoint}`;
+            
+            const options = {
+                method,
+                headers: getHeaders()
+            };
+            
+            if (body) {
+                options.body = JSON.stringify(body);
+            }
+            
+            try {
+                const response = await fetch(url, options);
+                const data = await response.json();
+                return { 
+                    success: response.ok, 
+                    status: response.status,
+                    data 
+                };
+            } catch (error) {
+                return { 
+                    success: false, 
+                    error: error.message 
+                };
+            }
+        }
+
+        function displayResult(elementId, result) {
+            const element = document.getElementById(elementId);
+            element.className = result.success ? 'result success' : 'result error';
+            element.textContent = JSON.stringify(result, null, 2);
+        }
+
+        async function testListGroups() {
+            const result = await makeRequest('GET', '/group');
+            displayResult('listGroupsResult', result);
+        }
+
+        async function testGetGroup() {
+            const groupId = document.getElementById('groupId').value;
+            const result = await makeRequest('GET', `/group/${groupId}`);
+            displayResult('getGroupResult', result);
+        }
+
+        async function testCreateGroup() {
+            const name = document.getElementById('newGroupName').value;
+            const purpose = document.getElementById('newGroupPurpose').value;
+            const body = {
+                name,
+                description: `Test group created at ${new Date().toISOString()}`,
+                purpose,
+                collection_ids: [],
+                admin_ids: ['user-123'],
+                user_ids: ['user-123', 'user-456'],
+                is_private: true
+            };
+            const result = await makeRequest('POST', '/group', body);
+            displayResult('createGroupResult', result);
+        }
+
+        async function testUpdateGroup() {
+            const groupId = document.getElementById('updateGroupId').value;
+            const name = document.getElementById('updateGroupName').value;
+            const body = {
+                name,
+                description: `Updated at ${new Date().toISOString()}`
+            };
+            const result = await makeRequest('PUT', `/group/${groupId}`, body);
+            displayResult('updateGroupResult', result);
+        }
+
+        async function testDeleteGroup() {
+            const groupId = document.getElementById('deleteGroupId').value;
+            const result = await makeRequest('DELETE', `/group/${groupId}`);
+            displayResult('deleteGroupResult', result);
+        }
+
+        async function testGetGroupCollections() {
+            const groupId = document.getElementById('groupCollectionsId').value;
+            const result = await makeRequest('GET', `/group/${groupId}/collection`);
+            displayResult('getGroupCollectionsResult', result);
+        }
+
+        async function testAddCollection() {
+            const groupId = document.getElementById('addCollGroupId').value;
+            const collectionId = document.getElementById('addCollId').value;
+            const body = { collectionId };
+            const result = await makeRequest('POST', `/group/${groupId}/collection`, body);
+            displayResult('addCollectionResult', result);
+        }
+
+        async function testRemoveCollection() {
+            const groupId = document.getElementById('removeCollGroupId').value;
+            const collectionId = document.getElementById('removeCollId').value;
+            const result = await makeRequest('DELETE', `/group/${groupId}/collection/${collectionId}`);
+            displayResult('removeCollectionResult', result);
+        }
+
+        async function testGetAdminGroups() {
+            const userId = document.getElementById('adminUserId').value;
+            const result = await makeRequest('GET', `/user/${userId}/admin-group`);
+            displayResult('getAdminGroupsResult', result);
+        }
+
+        async function testCheckPermission() {
+            const groupId = document.getElementById('permGroupId').value;
+            const userId = document.getElementById('permUserId').value;
+            const permission = document.getElementById('permission').value;
+            const result = await makeRequest('GET', `/group/${groupId}/user/${userId}/permission?permission=${permission}`);
+            displayResult('checkPermissionResult', result);
+        }
+    </script>
+</body>
+</html>

@@ -679,6 +679,13 @@ export class ApiClient {
   }
   
   /**
+   * Get collections in a group
+   */
+  async getCollectionsByGroup(groupId: string): Promise<any> {
+    return this.get(`/group/${groupId}/collection`);
+  }
+  
+  /**
    * Get groups that include a specific collection
    */
   async getGroupsByCollection(collectionId: string): Promise<any> {
@@ -717,14 +724,25 @@ export class ApiClient {
    * Add a collection to a group
    */
   async addCollectionToGroup(groupId: string, collectionId: string): Promise<any> {
-    return this.post(`/group/${groupId}/collections`, { collection_id: collectionId });
+    return this.post(`/group/${groupId}/collection`, { collectionId });
   }
   
   /**
    * Remove a collection from a group
    */
   async removeCollectionFromGroup(groupId: string, collectionId: string): Promise<any> {
-    return this.delete(`/group/${groupId}/collections/${collectionId}`);
+    return this.delete(`/group/${groupId}/collection/${collectionId}`);
+  }
+  
+  /**
+   * Check user permission for a group
+   */
+  async checkGroupUserPermission(groupId: string, userId: string, permission?: string): Promise<any> {
+    const params: any = {};
+    if (permission) {
+      params.permission = permission;
+    }
+    return this.get(`/group/${groupId}/user/${userId}/permission`, params);
   }
   
   // #endregion

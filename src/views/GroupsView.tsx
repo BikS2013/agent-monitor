@@ -3,7 +3,7 @@ import GroupsList from '../components/GroupsList';
 import GroupDetail from '../components/GroupDetail';
 import NewGroupModal from '../components/modals/NewGroupModal';
 import EditGroupModal from '../components/modals/EditGroupModal';
-import { useData } from '../context/DataContext';
+import { useConversationsData } from '../context/ConversationsDataContext';
 import { Group, Collection, Conversation } from '../data/types';
 import { useTheme } from '../context/ThemeContext';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -14,7 +14,8 @@ import {
   faPenToSquare,
   faShareNodes,
   faDownload,
-  faGear
+  faGear,
+  faRefresh
 } from '@fortawesome/free-solid-svg-icons';
 
 interface GroupsViewProps {
@@ -30,11 +31,12 @@ const GroupsView: React.FC<GroupsViewProps> = ({
   selectedGroup,
   setSelectedGroup
 }) => {
-  const { groups, loading, collections } = useData();
+  const { groups, loading, collections, refreshData } = useConversationsData();
   const { theme } = useTheme();
   const [isNewGroupModalOpen, setIsNewGroupModalOpen] = React.useState(false);
   const [isEditGroupModalOpen, setIsEditGroupModalOpen] = React.useState(false);
   const [searchText, setSearchText] = React.useState('');
+  const [isRefreshing, setIsRefreshing] = React.useState(false);
 
   // Debug: Log groups data
   React.useEffect(() => {
@@ -64,6 +66,18 @@ const GroupsView: React.FC<GroupsViewProps> = ({
   const handleSelectCollection = (collection: Collection) => {
     onSelectCollection(collection);
     onChangeView('collections');
+  };
+
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    try {
+      await refreshData();
+      console.log('GroupsView: Data refreshed successfully');
+    } catch (error) {
+      console.error('GroupsView: Failed to refresh data:', error);
+    } finally {
+      setIsRefreshing(false);
+    }
   };
 
   return (
@@ -129,6 +143,17 @@ const GroupsView: React.FC<GroupsViewProps> = ({
                 </div>
               </div>
               <div className="flex items-center space-x-2">
+                <button
+                  className="p-2 hover:bg-white hover:bg-opacity-10 rounded"
+                  title="Refresh Groups"
+                  onClick={handleRefresh}
+                  disabled={isRefreshing}
+                >
+                  <FontAwesomeIcon 
+                    icon={faRefresh} 
+                    className={isRefreshing ? 'animate-spin' : ''}
+                  />
+                </button>
                 <button
                   className="p-2 hover:bg-white hover:bg-opacity-10 rounded"
                   title="Edit Group"
